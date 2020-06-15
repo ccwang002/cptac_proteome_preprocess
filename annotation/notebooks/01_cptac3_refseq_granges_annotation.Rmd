@@ -1,0 +1,360 @@
+---
+title: "Make Genomic Annotation of CPTAC3 RefSeq 20180628"
+output:
+  html_document:
+    df_print: paged
+---
+
+```{r, message=FALSE}
+library(GenomicFeatures)
+library(SummarizedExperiment)
+library(here)
+library(tidyverse)
+```
+
+Read annotation files downloaded from DCC:
+```{r}
+REFSEQ_IDS_TSV_PTH = '~/Box/Projects/2020_CPTAC_data_collection/DCC/RefSeq_20180629/RefSeq.20180629_Human_ucsc_hg38_cpdbnr_mito_264contams.fasta.SGSN.categories.tsv.gz'
+REFSEQ_IDS_DF_PTH = '~/Box/Projects/2020_CPTAC_data_collection/DCC/RefSeq_20180629/intermediate_2018-06-29_hg38/2_annotation_files_customProDB/ids.RData'
+TXDB_PTH = '~/Box/Projects/2020_CPTAC_data_collection/DCC/RefSeq_20180629/intermediate_2018-06-29_hg38/2_annotation_files_customProDB/txdb.sqlite'
+CHRM_REFSEQ_TSV_PTH = '~/Box/Projects/2020_CPTAC_data_collection/DCC/RefSeq_20180629/refseq_hg38_20200503_chrM_only.tsv.gz'
+HGNC_PROTEIN_CODING_TSV_PTH = '~/Box/Projects/2020_CPTAC_data_collection/DCC/RefSeq_20180629/intermediate_2018-06-29_hg38/3_annotate_fasta/protein-coding_gene.txt.gz'
+```
+
+Read all RefSeq annotations:
+```{r}
+refseq_full_ids_tbl = read_tsv(REFSEQ_IDS_TSV_PTH)
+refseq_full_ids_tbl %>% head()
+```
+
+Some columns are messed up due to the spaces. Fix the species name
+```{r}
+wrong_species_names = refseq_full_ids_tbl %>%
+    filter(!is.na(geneSymbol)) %>%
+    count(speciesC, sort = TRUE) %>%
+    ungroup() %>%
+    filter(speciesC != 'Homo sapiens') %>%
+    filter(!grepl("^[A-Z]+$", speciesC)) %>%
+    pull(speciesC)
+
+wrong_species_names = c(
+    wrong_species_names,
+    "GTP", "NAD", "NADP", "NADPH"
+)
+```
+
+List all the RefSeq records with wrong species name:
+```{r}
+refseq_full_ids_tbl %>%
+    filter(speciesC %in% wrong_species_names)
+```
+
+Rename those records to be human.
+```{r}
+refseq_full_ids_tbl.fixed_species = refseq_full_ids_tbl %>%
+    mutate(
+        speciesC = case_when(
+            speciesC == 'Homo sapiens' ~ speciesC,
+            speciesC %in% wrong_species_names ~ 'Homo sapiens',
+            TRUE ~ speciesC
+        )
+    )
+
+refseq_full_ids_tbl.fixed_species %>% 
+    count(speciesC, sort = TRUE)
+```
+
+Select only the Human RefSeq annotations.
+```{r}
+refseq_full_ids_tbl.human_only = refseq_full_ids_tbl.fixed_species %>%
+    filter(speciesC == 'Homo sapiens') %>%
+    rename(refseq_prot_id = accession_number) %>%
+    mutate(
+        refseq_prot_id_no_ver = str_replace(refseq_prot_id, '\\.\\d+$', '')
+    ) %>%
+    select(refseq_prot_id, symbol = geneSymbol, refseq_prot_id_no_ver, aa_len = sequenceLength)
+
+refseq_full_ids_tbl.human_only %>% head()
+```
+
+
+Load the RefSeq annotation
+```{r}
+txdb = loadDb(TXDB_PTH)
+txdb
+```
+
+```{r}
+txdb_tbl = transcripts(txdb, columns=c("tx_id", "tx_name", "gene_id")) %>%
+    as_tibble() %>%
+    mutate(gene_id = as.character(gene_id))
+
+txdb_tbl %>% head()
+```
+
+```{r}
+txdb_tx_len_tbl = transcriptLengths(txdb, with.cds_len = TRUE) %>%
+    as_tibble()
+
+txdb_tx_len_tbl %>% head()
+```
+
+```{r}
+txdb_anno_tbl = txdb_tbl %>%
+    left_join(txdb_tx_len_tbl %>% select(tx_id, num_exons = nexon, tx_len, cds_len), by = c('tx_id'))
+
+txdb_anno_tbl %>% head()
+```
+
+Add the missing chrM gene info
+```{r}
+txdb_anno_tbl.chrM = read_tsv(CHRM_REFSEQ_TSV_PTH) %>%
+    mutate(
+        seqnames = factor(chrom, levels = levels(txdb_anno_tbl$seqnames)),
+        width = txEnd - txStart + 1, 
+        strand = factor(strand, levels = levels(txdb_anno_tbl$strand)),
+        tx_name = str_replace(name, '\\.\\d+$', '')
+    ) %>%
+    select(
+        seqnames, start = txStart, end = txEnd, width, strand, 
+        tx_name, 
+        num_exons = exonCount,
+        tx_len = width,
+        cds_len = width
+    )
+```
+
+Merge the annotations:
+```{r}
+txdb_anno_tbl.full = txdb_anno_tbl %>% 
+    select(-tx_id) %>%
+    bind_rows(txdb_anno_tbl.chrM)
+
+txdb_anno_tbl.full %>% head()
+```
+
+Load the Refseq transcript and protein ID mapping (comes with the annotation):
+```{r}
+load(REFSEQ_IDS_DF_PTH)
+ids %>% head()
+```
+
+```{r}
+refseq_human_tbl = refseq_full_ids_tbl.human_only %>%
+    left_join(
+        ids %>% as_tibble() %>% 
+            select(refseq_tx_id_no_ver = tx_name, refseq_prot_id_no_ver = pro_name, gene_name),
+        by="refseq_prot_id_no_ver"
+    ) %>%
+    mutate(
+        refseq_tx_id_no_ver = case_when(
+            is.na(refseq_tx_id_no_ver) & startsWith(refseq_prot_id_no_ver, 'YP_') ~ refseq_prot_id_no_ver,
+            TRUE ~ refseq_tx_id_no_ver
+        )
+    )
+```
+
+Make sure all the records have transcript ID
+```{r}
+refseq_human_tbl %>% 
+    filter(is.na(refseq_tx_id_no_ver))
+```
+
+Make sure no records have mismatch gene symbol from different data sources
+```{r}
+refseq_human_tbl %>% 
+    filter(is.na(refseq_tx_id_no_ver)) %>%
+    filter(symbol != gene_name)
+```
+
+
+## Add HGNC
+```{r}
+hgnc_tbl = read_tsv(
+    HGNC_PROTEIN_CODING_TSV_PTH,
+    col_types = cols(
+        .default = col_character(),
+        date_approved_reserved = col_date(format = '%Y-%m-%d'),
+        date_symbol_changed = col_date(format = '%Y-%m-%d'),
+        date_name_changed = col_date(format = '%Y-%m-%d'),
+        date_modified = col_date(format = '%Y-%m-%d')
+    )
+) %>%
+    select(hgnc_id, symbol, entrez_id, ensembl_gene_id)
+```
+
+```{r}
+refseq_human_anno_tbl = refseq_human_tbl %>%
+    select(-gene_name) %>%
+    left_join(txdb_anno_tbl.full, by = c("refseq_tx_id_no_ver" = "tx_name")) %>%
+    left_join(hgnc_tbl, by = 'symbol')
+
+refseq_human_anno_tbl %>% head()
+```
+
+Make sure all the records has the chromosome information
+```{r}
+refseq_human_anno_tbl %>% 
+    filter(is.na(seqnames))
+```
+
+Make sure all the records has consistent Entrez ID
+```{r}
+refseq_human_anno_tbl %>%
+    filter(gene_id != entrez_id)
+```
+
+Not all the records have Entrez ID from either source 
+```{r}
+refseq_human_anno_tbl %>%
+    count(is.na(gene_id), is.na(entrez_id))
+```
+
+Fill the Entrez ID, and count refseq protein with multiple loci (genomic locations)
+```{r}
+refseq_human_anno_tbl = refseq_human_anno_tbl %>%
+    mutate(
+        entrez_id = case_when(
+            is.na(entrez_id) ~ gene_id,
+            TRUE ~ entrez_id
+        )
+    ) %>%
+    group_by(refseq_prot_id) %>%
+    mutate(multi_genomic_loci = n() > 1) %>%
+    ungroup()
+```
+
+```{r}
+refseq_human_anno_tbl %>%
+    filter(is.na(entrez_id))
+```
+
+
+## QC the genomic loci
+There are duplicates on the haplotype chroms
+```{r}
+refseq_human_anno_tbl %>% 
+    group_by(refseq_prot_id) %>% 
+    filter(n() > 1) %>%
+    select(refseq_prot_id, seqnames)
+```
+
+There are also duplicates on the same chromosome
+```{r}
+refseq_human_anno_tbl %>% 
+    group_by(refseq_prot_id, seqnames) %>% 
+    filter(n() > 1) 
+```
+
+When picking the unique loci per refseq protein, prefer the canonical chromosomes
+```{r}
+refseq_human_anno_tbl.de_dup = refseq_human_anno_tbl %>% 
+    group_by(refseq_prot_id) %>%
+    arrange(seqnames, .by_group = TRUE) %>%
+    filter(row_number() == 1) %>%
+    ungroup()
+
+refseq_human_anno_tbl.de_dup %>% head()
+```
+
+Double check the records with mulitple loci and not in the canonical chromosomes: 
+```{r}
+refseq_human_anno_tbl.de_dup %>%
+    filter(!seqnames %in% str_c('chr', c(1:22, 'X', 'Y', 'M')), multi_genomic_loci)
+```
+
+Make sure both unique and multi loci tables contains the same refseq records
+```{r}
+nrow(refseq_human_tbl)
+nrow(refseq_human_anno_tbl.de_dup)
+setdiff(refseq_human_anno_tbl.de_dup$refseq_prot_id, refseq_human_tbl$refseq_prot_id)
+```
+
+For some proteins, their aa length does not match the cds length 
+```{r}
+refseq_human_anno_tbl.de_dup %>% 
+    filter(aa_len != cds_len / 3 - 1) %>%
+    mutate(aa_cds_diff = aa_len - (cds_len / 3 - 1))
+```
+
+The de_dup version is easier to use, so use it as default:
+```{r}
+refseq_20180629_gr = refseq_human_anno_tbl.de_dup %>%
+    select(seqnames, start, end, width, strand, 
+           symbol, refseq_tx_id = refseq_tx_id_no_ver, refseq_prot_id,
+           hgnc_id, entrez_id, ensembl_gene_id,
+           multi_genomic_loci,
+           num_exons, aa_len, tx_len, cds_len) %>%
+    makeGRangesFromDataFrame(
+        keep.extra.columns = TRUE,
+        seqinfo = seqinfo(txdb)
+    )
+
+names(refseq_20180629_gr) = refseq_human_anno_tbl.de_dup$refseq_prot_id
+
+refseq_20180629_gr.sorted = refseq_20180629_gr %>% 
+    sort(ignore.strand = TRUE)
+
+refseq_20180629_gr.sorted
+```
+
+The multi loci version is more complicated to use but has the comprehensive info
+```{r}
+refseq_20180629_full_grl = refseq_human_anno_tbl %>%
+    select(seqnames, start, end, width, strand, 
+           symbol, refseq_tx_id = refseq_tx_id_no_ver, refseq_prot_id,
+           multi_genomic_loci,
+           hgnc_id, entrez_id, ensembl_gene_id,
+           num_exons, aa_len, tx_len, cds_len) %>%
+    makeGRangesListFromDataFrame(
+        keep.extra.columns = TRUE,
+        split.field = 'refseq_prot_id',
+        seqinfo = seqinfo(txdb)
+    )
+
+# Sort using the same order as the unique version
+refseq_20180629_full_grl.sorted = refseq_20180629_full_grl[names(refseq_20180629_gr.sorted), ]
+refseq_20180629_full_grl.sorted
+```
+
+
+## Export
+```{r}
+saveRDS(
+    refseq_20180629_gr.sorted, 
+    here('annotation/custom_sources/cptac3_refseq_20180629/refseq_20180629_human_only_unique_loci_GRanges.rds')
+)
+saveRDS(
+    refseq_20180629_full_grl.sorted,
+    here('annotation/custom_sources/cptac3_refseq_20180629/refseq_20180629_human_only_all_loci_GRangesList.rds')
+)
+```
+
+
+Also export the plain TSV version
+```{r}
+refseq_20180629_unique_anno_tbl = refseq_20180629_gr.sorted %>%
+    as_tibble()
+
+refseq_20180629_unique_anno_tbl %>% head()
+```
+
+
+```{r}
+refseq_20180629_full_anno_tbl = refseq_20180629_full_grl.sorted %>%
+    as_tibble() %>%
+    select(-group) %>%
+    rename(refseq_prot_id = group_name)
+
+refseq_20180629_full_anno_tbl %>% head()
+```
+
+
+```{r}
+refseq_20180629_unique_anno_tbl %>% 
+    write_tsv(here('annotation/custom_sources/cptac3_refseq_20180629/refseq_20180629_human_only_unique_loci.tsv.gz'))
+
+refseq_20180629_full_anno_tbl %>% 
+    write_tsv(here('annotation/custom_sources/cptac3_refseq_20180629/refseq_20180629_human_only_all_loci.tsv.gz'))
+```
+
