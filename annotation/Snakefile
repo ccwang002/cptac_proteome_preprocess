@@ -16,7 +16,7 @@ rule refseq_20180629_query_uniparc:
         uniparc_tsv='intermediates/refseq_20180629/refseq_uniparc_mapping.tsv'
     input:
         fa=f"{config['data_root']}/DCC/RefSeq_20180629/RefSeq.20180629_Human_ucsc_hg38_cpdbnr_mito_264contams.fasta.gz",
-        id_list=rules.extract_refseq_ids.output.id_list
+        id_list=rules.refseq_20180629_extract_refseq_ids.output.id_list
     params:
         uniparc_json_folder='intermediates/refseq_20180629/uniparc_jsons'
     shell:
