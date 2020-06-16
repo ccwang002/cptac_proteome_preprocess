@@ -65,6 +65,12 @@ async def query_uniparc(
         decompressed = _zstd_dctx.decompress(json_out_pth.read_bytes())
         j = json.loads(decompressed)
         return parse_uniparc_json(prot_id, j)
+    # The response if the query fails
+    failed_response = {
+        "original_prot_id": prot_id,
+        "uniparc_id": None,
+        "uniparc_checksum": None,
+    }
     try:
         resp = await retry_post(
             session,
@@ -82,11 +88,11 @@ async def query_uniparc(
         )
     except ValueError:
         logger.error(f"UniParc query of {prot_id} failed after maximal retries")
-        return {
-            "original_prot_id": prot_id,
-            "uniparc_id": None,
-            "uniparc_checksum": None,
-        }
+        return failed_response
+    except asyncio.TimeoutError:
+        logger.error(f"UniParc query of {prot_id} timed out")
+        return failed_response
+
     j = await resp.json()
     j["sequence"].pop("content")
     j.pop("signatureSequenceMatch", None)
