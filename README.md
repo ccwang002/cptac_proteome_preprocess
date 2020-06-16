@@ -33,6 +33,13 @@ The project is mirrored on katmai:
 - Upstream data sources: `/diskmnt/Projects/PTMcosmos/CPTAC_data/CPTAC_data_collection_v1`
 
 Mirror script (from local to katmai):
-```
+```bash
 rsync -a --info=progress2 ~/Box/MyCPTAC/ katmai:/diskmnt/Projects/PTMcosmos/CPTAC_data/
+```
+
+Mirror script (from katmai to local):
+```bash
+# Add -n for dry run
+rsync -arv --files-from=remote_rsync_files.list \
+    katmai:/diskmnt/Projects/PTMcosmos/cptac_proteome_preprocess/ .
 ```
