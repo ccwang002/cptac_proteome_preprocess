@@ -19,6 +19,8 @@ conda create -n cptac \
     snakemake=5.19 \
     notebook=6.0 pandas=1.0 \
     zstd
+
+    pysam=0.16 # not in bioconda yet
 ```
 
 Additionally it needs R 4.0 and Bioconductor 3.11.
