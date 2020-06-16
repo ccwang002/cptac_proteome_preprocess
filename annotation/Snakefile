@@ -1,7 +1,7 @@
 configfile: '../snakemake_config.local.json'
 
 
-rule extract_refseq_ids:
+rule refseq_20180629_extract_refseq_ids:
     output: id_list='intermediates/refseq_20180629/refseq_protein_ids.list'
     input: 
         refseq_tsv='custom_sources/cptac3_refseq_20180629/refseq_20180629_human_only_unique_loci.tsv.gz'
@@ -11,7 +11,7 @@ rule extract_refseq_ids:
         "tail -n+2 > {output}"
 
 
-rule query_uniparc:
+rule refseq_20180629_query_uniparc:
     output:
         uniparc_tsv='intermediates/refseq_20180629/refseq_uniparc_mapping.tsv'
     input:
