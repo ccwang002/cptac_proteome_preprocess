@@ -19,9 +19,11 @@ rule refseq_20180629_query_uniparc:
         id_list=rules.refseq_20180629_extract_refseq_ids.output.id_list
     params:
         uniparc_json_folder='intermediates/refseq_20180629/uniparc_jsons'
+    log: 'intermediates/refseq_20180629/refseq_uniparc_mapping.log'
     shell:
         "mkdir -p {params.uniparc_json_folder}; "
         "python scripts/query_uniparc_by_seq.py "
         "{input.id_list} {input.fa} "
         "{output.uniparc_tsv} "
-        "--json-dir {params.uniparc_json_folder}"
+        "--json-dir {params.uniparc_json_folder} "
+        "2> {log}"
