@@ -18,7 +18,8 @@ conda create -n cptac \
     htslib=1.10 samtools=1.10 \
     snakemake=5.19 \
     notebook=6.0 pandas=1.0 \
-    zstd zstandard=0.14
+    zstd zstandard=0.14 \
+    xsv
 
     pysam=0.16 # not in bioconda yet
 ```
