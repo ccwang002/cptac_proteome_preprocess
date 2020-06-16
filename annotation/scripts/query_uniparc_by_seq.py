@@ -3,6 +3,7 @@ Get UniParc IDs by the given protein sequence.
 """
 import argparse
 import asyncio
+from itertools import zip_longest
 import json
 import logging
 from pathlib import Path
@@ -19,6 +20,13 @@ _zstd_dctx = zstd.ZstdDecompressor()
 _zstd_cctx = zstd.ZstdCompressor(level=9)
 
 
+def grouper(iterable, n, fillvalue=None):
+    "Collect data into fixed-length chunks or blocks"
+    # grouper('ABCDEFG', 3, 'x') --> ABC DEF Gxx"
+    args = [iter(iterable)] * n
+    return zip_longest(*args, fillvalue=fillvalue)
+
+
 async def retry_post(session, max_retry=3, **kwargs):
     """Retry POST."""
     for retry in range(max_retry):
@@ -30,8 +38,13 @@ async def retry_post(session, max_retry=3, **kwargs):
             logger.error(
                 f"Request failed with response {e.status} {e.message} [retry={retry}]"
             )
+        except asyncio.TimeoutError:
+            logger.error(
+                f"Request timed out [retry={retry}]"
+            )
+        finally:
             if retry == max_retry - 1:
-                raise ValueError("Reach maximal retries") from e
+                raise ValueError("Request POST failed")
 
 
 def parse_uniparc_json(prot_id, j):
@@ -65,12 +78,6 @@ async def query_uniparc(
         decompressed = _zstd_dctx.decompress(json_out_pth.read_bytes())
         j = json.loads(decompressed)
         return parse_uniparc_json(prot_id, j)
-    # The response if the query fails
-    failed_response = {
-        "original_prot_id": prot_id,
-        "uniparc_id": None,
-        "uniparc_checksum": None,
-    }
     try:
         resp = await retry_post(
             session,
@@ -87,11 +94,12 @@ async def query_uniparc(
             json={"sequence": prot_seq},
         )
     except ValueError:
-        logger.error(f"UniParc query of {prot_id} failed after maximal retries")
-        return failed_response
-    except asyncio.TimeoutError:
-        logger.error(f"UniParc query of {prot_id} timed out")
-        return failed_response
+        logger.error(f"UniParc query of {prot_id} failed")
+        return {
+            "original_prot_id": prot_id,
+            "uniparc_id": None,
+            "uniparc_checksum": None,
+        }
 
     j = await resp.json()
     j["sequence"].pop("content")
@@ -118,34 +126,37 @@ async def main(
     logger.info(f"Querying {len(prot_ids)} protein IDs")
     records = []
     ids_without_records = []
-    # Limit concurrent API calls
-    conn = aiohttp.TCPConnector(limit_per_host=10)
-    session = aiohttp.ClientSession(
-        connector=conn,
-        headers={"Accept": "application/json", "Content-type": "application/json"},
-    )
-    async with session:
-        # Query the IDs
-        tasks = []
-        for prot_id in prot_ids:
-            prot_seq = protein_fa.fetch(prot_id)
-            json_out_pth = Path(json_dir, f"{prot_id}.json.zst")
-            tasks.append(
-                asyncio.create_task(
-                    query_uniparc(prot_id, prot_seq, session, json_out_pth),
-                    name=prot_id,
+
+    # Group the query by batch
+    batch_size = 300
+    prot_id_batches = enumerate(grouper(prot_ids, batch_size), 1)
+    for batch_ix, prot_ids_one_batch in prot_id_batches:
+        # Limit concurrent API calls
+        conn = aiohttp.TCPConnector(limit_per_host=10)
+        session = aiohttp.ClientSession(
+            connector=conn,
+            headers={"Accept": "application/json", "Content-type": "application/json"},
+        )
+        prot_ids_one_batch = [pid for pid in prot_ids_one_batch if pid is not None]
+        async with session:
+            # Query the IDs
+            tasks = []
+            for prot_id in prot_ids_one_batch:
+                prot_seq = protein_fa.fetch(prot_id)
+                json_out_pth = Path(json_dir, f"{prot_id}.json.zst")
+                tasks.append(
+                    asyncio.create_task(
+                        query_uniparc(prot_id, prot_seq, session, json_out_pth),
+                        name=prot_id,
+                    )
                 )
-            )
 
-        for i, res in enumerate(asyncio.as_completed(tasks), 1):
-            record = await res
-            if record['uniparc_id'] is None:
-                ids_without_records.append(record['original_prot_id'])
-            records.append(record)
-
-            # Print progress
-            if i % 1000 == 1:
-                logger.info(f"... processed {i:,d}/{len(tasks):,d} IDs")
+            for i, res in enumerate(asyncio.as_completed(tasks), 1):
+                record = await res
+                if record['uniparc_id'] is None:
+                    ids_without_records.append(record['original_prot_id'])
+                records.append(record)
+        logger.info(f"... processed {batch_ix * batch_size:,d}/{len(prot_ids):,d} IDs")
 
     if ids_without_records:
         logger.warning(
