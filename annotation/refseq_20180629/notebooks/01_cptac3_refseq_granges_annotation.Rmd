@@ -1,5 +1,5 @@
 ---
-title: "Make Genomic Annotation of CPTAC3 RefSeq 20180628"
+title: "Make Genomic Annotation of CPTAC3 RefSeq 20180629"
 output:
   html_document:
     df_print: paged
@@ -12,7 +12,7 @@ library(here)
 library(tidyverse)
 ```
 
-Read annotation files downloaded from DCC:
+All source annotation files downloaded from DCC:
 ```{r}
 REFSEQ_IDS_TSV_PTH = '~/Box/MyCPTAC/CPTAC_data_collection_v1/DCC/RefSeq_20180629/RefSeq.20180629_Human_ucsc_hg38_cpdbnr_mito_264contams.fasta.SGSN.categories.tsv.gz'
 REFSEQ_IDS_DF_PTH = '~/Box/MyCPTAC/CPTAC_data_collection_v1/DCC/RefSeq_20180629/intermediate_2018-06-29_hg38/2_annotation_files_customProDB/ids.RData'
@@ -20,6 +20,13 @@ TXDB_PTH = '~/Box/MyCPTAC/CPTAC_data_collection_v1/DCC/RefSeq_20180629/intermedi
 CHRM_REFSEQ_TSV_PTH = '~/Box/MyCPTAC/CPTAC_data_collection_v1/DCC/RefSeq_20180629/refseq_hg38_20200503_chrM_only.tsv.gz'
 HGNC_PROTEIN_CODING_TSV_PTH = '~/Box/MyCPTAC/CPTAC_data_collection_v1/DCC/RefSeq_20180629/intermediate_2018-06-29_hg38/3_annotate_fasta/protein-coding_gene.txt.gz'
 ```
+
+Extra UniParc annotations:
+```{r}
+UNIPARC_EBI_TSV_PTH = here('annotation/intermediates/refseq_20180629/refseq_uniparc_mapping.tsv.gz')
+UNIPARC_REMAINING_TSV_PTH = here('annotation/intermediates/refseq_20180629/ebi_api_missing/refseq_uniparc_mapping.ebi_missing.tsv.gz')
+```
+
 
 Read all RefSeq annotations:
 ```{r}
@@ -76,6 +83,29 @@ refseq_full_ids_tbl.human_only = refseq_full_ids_tbl.fixed_species %>%
 
 refseq_full_ids_tbl.human_only %>% head()
 ```
+
+
+Load the UniParc tables
+```{r}
+uniparc_tbl = bind_rows(
+  read_tsv(UNIPARC_EBI_TSV_PTH) %>% filter(!is.na(uniparc_id)),
+  read_tsv(UNIPARC_REMAINING_TSV_PTH)
+) %>% 
+  rename(
+    uniparc_crc64_checksum = uniparc_checksum,
+    uniparc_xref_uniprot_ids = uniprot_ids,
+    uniparc_xref_ensembl_prot_ids = ensembl_prot_ids,
+    uniparc_xref_refseq_prot_ids = refseq_prot_ids
+  )
+
+uniparc_tbl %>% head()
+```
+
+All human RefSeq IDs have UniParc ID:
+```{r}
+setdiff(refseq_full_ids_tbl.human_only$refseq_prot_id, uniparc_tbl$original_prot_id)
+```
+
 
 
 Load the RefSeq annotation
@@ -183,11 +213,15 @@ hgnc_tbl = read_tsv(
     select(hgnc_id, symbol, entrez_id, ensembl_gene_id)
 ```
 
+
+
+## Merge all annotations
 ```{r}
 refseq_human_anno_tbl = refseq_human_tbl %>%
     select(-gene_name) %>%
     left_join(txdb_anno_tbl.full, by = c("refseq_tx_id_no_ver" = "tx_name")) %>%
-    left_join(hgnc_tbl, by = 'symbol')
+    left_join(hgnc_tbl, by = 'symbol') %>%
+    left_join(uniparc_tbl, by = c('refseq_prot_id' = 'original_prot_id'))
 
 refseq_human_anno_tbl %>% head()
 ```
@@ -277,14 +311,24 @@ refseq_human_anno_tbl.de_dup %>%
     mutate(aa_cds_diff = aa_len - (cds_len / 3 - 1))
 ```
 
+```{r}
+colnames(uniparc_tbl)
+```
+
+
 The de_dup version is easier to use, so use it as default:
 ```{r}
 refseq_20180629_gr = refseq_human_anno_tbl.de_dup %>%
     select(seqnames, start, end, width, strand, 
            symbol, refseq_tx_id = refseq_tx_id_no_ver, refseq_prot_id,
+           uniparc_id,
            hgnc_id, entrez_id, ensembl_gene_id,
            multi_genomic_loci,
-           num_exons, aa_len, tx_len, cds_len) %>%
+           num_exons, aa_len, tx_len, cds_len,
+           uniparc_crc64_checksum,
+           uniparc_xref_refseq_prot_ids,
+           uniparc_xref_ensembl_prot_ids,
+           uniparc_xref_uniprot_ids) %>%
     makeGRangesFromDataFrame(
         keep.extra.columns = TRUE,
         seqinfo = seqinfo(txdb)
@@ -303,9 +347,14 @@ The multi loci version is more complicated to use but has the comprehensive info
 refseq_20180629_full_grl = refseq_human_anno_tbl %>%
     select(seqnames, start, end, width, strand, 
            symbol, refseq_tx_id = refseq_tx_id_no_ver, refseq_prot_id,
-           multi_genomic_loci,
+           uniparc_id,
            hgnc_id, entrez_id, ensembl_gene_id,
-           num_exons, aa_len, tx_len, cds_len) %>%
+           multi_genomic_loci,
+           num_exons, aa_len, tx_len, cds_len,
+           uniparc_crc64_checksum,
+           uniparc_xref_refseq_prot_ids,
+           uniparc_xref_ensembl_prot_ids,
+           uniparc_xref_uniprot_ids) %>%
     makeGRangesListFromDataFrame(
         keep.extra.columns = TRUE,
         split.field = 'refseq_prot_id',
@@ -314,7 +363,7 @@ refseq_20180629_full_grl = refseq_human_anno_tbl %>%
 
 # Sort using the same order as the unique version
 refseq_20180629_full_grl.sorted = refseq_20180629_full_grl[names(refseq_20180629_gr.sorted), ]
-refseq_20180629_full_grl.sorted
+refseq_20180629_full_grl.sorted[, c("symbol", "uniparc_id", "refseq_tx_id", "multi_genomic_loci")]
 ```
 
 
@@ -322,11 +371,11 @@ refseq_20180629_full_grl.sorted
 ```{r}
 saveRDS(
     refseq_20180629_gr.sorted, 
-    here('annotation/custom_sources/cptac3_refseq_20180629/refseq_20180629_human_only_unique_loci_GRanges.rds')
+    here('annotation/refseq_20180629/tracked_results/refseq_20180629_human_only_unique_loci_GRanges.rds')
 )
 saveRDS(
     refseq_20180629_full_grl.sorted,
-    here('annotation/custom_sources/cptac3_refseq_20180629/refseq_20180629_human_only_all_loci_GRangesList.rds')
+    here('annotation/refseq_20180629/tracked_results/refseq_20180629_human_only_all_loci_GRangesList.rds')
 )
 ```
 
@@ -334,7 +383,8 @@ saveRDS(
 Also export the plain TSV version
 ```{r}
 refseq_20180629_unique_anno_tbl = refseq_20180629_gr.sorted %>%
-    as_tibble()
+    as_tibble() %>%
+    select(refseq_prot_id, everything())
 
 refseq_20180629_unique_anno_tbl %>% head()
 ```
@@ -352,9 +402,9 @@ refseq_20180629_full_anno_tbl %>% head()
 
 ```{r}
 refseq_20180629_unique_anno_tbl %>% 
-    write_tsv(here('annotation/custom_sources/cptac3_refseq_20180629/refseq_20180629_human_only_unique_loci.tsv.gz'))
+    write_tsv(here('annotation/refseq_20180629/tracked_results/refseq_20180629_human_only_unique_loci.tsv.gz'))
 
 refseq_20180629_full_anno_tbl %>% 
-    write_tsv(here('annotation/custom_sources/cptac3_refseq_20180629/refseq_20180629_human_only_all_loci.tsv.gz'))
+    write_tsv(here('annotation/refseq_20180629/tracked_results/refseq_20180629_human_only_all_loci.tsv.gz'))
 ```
 
