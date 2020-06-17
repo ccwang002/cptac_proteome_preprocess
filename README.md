@@ -22,6 +22,7 @@ conda create -n cptac \
     xsv
 
     pysam=0.16 # not in bioconda yet
+    crc64iso
 ```
 
 Additionally it needs R 4.0 and Bioconductor 3.11.
