@@ -210,7 +210,7 @@ hgnc_tbl = read_tsv(
         date_modified = col_date(format = '%Y-%m-%d')
     )
 ) %>%
-    select(hgnc_id, symbol, entrez_id, ensembl_gene_id)
+    select(hgnc_id, symbol, entrez_gene_id=entrez_id, ensembl_gene_id)
 ```
 
 
@@ -235,22 +235,22 @@ refseq_human_anno_tbl %>%
 Make sure all the records has consistent Entrez ID
 ```{r}
 refseq_human_anno_tbl %>%
-    filter(gene_id != entrez_id)
+    filter(gene_id != entrez_gene_id)
 ```
 
 Not all the records have Entrez ID from either source 
 ```{r}
 refseq_human_anno_tbl %>%
-    count(is.na(gene_id), is.na(entrez_id))
+    count(is.na(gene_id), is.na(entrez_gene_id))
 ```
 
 Fill the Entrez ID, and count refseq protein with multiple loci (genomic locations)
 ```{r}
 refseq_human_anno_tbl = refseq_human_anno_tbl %>%
     mutate(
-        entrez_id = case_when(
-            is.na(entrez_id) ~ gene_id,
-            TRUE ~ entrez_id
+        entrez_gene_id = case_when(
+            is.na(entrez_gene_id) ~ gene_id,
+            TRUE ~ entrez_gene_id
         )
     ) %>%
     group_by(refseq_prot_id) %>%
@@ -260,7 +260,7 @@ refseq_human_anno_tbl = refseq_human_anno_tbl %>%
 
 ```{r}
 refseq_human_anno_tbl %>%
-    filter(is.na(entrez_id))
+    filter(is.na(entrez_gene_id))
 ```
 
 
@@ -322,7 +322,7 @@ refseq_20180629_gr = refseq_human_anno_tbl.de_dup %>%
     select(seqnames, start, end, width, strand, 
            symbol, refseq_tx_id = refseq_tx_id_no_ver, refseq_prot_id,
            uniparc_id,
-           hgnc_id, entrez_id, ensembl_gene_id,
+           hgnc_id, entrez_gene_id, ensembl_gene_id,
            multi_genomic_loci,
            num_exons, aa_len, tx_len, cds_len,
            uniparc_crc64_checksum,
@@ -348,7 +348,7 @@ refseq_20180629_full_grl = refseq_human_anno_tbl %>%
     select(seqnames, start, end, width, strand, 
            symbol, refseq_tx_id = refseq_tx_id_no_ver, refseq_prot_id,
            uniparc_id,
-           hgnc_id, entrez_id, ensembl_gene_id,
+           hgnc_id, entrez_gene_id, ensembl_gene_id,
            multi_genomic_loci,
            num_exons, aa_len, tx_len, cds_len,
            uniparc_crc64_checksum,
@@ -364,6 +364,13 @@ refseq_20180629_full_grl = refseq_human_anno_tbl %>%
 # Sort using the same order as the unique version
 refseq_20180629_full_grl.sorted = refseq_20180629_full_grl[names(refseq_20180629_gr.sorted), ]
 refseq_20180629_full_grl.sorted[, c("symbol", "uniparc_id", "refseq_tx_id", "multi_genomic_loci")]
+```
+
+
+## Make gene level annotation
+```{r}
+gene_human_anno_tbl = refseq_human_anno_tbl %>%
+  distinct(symbol, hgnc_id, entrez_gene_id, ensembl_gene_id)
 ```
 
 
