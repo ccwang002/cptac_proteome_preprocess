@@ -5,3 +5,4 @@
 
 .snakemake
 intermediates
+final_output
