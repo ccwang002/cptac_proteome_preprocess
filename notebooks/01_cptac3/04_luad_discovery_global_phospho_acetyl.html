@@ -1750,7 +1750,7 @@ sgt_protein_full_row_tbl %&gt;% head()</code></pre>
     select(
         preferred_sample_name, case_id = Participant,
         aliquot_id = Aliquot,
-        experiment = Experiment, tmt_plex = Channel,
+        tmt_experiment = Experiment, tmt_channel = Channel,
         sample_type = Type
     ) %&gt;%
     mutate(
@@ -1764,7 +1764,7 @@ sgt_protein_full_row_tbl %&gt;% head()</code></pre>
 protein_col_tbl %&gt;% head()</code></pre>
 <div data-pagedtable="false">
 <script data-pagedtable-source type="application/json">
-{"columns":[{"label":["preferred_sample_name"],"name":[1],"type":["chr"],"align":["left"]},{"label":["case_id"],"name":[2],"type":["chr"],"align":["left"]},{"label":["aliquot_id"],"name":[3],"type":["chr"],"align":["left"]},{"label":["experiment"],"name":[4],"type":["chr"],"align":["left"]},{"label":["tmt_plex"],"name":[5],"type":["chr"],"align":["left"]},{"label":["sample_type"],"name":[6],"type":["chr"],"align":["left"]}],"data":[{"1":"C3N.01799","2":"C3N-01799","3":"CPT0089340003","4":"1","5":"126","6":"Primary Tumor"},{"1":"C3N.01799.N","2":"C3N-01799","3":"CPT0089360003","4":"1","5":"127N","6":"Solid Tissue Normal"},{"1":"C3L.01890","2":"C3L-01890","3":"CPT0092930003","4":"1","5":"127C","6":"Primary Tumor"},{"1":"C3L.01890.N","2":"C3L-01890","3":"CPT0092940003","4":"1","5":"128N","6":"Solid Tissue Normal"},{"1":"C3N.00572","2":"C3N-00572","3":"CPT0015410003","4":"1","5":"128C","6":"Primary Tumor"},{"1":"C3N.00572.N","2":"C3N-00572","3":"CPT0015420003","4":"1","5":"129N","6":"Solid Tissue Normal"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
+{"columns":[{"label":["preferred_sample_name"],"name":[1],"type":["chr"],"align":["left"]},{"label":["case_id"],"name":[2],"type":["chr"],"align":["left"]},{"label":["aliquot_id"],"name":[3],"type":["chr"],"align":["left"]},{"label":["tmt_experiment"],"name":[4],"type":["chr"],"align":["left"]},{"label":["tmt_channel"],"name":[5],"type":["chr"],"align":["left"]},{"label":["sample_type"],"name":[6],"type":["chr"],"align":["left"]}],"data":[{"1":"C3N.01799","2":"C3N-01799","3":"CPT0089340003","4":"1","5":"126","6":"Primary Tumor"},{"1":"C3N.01799.N","2":"C3N-01799","3":"CPT0089360003","4":"1","5":"127N","6":"Solid Tissue Normal"},{"1":"C3L.01890","2":"C3L-01890","3":"CPT0092930003","4":"1","5":"127C","6":"Primary Tumor"},{"1":"C3L.01890.N","2":"C3L-01890","3":"CPT0092940003","4":"1","5":"128N","6":"Solid Tissue Normal"},{"1":"C3N.00572","2":"C3N-00572","3":"CPT0015410003","4":"1","5":"128C","6":"Primary Tumor"},{"1":"C3N.00572.N","2":"C3N-00572","3":"CPT0015420003","4":"1","5":"129N","6":"Solid Tissue Normal"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
   </script>
 </div>
 <pre class="r"><code>protein_se = raw_protein_se[sgt_protein_full_row_tbl$refseq_prot_id, ]
@@ -1785,7 +1785,8 @@ metadata(protein_se) = list(
 ## rowData names(11): refseq_prot_id numColumnsProteinObserved ...
 ##   entrez_gene_id ensembl_gene_id
 ## colnames(211): C3N.01799 C3N.01799.N ... C3L.02365 C3L.02365.N
-## colData names(5): case_id aliquot_id experiment tmt_plex sample_type</code></pre>
+## colData names(5): case_id aliquot_id tmt_experiment tmt_channel
+##   sample_type</code></pre>
 </div>
 <div id="phospho" class="section level2">
 <h2>Phospho</h2>
@@ -1893,7 +1894,8 @@ metadata(phospho_se) = list(
 ## rowData names(21): original_id refseq_prot_id ...
 ##   uniparc_xref_ensembl_prot_ids uniparc_xref_uniprot_ids
 ## colnames(211): C3N.01799 C3N.01799.N ... C3L.02365 C3L.02365.N
-## colData names(5): case_id aliquot_id experiment tmt_plex sample_type</code></pre>
+## colData names(5): case_id aliquot_id tmt_experiment tmt_channel
+##   sample_type</code></pre>
 </div>
 <div id="acetyl" class="section level2">
 <h2>Acetyl</h2>

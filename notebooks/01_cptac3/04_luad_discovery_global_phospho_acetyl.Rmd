@@ -114,7 +114,7 @@ protein_col_tbl = colData(raw_protein_se) %>%
     select(
         preferred_sample_name, case_id = Participant,
         aliquot_id = Aliquot,
-        experiment = Experiment, tmt_plex = Channel,
+        tmt_experiment = Experiment, tmt_channel = Channel,
         sample_type = Type
     ) %>%
     mutate(
