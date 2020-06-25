@@ -1,0 +1,136 @@
+---
+title: "R Notebook"
+output:
+  html_document:
+    df_print: paged
+---
+
+```{r, message=FALSE}
+library(SummarizedExperiment)
+library(cmapR)
+library(here)
+library(tidyverse)
+```
+
+```{r}
+DATA_ROOT = '~/Box/MyCPTAC/CPTAC_data_collection_v1'
+```
+
+```{r}
+protein_pth = fs::path(DATA_ROOT, 'CPTAC3/LSCC_discovery/lscc-v3.2-proteome-ratio-norm-NArm.gct')
+protein_gene_level_pth = fs::path(DATA_ROOT, 'CPTAC3/LSCC_discovery/lscc-v3.2-proteome-ratio-norm-NArm-gene-level.gct')
+phospho_pth = fs::path(DATA_ROOT, 'CPTAC3/LSCC_discovery/lscc-v3.2-phosphoproteome-ratio-norm-unfiltered.gct')
+```
+
+```{r}
+protein_annotation_gr = read_rds(here(
+    'annotation/refseq_20180629/tracked_results/refseq_20180629_human_only_unique_loci_GRanges.rds'
+))
+names(mcols(protein_annotation_gr))
+```
+
+```{r}
+protein_gct = parse_gctx(protein_pth)
+protein_se = as(protein_gct, "SummarizedExperiment")
+```
+
+```{r}
+protein_gene_level_gct = parse_gctx(protein_gene_level_pth)
+protein_gene_level_se = as(protein_gene_level_gct, "SummarizedExperiment")
+```
+
+```{r}
+protein_gene_level_row_tbl = rowData(protein_gene_level_se) %>%
+    as_tibble() %>%
+    select(geneSymbol, scoreUnique, scoreUniqueSubgroupSpecificCI, accession_number, subgroupNum) %>%
+    mutate(subgroupNum = as.character(subgroupNum)) %>%
+    extract(subgroupNum, c('protein_grp', 'protein_subgrp'), "^(\\d+)\\.(\\d+)", convert=TRUE)
+
+protein_gene_level_row_tbl %>% head()
+```
+```{r}
+protein_gene_level_row_tbl %>% count(geneSymbol) %>% filter(n > 1)
+```
+
+
+Try to replicate their method
+```{r}
+protein_gene_level_row_tbl.custom = rowData(protein_se) %>%
+    as_tibble() %>%
+    select(geneSymbol, scoreUnique, scoreUniqueSubgroupSpecificCI, accession_number, subgroupNum) %>%
+    mutate(subgroupNum = as.character(subgroupNum)) %>%
+    extract(subgroupNum, c('protein_grp', 'protein_subgrp'), "^(\\d+)\\.(\\d+)", convert=TRUE) %>%
+    arrange(geneSymbol, protein_subgrp) %>%
+    group_by(geneSymbol) %>%
+    filter(row_number() == 1)
+```
+
+
+```{r}
+setdiff(
+    protein_gene_level_row_tbl$geneSymbol,
+    protein_gene_level_row_tbl.custom$geneSymbol
+)
+```
+
+Not sure why there are some extra genes in my output
+```{r}
+extra_genes = setdiff(
+    protein_gene_level_row_tbl.custom$geneSymbol,
+    protein_gene_level_row_tbl$geneSymbol
+)
+str_c(extra_genes, collapse = ' ')
+```
+
+```{r}
+rowData(protein_se) %>%
+    as_tibble() %>% 
+    filter(accession_number %in% (
+        protein_gene_level_row_tbl.custom %>%
+            filter(geneSymbol %in% extra_genes) %>% 
+            pull(accession_number)
+    ))
+```
+
+Compare the kept RefSeq accessions
+```{r}
+protein_gene_level_row_tbl %>%
+    left_join(protein_gene_level_row_tbl.custom, by = 'geneSymbol') %>%
+    filter(accession_number.x != accession_number.y)
+```
+```{r}
+rowData(protein_se) %>%
+    subset(geneSymbol == 'KIF3A') %>%
+    as_tibble()
+```
+
+Check if the gene symbol is the same as the original RefSeq annotation
+```{r}
+rowData(protein_se) %>%
+    as_tibble() %>%
+    left_join(
+        protein_annotation_gr %>% as_tibble() %>% select(refseq_prot_id, symbol),
+        by = c('accession_number'='refseq_prot_id')
+    ) %>%
+    filter(geneSymbol != symbol)
+```
+
+```{r}
+prot_ids_not_in_refseq = setdiff(
+    rowData(protein_se)$accession_number,
+    protein_annotation_gr$refseq_prot_id
+)
+prot_ids_not_in_refseq
+```
+
+```{r}
+rowData(protein_se)[prot_ids_not_in_refseq, ] %>%
+    as_tibble()
+```
+
+```{r}
+rowData(protein_se) %>% 
+    as_tibble() %>%
+    count(geneSymbol, sort =TRUE) %>%
+    filter(n > 1)
+```
