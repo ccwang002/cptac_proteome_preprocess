@@ -173,7 +173,10 @@ hist(phospho_na_percent)
 ```{r}
 phospho_row_tbl = raw_phospho_row_tbl %>%
     bind_cols(tibble(na_percent = phospho_na_percent)) %>%
-    filter(peptide_loc_valid) %>%
+    filter(
+        peptide_loc_valid,
+        na_percent <= 0.8
+    ) %>%
     select(
         original_id, 
         refseq_prot_id = accession_number,
@@ -271,7 +274,10 @@ hist(acetyl_na_percent)
 ```{r}
 acetyl_row_tbl = raw_acetyl_row_tbl %>%
     bind_cols(tibble(na_percent = acetyl_na_percent)) %>%
-    filter(peptide_loc_valid) %>%
+    filter(
+        peptide_loc_valid,
+        na_percent <= 0.8
+    ) %>%
     select(
         original_id, 
         refseq_prot_id = accession_number,

@@ -217,7 +217,7 @@ phospho_row_tbl = phospho_tbl %>%
     # Only keep the phosphosites
     filter(
         !is.na(phosphosites), 
-        na_percent <= 0.6,
+        na_percent <= 0.8,
         peptide_loc_valid
     ) %>%
     # mutate(
