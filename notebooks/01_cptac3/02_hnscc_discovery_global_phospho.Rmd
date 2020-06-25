@@ -37,7 +37,8 @@ tmt_map_clean_tbl = tmt_map_tbl %>%
     pivot_longer(-folder, names_to = c('tmt_plex', 'id_type'), names_pattern = '^TMT11-(\\d+[NC]?) (.*)$') %>%
     pivot_wider(names_from = 'id_type', values_from = 'value') %>%
     filter(tmt_plex != '126') %>%
-    mutate_at(vars(`Participant ID`, `Specimen Label`), ~ str_replace(.x, '_disqualified$', ''))
+    mutate_at(vars(`Participant ID`, `Specimen Label`), ~ str_replace(.x, '_disqualified$', '')) %>%
+    mutate(experiment = as.integer(str_match(folder, '^(\\d+)CPTAC_')[, 2]))
 
 tmt_map_clean_tbl
 ```
@@ -98,7 +99,10 @@ protein_sample_tbl = bind_cols(
     tibble(
         preferred_sample_names = preferred_sample_names
     ),
-    tmt_map_clean_tbl %>% select(case_id = `Participant ID`, aliquot_id = `Specimen Label`, tmt_plex)
+    tmt_map_clean_tbl %>% select(
+        case_id = `Participant ID`, aliquot_id = `Specimen Label`, 
+        experiment, tmt_plex
+    )
 ) %>%
     mutate(
         sample_type = case_when(
@@ -108,7 +112,7 @@ protein_sample_tbl = bind_cols(
             TRUE ~ NA_character_
         )
     ) %>%
-    select(preferred_sample_names, case_id, sample_type, aliquot_id, tmt_plex)
+    select(preferred_sample_names, case_id, sample_type, aliquot_id, experiment, tmt_plex)
 
 protein_sample_tbl %>% head()
 ```
