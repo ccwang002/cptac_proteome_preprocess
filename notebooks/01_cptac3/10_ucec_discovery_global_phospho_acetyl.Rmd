@@ -1,0 +1,392 @@
+---
+title: "R Notebook"
+output:
+  html_document:
+    df_print: paged
+---
+
+```{r, message=FALSE}
+library(SummarizedExperiment)
+library(here)
+library(readxl)
+library(tidyverse)
+```
+
+```{r}
+DATA_ROOT = '~/Box/MyCPTAC/CPTAC_data_collection_v1'
+```
+
+```{r}
+# tmt_pth = fs::path(DATA_ROOT, 'CPTAC3/UCEC_discovery/S043_CPTAC_UCEC_Discovery_Cohort_Study_Specimens_r1_Sept2018.xlsx')
+tmt_pth = fs::path(DATA_ROOT, 'CPTAC3/UCEC_discovery/UCEC_CPTAC3_meta_table_V2.1.txt.gz')
+
+protein_pth = fs::path(DATA_ROOT, 'CPTAC3/UCEC_discovery/PNNL_with_refseq/ucec_global_gene_refseq_B12345_medpolish.txt.gz')
+phospho_pth = fs::path(DATA_ROOT, 'CPTAC3/UCEC_discovery/PNNL_with_refseq/ucec_phospho_d6_refseq_B12345_with_sites.txt.gz')
+phospho_loc_pth = fs::path(DATA_ROOT, 'CPTAC3/UCEC_discovery/PNNL_with_refseq/ucec_phospho_d6_refseq_B12345_with_sites.txt.peptide_location.tsv.gz')
+acetyl_pth = fs::path(DATA_ROOT, 'CPTAC3/UCEC_discovery/PNNL_with_refseq/ucec_acetyl_d6_refseq_B12345_with_sites.txt.gz')
+acetyl_loc_pth = fs::path(DATA_ROOT, 'CPTAC3/UCEC_discovery/PNNL_with_refseq/ucec_acetyl_d6_refseq_B12345_with_sites.txt.peptide_location.tsv.gz')
+```
+
+
+## TMT map
+```{r}
+tmt_map_tbl = read_tsv(tmt_pth) %>%
+    select(preferred_sample_name = idx, 
+           case_id = Proteomics_Participant_ID, 
+           aliquot_ids = Proteomics_Aliquot_ID,
+           sample_type = Proteomics_Tumor_Normal, 
+           OCT = Proteomics_OCT,
+           Case_excluded, 
+           tmt_experiment = Proteomics_TMT_plex, 
+           tmt_channel = Proteomics_TMT_channel) %>%
+    mutate(
+        tmt_experiment = as.integer(tmt_experiment),
+        aliquot_ids = str_split(aliquot_ids, ','),
+        first_aliquot_id = map_chr(aliquot_ids, ~ .x[[1]]),
+        aliquot_ids = map_chr(aliquot_ids, str_c, collapse = ';')
+    )
+
+tmt_map_tbl %>% head()
+```
+
+```{r}
+tmt_map_clean_tbl = tmt_map_tbl %>%
+    filter(Case_excluded == 'No')
+
+tmt_map_clean_tbl
+```
+
+
+
+## Protein
+```{r}
+protein_tbl = read_tsv(protein_pth) %>%
+    rename_at(vars(-Gene, -RefSeq), ~ str_replace(.x, fixed('.'), ''))
+```
+
+```{r}
+protein_annotation_gr = read_rds(here(
+    'annotation/refseq_20180629/tracked_results/refseq_20180629_human_only_unique_loci_GRanges.rds'
+))
+names(mcols(protein_annotation_gr))
+```
+
+```{r}
+gene_annotation_tbl = protein_annotation_gr %>%
+    as_tibble() %>%
+    distinct(symbol, hgnc_id, entrez_gene_id, ensembl_gene_id)
+```
+
+
+Make sure all the genes are unique
+```{r}
+protein_tbl %>%
+    count(Gene) %>%
+    filter(n > 1)
+```
+
+All the genes are in the annotation
+```{r}
+setdiff(protein_tbl$Gene, gene_annotation_tbl$symbol)
+```
+
+UCEC is a bit different because the TMT map only includes the samples that are kept. Make sure the full TMT map can be mapped to the samples in data:
+```{r}
+data_sample_names = colnames(protein_tbl)[-(1:2)]
+setdiff(tmt_map_clean_tbl$first_aliquot_id, data_sample_names)
+```
+
+```{r}
+protein_mat = protein_tbl %>% 
+    select(-Gene, -RefSeq) %>%
+    as.matrix()
+
+# Re-order the samples
+protein_mat = protein_mat[, tmt_map_clean_tbl$first_aliquot_id]
+colnames(protein_mat) = tmt_map_clean_tbl$preferred_sample_name
+rownames(protein_mat) = protein_tbl$Gene
+
+protein_mat[1:5, 1:5]
+```
+
+```{r}
+protein_sample_tbl = tmt_map_clean_tbl %>% 
+  select(
+        preferred_sample_name, case_id, sample_type,
+        aliquot_ids, tmt_experiment, tmt_channel, OCT
+    )
+
+protein_sample_tbl %>% head()
+```
+
+```{r}
+protein_row_tbl = protein_tbl %>%
+    select(symbol = Gene) %>%
+    left_join(gene_annotation_tbl, by = 'symbol')
+
+protein_row_tbl %>% head()
+```
+
+```{r}
+protein_se = SummarizedExperiment(
+    assays = list('normalized' = protein_mat),
+    rowData = protein_row_tbl %>% column_to_rownames('symbol'),
+    colData = protein_sample_tbl %>% column_to_rownames('preferred_sample_name'),
+    metadata = list(
+        cohort = 'CPTAC3 UCEC discovery cohort',
+        pipeline = 'PNNL'
+    )
+)
+
+protein_se
+```
+
+
+
+### Phospho
+```{r}
+phospho_tbl = read_tsv(phospho_pth) %>%
+    rename_at(vars(-Gene:-site), ~ str_replace(.x, fixed('.'), ''))
+```
+
+Read peptide location
+```{r}
+phospho_loc_tbl = read_tsv(
+    phospho_loc_pth,
+    col_types = cols(
+        peptide_start = col_integer(), 
+        peptide_end = col_integer()
+    ))
+phospho_loc_tbl %>% head()
+```
+
+Create the phospho matrix
+```{r}
+phospho_mat = phospho_tbl %>%
+    select(-(Gene:site)) %>%
+    as.matrix()
+
+# Re-order the samples
+phospho_mat = phospho_mat[, tmt_map_clean_tbl$first_aliquot_id]
+colnames(phospho_mat) = tmt_map_clean_tbl$preferred_sample_name
+rownames(phospho_mat) = phospho_tbl$peptide
+
+phospho_mat[1:5, 1:5]
+```
+
+Construct the phospho rowData table
+```{r}
+raw_phospho_row_tbl = phospho_tbl %>%
+    select(original_id = peptide, symbol = Gene, refseq_prot_id = RefSeq) %>% 
+    inner_join(phospho_loc_tbl, by = 'original_id')
+
+raw_phospho_row_tbl %>% head()
+```
+
+Calculate the NA% per peptide (to order the site)
+```{r}
+phospho_na_percent = rowSums(is.na(phospho_mat)) / ncol(phospho_mat)
+hist(phospho_na_percent)
+```
+
+```{r}
+phospho_row_tbl = raw_phospho_row_tbl %>%
+    bind_cols(tibble(na_percent = phospho_na_percent)) %>%
+    filter(
+        peptide_loc_valid,
+        na_percent <= 0.8
+    ) %>%
+    select(
+        original_id, 
+        refseq_prot_id,
+        phosphosites,
+        symbol,
+        peptide,
+        peptide_start,
+        peptide_end,
+        na_percent
+    ) %>%
+    arrange(symbol, phosphosites, na_percent) %>%
+    mutate(
+        unique_site_id = base::make.unique(
+            str_c(symbol, refseq_prot_id, phosphosites, sep = ':'), 
+            sep='.'
+        )
+    )
+
+phospho_row_tbl %>% head()
+```
+
+Some sites have duplication
+```{r}
+phospho_row_tbl %>% 
+    count(symbol, phosphosites, sort = TRUE) %>% 
+    filter(n > 1)
+```
+
+Make sure all the RefSeq IDs are available
+```{r}
+setdiff(
+    phospho_row_tbl$refseq_prot_id,
+    protein_annotation_gr$refseq_prot_id
+)
+```
+
+Combine the RefSeq annotation
+```{r}
+protein_annotation_tbl = protein_annotation_gr %>%
+    mcols() %>%
+    as_tibble() %>%
+    select(-symbol)
+```
+
+```{r}
+phospho_row_full_tbl = phospho_row_tbl %>% 
+    select(unique_site_id, original_id, refseq_prot_id, symbol, phosphosites, 
+           peptide, peptide_start, peptide_end) %>%
+    left_join(
+        protein_annotation_tbl,
+        by = 'refseq_prot_id'
+    )
+
+phospho_row_full_tbl %>% head()
+```
+
+Make the summarized experiment object
+```{r}
+phospho_mat.selected = phospho_mat[phospho_row_full_tbl$original_id, ]
+rownames(phospho_mat.selected) = phospho_row_full_tbl$unique_site_id
+
+phospho_se = SummarizedExperiment(
+    assays = list('normalized' = phospho_mat.selected),
+    rowData = phospho_row_full_tbl %>% column_to_rownames('unique_site_id'),
+    colData = protein_sample_tbl %>% column_to_rownames('preferred_sample_name'),
+    metadata = list(
+        cohort = 'CPTAC3 UCEC discovery cohort',
+        pipeline = 'PNNL'
+    )
+)
+
+phospho_se
+```
+
+
+## Acetylome
+```{r}
+acetyl_tbl = read_tsv(acetyl_pth) %>%
+    rename_at(vars(-Gene:-site), ~ str_replace(.x, fixed('.'), ''))
+
+acetyl_loc_tbl = read_tsv(
+    acetyl_loc_pth,
+    col_types = cols(
+        peptide_start = col_integer(), 
+        peptide_end = col_integer()
+    ))
+```
+
+Create the phospho matrix
+```{r}
+acetyl_mat = acetyl_tbl %>%
+    select(-(Gene:site)) %>%
+    as.matrix()
+
+# Re-order the samples
+acetyl_mat = acetyl_mat[, tmt_map_clean_tbl$first_aliquot_id]
+colnames(acetyl_mat) = tmt_map_clean_tbl$preferred_sample_name
+rownames(acetyl_mat) = acetyl_tbl$peptide
+
+acetyl_mat[1:5, 1:5]
+```
+
+Construct the phospho rowData table
+```{r}
+raw_acetyl_row_tbl = acetyl_tbl %>%
+    select(original_id = peptide, symbol = Gene, refseq_prot_id = RefSeq) %>% 
+    inner_join(acetyl_loc_tbl, by = 'original_id')
+
+raw_acetyl_row_tbl %>% head()
+```
+
+```{r}
+acetyl_na_percent = rowSums(is.na(acetyl_mat[raw_acetyl_row_tbl$original_id, ])) / ncol(acetyl_mat)
+hist(acetyl_na_percent)
+```
+
+```{r}
+acetyl_row_tbl = raw_acetyl_row_tbl %>%
+    bind_cols(tibble(na_percent = acetyl_na_percent)) %>%
+    filter(
+        peptide_loc_valid,
+        na_percent <= 0.8
+    ) %>%
+    select(
+        original_id, 
+        refseq_prot_id,
+        acetylsites,
+        symbol,
+        peptide,
+        peptide_start,
+        peptide_end,
+        na_percent
+    ) %>%
+    arrange(symbol, acetylsites, na_percent) %>%
+    mutate(
+        unique_site_id = base::make.unique(
+            str_c(symbol, refseq_prot_id, acetylsites, sep = ':'), 
+            sep='.'
+        )
+    )
+
+acetyl_row_tbl %>% head()
+```
+
+Some sites have duplication
+```{r}
+acetyl_row_tbl %>% 
+    count(symbol, acetylsites, sort = TRUE) %>% 
+    filter(n > 1)
+```
+
+
+Combine the RefSeq annotation
+```{r}
+acetyl_row_full_tbl = acetyl_row_tbl %>% 
+    select(unique_site_id, original_id, refseq_prot_id, symbol, acetylsites, 
+           peptide, peptide_start, peptide_end) %>%
+    left_join(
+        protein_annotation_tbl,
+        by = 'refseq_prot_id'
+    )
+
+acetyl_row_full_tbl %>% head()
+```
+Check if we can re-use the protein col data
+```{r}
+identical(colnames(acetyl_mat), tmt_map_clean_tbl$preferred_sample_name)
+```
+
+```{r}
+acetyl_mat.selected = acetyl_mat[acetyl_row_full_tbl$original_id, ]
+rownames(acetyl_mat.selected) = acetyl_row_full_tbl$unique_site_id
+
+acteyl_se = SummarizedExperiment(
+    assays = list('normalized' = acetyl_mat.selected),
+    rowData = acetyl_row_full_tbl %>% column_to_rownames('unique_site_id'),
+    colData = protein_sample_tbl %>% column_to_rownames('preferred_sample_name'),
+    metadata = list(
+        cohort = 'CPTAC3 UCEC discovery cohort',
+        pipeline = 'PNNL'
+    )
+)
+
+acteyl_se
+```
+
+
+
+## Export
+```{r}
+protein_se %>% saveRDS(here('final_output/CPTAC3_UCEC_discovery/CPTAC3_UCEC_pnnl_proteome.rds'))
+phospho_se %>% saveRDS(here('final_output/CPTAC3_UCEC_discovery/CPTAC3_UCEC_pnnl_phosphoproteome.rds'))
+acteyl_se %>% saveRDS(here('final_output/CPTAC3_UCEC_discovery/CPTAC3_UCEC_pnnl_acetylome.rds'))
+```
