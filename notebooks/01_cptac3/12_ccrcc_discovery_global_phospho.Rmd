@@ -1,0 +1,274 @@
+---
+title: "R Notebook"
+output:
+  html_document:
+    df_print: paged
+---
+
+```{r, message=FALSE}
+library(SummarizedExperiment)
+library(here)
+library(tidyverse)
+```
+
+```{r}
+DATA_ROOT = '~/Box/MyCPTAC/CPTAC_data_collection_v1'
+```
+
+```{r}
+tmt_pth = fs::path(DATA_ROOT, 'CPTAC3/CCRCC_discovery/cptac-metadata.csv')
+
+protein_pth = fs::path(DATA_ROOT, 'CPTAC3/CCRCC_discovery/6_CPTAC3_CCRCC_Whole_abundance_gene_protNorm=2_CB.tsv.gz')
+phospho_pth = fs::path(DATA_ROOT, 'CPTAC3/CCRCC_discovery/6_CPTAC3_CCRCC_Phospho_abundance_phosphosite_protNorm=2_CB.tsv.gz')
+phospho_loc_pth = fs::path(DATA_ROOT, 'CPTAC3/CCRCC_discovery/6_CPTAC3_CCRCC_Phospho_abundance_phosphosite_protNorm=2_CB.tsv.peptide_location.tsv.gz')
+```
+
+
+## TMT map
+```{r}
+tmt_map_tbl = read_csv(tmt_pth, col_types = cols(Data.Set = col_integer())) %>%
+    select(
+      case_id = Case.ID,
+      aliquot_id = Specimen.Label,
+      sample_type = Type, 
+      tmt_experiment = Data.Set,
+      tmt_channel = TMT.Channel
+    ) %>%
+    mutate(preferred_sample_name = aliquot_id)
+
+tmt_map_tbl %>% head()
+```
+```{r}
+tmt_map_clean_tbl = tmt_map_tbl %>%
+    # Remove pool and cell line samples
+    filter(!is.na(sample_type))
+
+tmt_map_clean_tbl %>% head()
+```
+
+
+## Protein
+```{r}
+protein_tbl = read_tsv(protein_pth)
+```
+
+```{r}
+protein_annotation_gr = read_rds(here(
+    'annotation/refseq_20180629/tracked_results/refseq_20180629_human_only_unique_loci_GRanges.rds'
+))
+names(mcols(protein_annotation_gr))
+```
+
+```{r}
+gene_annotation_tbl = protein_annotation_gr %>%
+    as_tibble() %>%
+    distinct(symbol, hgnc_id, entrez_gene_id, ensembl_gene_id)
+```
+
+
+Make sure all the genes are unique
+```{r}
+protein_tbl %>%
+    count(Index) %>%
+    filter(n > 1)
+```
+
+All the genes are in the annotation
+```{r}
+setdiff(protein_tbl$Index, gene_annotation_tbl$symbol)
+```
+
+```{r}
+protein_mat = protein_tbl %>% 
+    select(-Index, -NumberPSM, -Proteins) %>%
+    as.matrix()
+
+# Re-order the samples
+protein_mat = protein_mat[, tmt_map_clean_tbl$preferred_sample_name]
+protein_mat = protein_mat - protein_tbl$ReferenceIntensity
+rownames(protein_mat) = protein_tbl$Index
+
+protein_mat[1:5, 1:5]
+```
+
+```{r}
+protein_sample_tbl = tmt_map_clean_tbl %>% 
+  select(
+        preferred_sample_name, case_id, sample_type,
+        aliquot_id, tmt_experiment, tmt_channel
+    )
+
+protein_sample_tbl %>% head()
+```
+
+```{r}
+protein_row_tbl = protein_tbl %>%
+    select(symbol = Index, num_psm = NumberPSM, refseq_prot_ids = Proteins) %>%
+    mutate(refseq_prot_ids = map_chr(refseq_prot_ids, str_remove, ';$')) %>%
+    left_join(gene_annotation_tbl, by = 'symbol')
+
+protein_row_tbl %>% head()
+```
+
+```{r}
+protein_se = SummarizedExperiment(
+    assays = list('normalized' = protein_mat),
+    rowData = protein_row_tbl %>% column_to_rownames('symbol'),
+    colData = protein_sample_tbl %>% column_to_rownames('preferred_sample_name'),
+    metadata = list(
+        cohort = 'CPTAC3 CCRCC discovery cohort',
+        pipeline = 'UMich'
+    )
+)
+
+protein_se
+```
+
+
+
+### Phospho
+```{r}
+phospho_tbl = read_tsv(
+    phospho_pth, 
+    col_types = cols(
+        .default = col_double(),
+        Index = col_character(),
+        Gene = col_character(),
+        Peptide = col_character()
+    )
+)
+```
+
+Read peptide location
+```{r}
+phospho_loc_tbl = read_tsv(
+    phospho_loc_pth,
+    col_types = cols(
+        peptide_start = col_integer(), 
+        peptide_end = col_integer()
+    ))
+phospho_loc_tbl %>% head()
+```
+
+Create the phospho matrix
+```{r}
+phospho_mat = phospho_tbl %>%
+    select(-(Index:ReferenceIntensity)) %>%
+    as.matrix()
+
+# Re-order the samples
+phospho_mat = phospho_mat[, protein_sample_tbl$preferred_sample_name]
+phospho_mat = phospho_mat - phospho_tbl$ReferenceIntensity
+rownames(phospho_mat) = phospho_tbl$Index
+
+phospho_mat[1:5, 1:5]
+```
+
+Construct the phospho rowData table
+```{r}
+raw_phospho_row_tbl = phospho_tbl %>%
+    select(original_id = Index, symbol = Gene) %>% 
+    left_join(phospho_loc_tbl, by = 'original_id')
+
+raw_phospho_row_tbl %>% head()
+```
+Some phosphosites are invalid or they are not phosphosites at all
+```{r}
+raw_phospho_row_tbl %>% count(peptide_loc_valid)
+```
+
+
+Calculate the NA% per peptide (to order the site)
+```{r}
+phospho_na_percent = rowSums(is.na(phospho_mat)) / ncol(phospho_mat)
+hist(phospho_na_percent)
+```
+
+```{r}
+phospho_row_tbl = raw_phospho_row_tbl %>%
+    bind_cols(tibble(na_percent = phospho_na_percent)) %>%
+    filter(
+        peptide_loc_valid,
+        na_percent <= 0.8
+    ) %>%
+    select(
+        original_id, 
+        refseq_prot_id,
+        phosphosites,
+        symbol,
+        peptide,
+        peptide_start,
+        peptide_end,
+        na_percent
+    ) %>%
+    arrange(symbol, phosphosites, na_percent) %>%
+    mutate(
+        unique_site_id = base::make.unique(
+            str_c(symbol, refseq_prot_id, phosphosites, sep = ':'), 
+            sep='.'
+        )
+    )
+
+phospho_row_tbl %>% head()
+```
+
+Some sites have duplication
+```{r}
+phospho_row_tbl %>% 
+    count(symbol, phosphosites, sort = TRUE) %>% 
+    filter(n > 1)
+```
+
+Make sure all the RefSeq IDs are available
+```{r}
+setdiff(
+    phospho_row_tbl$refseq_prot_id,
+    protein_annotation_gr$refseq_prot_id
+)
+```
+
+Combine the RefSeq annotation
+```{r}
+protein_annotation_tbl = protein_annotation_gr %>%
+    mcols() %>%
+    as_tibble() %>%
+    select(-symbol)
+```
+
+```{r}
+phospho_row_full_tbl = phospho_row_tbl %>% 
+    select(unique_site_id, original_id, refseq_prot_id, symbol, phosphosites, 
+           peptide, peptide_start, peptide_end) %>%
+    left_join(
+        protein_annotation_tbl,
+        by = 'refseq_prot_id'
+    )
+
+phospho_row_full_tbl %>% head()
+```
+
+Make the summarized experiment object
+```{r}
+phospho_mat.selected = phospho_mat[phospho_row_full_tbl$original_id, ]
+rownames(phospho_mat.selected) = phospho_row_full_tbl$unique_site_id
+
+phospho_se = SummarizedExperiment(
+    assays = list('normalized' = phospho_mat.selected),
+    rowData = phospho_row_full_tbl %>% column_to_rownames('unique_site_id'),
+    colData = protein_sample_tbl %>% column_to_rownames('preferred_sample_name'),
+    metadata = list(
+        cohort = 'CPTAC3 CCRCC discovery cohort',
+        pipeline = 'UMich'
+    )
+)
+
+phospho_se
+```
+
+
+
+## Export
+```{r}
+protein_se %>% saveRDS(here('final_output/CPTAC3_CCRCC_discovery/CPTAC3_CCRCC_umich_proteome.rds'))
+phospho_se %>% saveRDS(here('final_output/CPTAC3_CCRCC_discovery/CPTAC3_CCRCC_umich_phosphoproteome.rds'))
+```
