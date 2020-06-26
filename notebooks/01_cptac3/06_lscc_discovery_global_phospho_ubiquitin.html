@@ -1771,7 +1771,8 @@ protein_col_tbl %&gt;% head()</code></pre>
 rownames(protein_se) = sgt_protein_full_row_tbl$symbol
 rowData(protein_se) = sgt_protein_full_row_tbl %&gt;% column_to_rownames(&#39;symbol&#39;)
 colData(protein_se) = protein_col_tbl %&gt;% column_to_rownames(&#39;preferred_sample_name&#39;) %&gt;% as(&#39;DataFrame&#39;)
-
+assayNames(protein_se) = &#39;normalized&#39;
+  
 metadata(protein_se) = list(
     cohort = &#39;CPTAC3 LSCC discovery cohort&#39;,
     pipeline = &#39;Broad&#39;
@@ -1780,7 +1781,7 @@ metadata(protein_se) = list(
 <pre><code>## class: SummarizedExperiment 
 ## dim: 11117 207 
 ## metadata(2): cohort pipeline
-## assays(1): exprs
+## assays(1): normalized
 ## rownames(11117): A1BG A2M ... ZZEF1 ZZZ3
 ## rowData names(11): refseq_prot_id numColumnsProteinObserved ...
 ##   entrez_gene_id ensembl_gene_id
@@ -1880,6 +1881,7 @@ phospho_row_full_tbl %&gt;% head()</code></pre>
 rownames(phospho_se) = phospho_row_full_tbl$unique_site_id
 rowData(phospho_se) = phospho_row_full_tbl %&gt;% column_to_rownames(&#39;unique_site_id&#39;)
 colData(phospho_se) = colData(protein_se)
+assayNames(phospho_se) = &#39;normalized&#39;
 
 metadata(phospho_se) = list(
     cohort = &#39;CPTAC3 LSCC discovery cohort&#39;,
@@ -1889,7 +1891,7 @@ metadata(phospho_se) = list(
 <pre><code>## class: SummarizedExperiment 
 ## dim: 43163 207 
 ## metadata(2): cohort pipeline
-## assays(1): exprs
+## assays(1): normalized
 ## rownames(43163): A4GALT:NP_001304967.1:T324 AAAS:NP_056480.1:S495 ...
 ##   ZZZ3:NP_056349.1:S89 ZZZ3:NP_056349.1:T428
 ## rowData names(21): original_id refseq_prot_id ...
@@ -2010,6 +2012,7 @@ ubiquitin_col_tbl %&gt;% head()</code></pre>
 rownames(ubiquitin_se) = ubiquitin_row_full_tbl$unique_site_id
 rowData(ubiquitin_se) = ubiquitin_row_full_tbl %&gt;% column_to_rownames(&#39;unique_site_id&#39;)
 colData(ubiquitin_se) = ubiquitin_col_tbl %&gt;% column_to_rownames(&#39;preferred_sample_name&#39;) %&gt;% as(&#39;DataFrame&#39;)
+assayNames(ubiquitin_se) = &#39;normalized&#39;
 
 metadata(ubiquitin_se) = list(
     cohort = &#39;CPTAC3 LSCC discovery cohort&#39;,
@@ -2019,7 +2022,7 @@ metadata(ubiquitin_se) = list(
 <pre><code>## class: SummarizedExperiment 
 ## dim: 14473 143 
 ## metadata(2): cohort pipeline
-## assays(1): exprs
+## assays(1): normalized
 ## rownames(14473): AAAS:NP_056480.1:K366 AAAS:NP_056480.1:K52 ...
 ##   ZZEF1:NP_055928.3:K2490 ZZEF1:NP_055928.3:K2501
 ## rowData names(21): original_id refseq_prot_id ...

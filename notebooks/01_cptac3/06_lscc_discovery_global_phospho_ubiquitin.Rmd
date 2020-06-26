@@ -136,7 +136,8 @@ protein_se = raw_protein_se[sgt_protein_full_row_tbl$refseq_prot_id, ]
 rownames(protein_se) = sgt_protein_full_row_tbl$symbol
 rowData(protein_se) = sgt_protein_full_row_tbl %>% column_to_rownames('symbol')
 colData(protein_se) = protein_col_tbl %>% column_to_rownames('preferred_sample_name') %>% as('DataFrame')
-
+assayNames(protein_se) = 'normalized'
+  
 metadata(protein_se) = list(
     cohort = 'CPTAC3 LSCC discovery cohort',
     pipeline = 'Broad'
@@ -241,6 +242,7 @@ phospho_se = raw_phospho_se[phospho_row_full_tbl$original_id, ]
 rownames(phospho_se) = phospho_row_full_tbl$unique_site_id
 rowData(phospho_se) = phospho_row_full_tbl %>% column_to_rownames('unique_site_id')
 colData(phospho_se) = colData(protein_se)
+assayNames(phospho_se) = 'normalized'
 
 metadata(phospho_se) = list(
     cohort = 'CPTAC3 LSCC discovery cohort',
@@ -359,6 +361,7 @@ ubiquitin_se = raw_ubiquitin_se[ubiquitin_row_full_tbl$original_id, ]
 rownames(ubiquitin_se) = ubiquitin_row_full_tbl$unique_site_id
 rowData(ubiquitin_se) = ubiquitin_row_full_tbl %>% column_to_rownames('unique_site_id')
 colData(ubiquitin_se) = ubiquitin_col_tbl %>% column_to_rownames('preferred_sample_name') %>% as('DataFrame')
+assayNames(ubiquitin_se) = 'normalized'
 
 metadata(ubiquitin_se) = list(
     cohort = 'CPTAC3 LSCC discovery cohort',

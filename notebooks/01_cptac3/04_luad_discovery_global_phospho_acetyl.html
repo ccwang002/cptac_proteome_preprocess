@@ -1771,6 +1771,7 @@ protein_col_tbl %&gt;% head()</code></pre>
 rownames(protein_se) = sgt_protein_full_row_tbl$symbol
 rowData(protein_se) = sgt_protein_full_row_tbl %&gt;% column_to_rownames(&#39;symbol&#39;)
 colData(protein_se) = protein_col_tbl %&gt;% column_to_rownames(&#39;preferred_sample_name&#39;) %&gt;% as(&#39;DataFrame&#39;)
+assayNames(protein_se) = &#39;normalized&#39;
 
 metadata(protein_se) = list(
     cohort = &#39;CPTAC3 LUAD discovery cohort&#39;,
@@ -1780,7 +1781,7 @@ metadata(protein_se) = list(
 <pre><code>## class: SummarizedExperiment 
 ## dim: 10305 211 
 ## metadata(2): cohort pipeline
-## assays(1): exprs
+## assays(1): normalized
 ## rownames(10305): A1BG A2M ... ZZEF1 ZZZ3
 ## rowData names(11): refseq_prot_id numColumnsProteinObserved ...
 ##   entrez_gene_id ensembl_gene_id
@@ -1879,6 +1880,7 @@ phospho_row_full_tbl %&gt;% head()</code></pre>
 rownames(phospho_se) = phospho_row_full_tbl$unique_site_id
 rowData(phospho_se) = phospho_row_full_tbl %&gt;% column_to_rownames(&#39;unique_site_id&#39;)
 colData(phospho_se) = colData(protein_se)
+assayNames(phospho_se) = &#39;normalized&#39;
 
 metadata(phospho_se) = list(
     cohort = &#39;CPTAC3 LUAD discovery cohort&#39;,
@@ -1888,7 +1890,7 @@ metadata(phospho_se) = list(
 <pre><code>## class: SummarizedExperiment 
 ## dim: 41177 211 
 ## metadata(2): cohort pipeline
-## assays(1): exprs
+## assays(1): normalized
 ## rownames(41177): AAAS:NP_056480.1:S495 AAAS:NP_056480.1:S541 ...
 ##   ZZZ3:NP_056349.1:S606 ZZZ3:NP_056349.1:S89
 ## rowData names(21): original_id refseq_prot_id ...
@@ -1985,6 +1987,7 @@ acetyl_row_full_tbl %&gt;% head()</code></pre>
 rownames(acetyl_se) = acetyl_row_full_tbl$unique_site_id
 rowData(acetyl_se) = acetyl_row_full_tbl %&gt;% column_to_rownames(&#39;unique_site_id&#39;)
 colData(acetyl_se) = colData(acetyl_se)
+assayNames(acetyl_se) = &#39;normalized&#39;
 
 metadata(acetyl_se) = list(
     cohort = &#39;CPTAC3 LUAD discovery cohort&#39;,
@@ -1994,7 +1997,7 @@ metadata(acetyl_se) = list(
 <pre><code>## class: SummarizedExperiment 
 ## dim: 6906 211 
 ## metadata(2): cohort pipeline
-## assays(1): exprs
+## assays(1): normalized
 ## rownames(6906): A2M:NP_000005.2:K1092 A2M:NP_000005.2:K1168 ...
 ##   ZYX:NP_001010972.1:K25 ZYX:NP_001010972.1:K279
 ## rowData names(21): original_id refseq_prot_id ...
