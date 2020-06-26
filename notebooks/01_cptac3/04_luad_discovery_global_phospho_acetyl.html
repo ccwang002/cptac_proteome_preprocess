@@ -1668,7 +1668,7 @@ names(mcols(protein_annotation_gr))</code></pre>
 <pre><code>## ~/Box/MyCPTAC/CPTAC_data_collection_v1/CPTAC3/LUAD_discovery/luad-v3.1-proteome-ratio-norm-NArm.gct 10699 rows, 211 cols, 15 row descriptors, 78 col descriptors</code></pre>
 <pre class="r"><code>raw_protein_se = as(protein_gct, &quot;SummarizedExperiment&quot;)</code></pre>
 <p>Make sure the gene symbols are the same as the protein annotation</p>
-<pre class="r"><code>rowData(raw_protein_se) %&gt;% 
+<pre class="r"><code>rowData(raw_protein_se) %&gt;%
     as_tibble() %&gt;%
     select(accession_number, geneSymbol) %&gt;%
     inner_join(protein_annotation_gr %&gt;% mcols() %&gt;% as_tibble(),
@@ -1693,14 +1693,14 @@ rowData(raw_protein_se)[prot_ids_not_in_refseq, ] %&gt;%
   </script>
 </div>
 <pre class="r"><code>protein_row_tbl = rowData(raw_protein_se) %&gt;%
-    as_tibble() %&gt;% 
+    as_tibble() %&gt;%
     # Keep only RefSeq proteins
     filter(accession_number %in% protein_annotation_gr$refseq_prot_id) %&gt;%
     mutate(subgroupNum = as.character(subgroupNum)) %&gt;%
     extract(
-        subgroupNum, 
+        subgroupNum,
         c(&#39;protein_grp&#39;, &#39;protein_subgrp&#39;),
-        &quot;^(\\d+)\\.(\\d+)&quot;, 
+        &quot;^(\\d+)\\.(\\d+)&quot;,
         convert = TRUE, remove = FALSE
     )</code></pre>
 <p>By default genes are not unique (isoform level)</p>
@@ -1730,12 +1730,12 @@ sgt_protein_row_tbl %&gt;% head()</code></pre>
 
 sgt_protein_full_row_tbl = sgt_protein_row_tbl %&gt;%
     select(
-        symbol = geneSymbol, 
+        symbol = geneSymbol,
         refseq_prot_id = accession_number,
         numColumnsProteinObserved, numSpectraProteinObserved,
         protein_mw, percentCoverage,
         numPepsUnique, scoreUnique, subgroupNum
-    ) %&gt;% 
+    ) %&gt;%
     left_join(gene_annotation_tbl, by = &quot;symbol&quot;)
 
 sgt_protein_full_row_tbl %&gt;% head()</code></pre>
@@ -1799,10 +1799,10 @@ metadata(protein_se) = list(
 phospho_loc_tbl = read_tsv(
     phospho_loc_pth,
     col_types = cols(
-        peptide_start = col_integer(), 
+        peptide_start = col_integer(),
         peptide_end = col_integer()
     ))</code></pre>
-<pre class="r"><code>raw_phospho_row_tbl = rowData(raw_phospho_se) %&gt;% 
+<pre class="r"><code>raw_phospho_row_tbl = rowData(raw_phospho_se) %&gt;%
     as_tibble(rownames = &#39;original_id&#39;) %&gt;%
     inner_join(phospho_loc_tbl, by = c(&#39;original_id&#39; = &#39;rid&#39;))
 
@@ -1822,7 +1822,7 @@ hist(phospho_na_percent)</code></pre>
         na_percent &lt;= 0.8
     ) %&gt;%
     select(
-        original_id, 
+        original_id,
         refseq_prot_id = accession_number,
         phosphosites,
         symbol = geneSymbol,
@@ -1834,7 +1834,7 @@ hist(phospho_na_percent)</code></pre>
     arrange(symbol, phosphosites, na_percent) %&gt;%
     mutate(
         unique_site_id = base::make.unique(
-            str_c(symbol, refseq_prot_id, phosphosites, sep = &#39;:&#39;), 
+            str_c(symbol, refseq_prot_id, phosphosites, sep = &#39;:&#39;),
             sep=&#39;.&#39;
         )
     )
@@ -1846,8 +1846,8 @@ phospho_row_tbl %&gt;% head()</code></pre>
   </script>
 </div>
 <p>Some sites have duplication</p>
-<pre class="r"><code>phospho_row_tbl %&gt;% 
-    count(symbol, phosphosites, sort = TRUE) %&gt;% 
+<pre class="r"><code>phospho_row_tbl %&gt;%
+    count(symbol, phosphosites, sort = TRUE) %&gt;%
     filter(n &gt; 1)</code></pre>
 <div data-pagedtable="false">
 <script data-pagedtable-source type="application/json">
@@ -1859,8 +1859,8 @@ phospho_row_tbl %&gt;% head()</code></pre>
     mcols() %&gt;%
     as_tibble() %&gt;%
     select(-symbol)</code></pre>
-<pre class="r"><code>phospho_row_full_tbl = phospho_row_tbl %&gt;% 
-    select(unique_site_id, original_id, refseq_prot_id, symbol, phosphosites, 
+<pre class="r"><code>phospho_row_full_tbl = phospho_row_tbl %&gt;%
+    select(unique_site_id, original_id, refseq_prot_id, symbol, phosphosites,
            peptide, peptide_start, peptide_end) %&gt;%
     left_join(
         protein_annotation_tbl,
@@ -1909,10 +1909,10 @@ metadata(phospho_se) = list(
 acetyl_loc_tbl = read_tsv(
     acetyl_loc_pth,
     col_types = cols(
-        peptide_start = col_integer(), 
+        peptide_start = col_integer(),
         peptide_end = col_integer()
     ))</code></pre>
-<pre class="r"><code>raw_acetyl_row_tbl = rowData(raw_acetyl_se) %&gt;% 
+<pre class="r"><code>raw_acetyl_row_tbl = rowData(raw_acetyl_se) %&gt;%
     as_tibble(rownames = &#39;original_id&#39;) %&gt;%
     inner_join(acetyl_loc_tbl, by = c(&#39;original_id&#39; = &#39;rid&#39;))
 
@@ -1932,7 +1932,7 @@ hist(acetyl_na_percent)</code></pre>
         na_percent &lt;= 0.8
     ) %&gt;%
     select(
-        original_id, 
+        original_id,
         refseq_prot_id = accession_number,
         acetylsites,
         symbol = geneSymbol,
@@ -1944,7 +1944,7 @@ hist(acetyl_na_percent)</code></pre>
     arrange(symbol, acetylsites, na_percent) %&gt;%
     mutate(
         unique_site_id = base::make.unique(
-            str_c(symbol, refseq_prot_id, acetylsites, sep = &#39;:&#39;), 
+            str_c(symbol, refseq_prot_id, acetylsites, sep = &#39;:&#39;),
             sep=&#39;.&#39;
         )
     )
@@ -1956,8 +1956,8 @@ acetyl_row_tbl %&gt;% head()</code></pre>
   </script>
 </div>
 <p>Some sites have duplication</p>
-<pre class="r"><code>acetyl_row_tbl %&gt;% 
-    count(symbol, acetylsites, sort = TRUE) %&gt;% 
+<pre class="r"><code>acetyl_row_tbl %&gt;%
+    count(symbol, acetylsites, sort = TRUE) %&gt;%
     filter(n &gt; 1)</code></pre>
 <div data-pagedtable="false">
 <script data-pagedtable-source type="application/json">
@@ -1965,8 +1965,8 @@ acetyl_row_tbl %&gt;% head()</code></pre>
   </script>
 </div>
 <p>Combine the RefSeq annotation</p>
-<pre class="r"><code>acetyl_row_full_tbl = acetyl_row_tbl %&gt;% 
-    select(unique_site_id, original_id, refseq_prot_id, symbol, acetylsites, 
+<pre class="r"><code>acetyl_row_full_tbl = acetyl_row_tbl %&gt;%
+    select(unique_site_id, original_id, refseq_prot_id, symbol, acetylsites,
            peptide, peptide_start, peptide_end) %&gt;%
     left_join(
         protein_annotation_tbl,
@@ -2009,7 +2009,7 @@ metadata(acetyl_se) = list(
 <h2>Export</h2>
 <pre class="r"><code>protein_se %&gt;% saveRDS(here(&#39;final_output/CPTAC3_LUAD_discovery/CPTAC3_LUAD_broad_proteome.rds&#39;))
 phospho_se %&gt;% saveRDS(here(&#39;final_output/CPTAC3_LUAD_discovery/CPTAC3_LUAD_broad_phosphoproteome.rds&#39;))
-acetyl_se %&gt;% saveRDS(here(&#39;final_output/CPTAC3_LUAD_discovery/CPTAC3_LUAD_broad_acetylproteome.rds&#39;))</code></pre>
+acetyl_se %&gt;% saveRDS(here(&#39;final_output/CPTAC3_LUAD_discovery/CPTAC3_LUAD_broad_acetylome.rds&#39;))</code></pre>
 </div>
 
 
