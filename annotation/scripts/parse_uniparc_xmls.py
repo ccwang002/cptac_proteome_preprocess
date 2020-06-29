@@ -18,7 +18,8 @@ def parse_dbref(entry):
         for d in entry['dbReference']:
             if d["@type"].startswith(db_type):
                 if '@version' not in d:
-                    logger.warning(f'This dbRef has no external version: {d!r}')
+                    # Use the internal version
+                    # logger.warning(f'This dbRef has no external version: {d!r}')
                     id_str = f"{d['@id']}.{d['@version_i']}"
                 else:
                     id_str = f"{d['@id']}.{d['@version']}"
