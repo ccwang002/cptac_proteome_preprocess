@@ -1,4 +1,10 @@
 ## Annotations
 
-### Notebooks
-- `01_cptac3_refseq_granges_annotation.Rmd`: Create the GRanges objects of RefSeq 20180629.
+Generate file list and their MD5 checksums under `intermediates` by:
+
+```bash
+fd --type file . intermediates \
+    | sort \
+    | parallel --keep-order -j6 --bar 'gmd5sum {}' \
+    > intermediates_files_md5_checksum.txt
+```
