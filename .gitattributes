@@ -1,2 +1,2 @@
-notebooks/**/*.html linguist-generated linguist-vendored -linguist-detectable
+notebooks/**/*.html -linguist-detectable
 *.Rmd linguist-detectable
