@@ -1,5 +1,10 @@
 ## RefSeq 20160914
 
+Note that mitochondrial genes (`YP_*`) are reported on chrMT ([rCRS] sequence; 16,569bp) instead of chrM (official GRCh37; 16,571bp). chrMT is identical to hg38's chrM.
+
+[rCRS]: https://en.wikipedia.org/wiki/Cambridge_Reference_Sequence
+
+
 ### Workflow
 Use `notebooks/01_cptac_refseq_granges_annotation.Rmd` to obtain the full RefSeq protein ID list.
 
