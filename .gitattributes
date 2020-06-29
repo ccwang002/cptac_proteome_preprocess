@@ -1,2 +1,1 @@
-archived/* linguist-detectable=false
-notebooks/**/*.html linguist-generated=true
+notebooks/**/*.html linguist-generated linguist-vendored -linguist-detectable
