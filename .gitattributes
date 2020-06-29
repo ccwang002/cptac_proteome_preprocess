@@ -1,1 +1,2 @@
 notebooks/**/*.html linguist-generated linguist-vendored -linguist-detectable
+*.Rmd linguist-detectable
