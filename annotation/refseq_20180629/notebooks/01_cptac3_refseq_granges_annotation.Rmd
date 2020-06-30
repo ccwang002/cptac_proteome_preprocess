@@ -27,6 +27,11 @@ UNIPARC_EBI_TSV_PTH = here('annotation/intermediates/refseq_20180629/refseq_unip
 UNIPARC_REMAINING_TSV_PTH = here('annotation/intermediates/refseq_20180629/ebi_api_missing/refseq_uniparc_mapping.ebi_missing.tsv.gz')
 ```
 
+Extra HGNC query based on Entrez/NCBI gene IDs:
+```{r}
+HGNC_EXTRA_TSV_PTH = here('annotation/refseq_20180629/custom_sources/entrez_gene_ids_extra_hgnc_biomart_2020-06-30.tsv.gz')
+```
+
 
 Read all RefSeq annotations:
 ```{r}
@@ -264,6 +269,62 @@ refseq_human_anno_tbl %>%
 ```
 
 
+## Recover HGNC IDs
+Not all the genes have HGNC ID
+```{r}
+entrez_gene_ids_without_hgnc_id = refseq_human_anno_tbl %>%
+    filter(is.na(hgnc_id)) %>%
+    pull(entrez_gene_id) %>%
+    unique()
+
+length(entrez_gene_ids_without_hgnc_id)
+```
+
+Use HGNC Biomart to recover their HGNC IDs <https://biomart.genenames.org/>.
+```
+entrez_gene_ids_without_hgnc_id %>% 
+    sort() %>%
+    write_lines('../custom_sources/entrez_gene_ids_without_hgnc_ids.list')
+```
+
+Export the list of Entrez gene IDs and query the Biomart with following attributes: HGNC ID, Status, Approved symbol, Approved name, Date approved, Date modified, Date symbol changed, Date name changed, Locus group, Locus type, HGNC family ID, HGNC family name, Ensembl gene ID, NCBI gene ID.
+
+
+Read in the extra HGNC query table
+```{r}
+hgnc_extra_tbl = read_tsv(
+    HGNC_EXTRA_TSV_PTH,
+    col_types = cols(
+        .default = col_character(),
+        `Date approved` = col_date(format = '%Y-%m-%d'),
+        `Date symbol changed` = col_date(format = '%Y-%m-%d'),
+        `Date name changed` = col_date(format = '%Y-%m-%d'),
+        `Date modified` = col_date(format = '%Y-%m-%d')
+    )
+) %>%
+    select(hgnc_id = `HGNC ID`, symbol = `Approved symbol`, 
+           entrez_gene_id=`NCBI gene ID`, ensembl_gene_id=`Ensembl gene ID`)
+```
+
+Fill in the extra HGNC annotation
+```{r}
+refseq_human_anno_tbl = bind_rows(
+    refseq_human_anno_tbl %>%
+        filter(!entrez_gene_id %in% hgnc_extra_tbl$entrez_gene_id),
+    refseq_human_anno_tbl %>%
+        filter(entrez_gene_id %in% hgnc_extra_tbl$entrez_gene_id) %>%
+        select(-hgnc_id, -ensembl_gene_id) %>%
+        left_join(hgnc_extra_tbl, by = 'entrez_gene_id')
+)
+```
+
+List the entries without HGNC ID
+```{r}
+refseq_human_anno_tbl %>%
+    filter(is.na(hgnc_id))
+```
+
+
 ## QC the genomic loci
 There are duplicates on the haplotype chroms
 ```{r}
@@ -277,7 +338,7 @@ There are also duplicates on the same chromosome
 ```{r}
 refseq_human_anno_tbl %>% 
     group_by(refseq_prot_id, seqnames) %>% 
-    filter(n() > 1) 
+    filter(n() > 1)
 ```
 
 When picking the unique loci per refseq protein, prefer the canonical chromosomes
@@ -370,7 +431,7 @@ refseq_20180629_full_grl.sorted[, c("symbol", "uniparc_id", "refseq_tx_id", "mul
 ## Make gene level annotation
 ```{r}
 gene_human_anno_tbl = refseq_human_anno_tbl %>%
-  distinct(symbol, hgnc_id, entrez_gene_id, ensembl_gene_id)
+    distinct(symbol, hgnc_id, entrez_gene_id, ensembl_gene_id)
 ```
 
 
