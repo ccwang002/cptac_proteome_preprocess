@@ -1,0 +1,353 @@
+---
+title: "R Notebook"
+output:
+  html_document:
+    df_print: paged
+---
+
+```{r, message=FALSE}
+library(SummarizedExperiment)
+library(cmapR)
+library(here)
+library(tidyverse)
+```
+
+```{r}
+DATA_ROOT = '~/Box/MyCPTAC/CPTAC_data_collection_v1'
+```
+
+```{r}
+protein_pth = fs::path(DATA_ROOT, 'CPTAC2/BRCA_discovery/prosp-brca-v5.3-proteome-ratio-norm-NArm.gct')
+
+phospho_pth = fs::path(DATA_ROOT, 'CPTAC2/BRCA_discovery/prosp-brca-v5.3-phosphoproteome-ratio-norm-NArm.gct')
+phospho_loc_pth = fs::path(DATA_ROOT, 'CPTAC2/BRCA_discovery/prosp-brca-v5.3-phosphoproteome-ratio-norm-NArm.peptide_location.tsv.gz')
+
+acetyl_pth = fs::path(DATA_ROOT, 'CPTAC2/BRCA_discovery/prosp-brca-v5.3-acetylome-ratio-norm-NArm.gct')
+acetyl_loc_pth = fs::path(DATA_ROOT, 'CPTAC2/BRCA_discovery/prosp-brca-v5.3-acetylome-ratio-norm-NArm.peptide_location.tsv.gz')
+
+se_metadata = list(
+    cohort = 'CPTAC2 BRCA prospective cohort',
+    pipeline = 'Broad'
+)
+```
+
+
+```{r}
+protein_annotation_gr = read_rds(here(
+    'annotation/refseq_20160914/tracked_results/refseq_20160914_human_only_unique_loci_GRanges.rds'
+))
+names(mcols(protein_annotation_gr))
+```
+
+## Protein
+```{r}
+protein_gct = parse_gctx(protein_pth)
+raw_protein_se = as(protein_gct, "SummarizedExperiment")
+```
+
+Make sure the gene symbols are the same as the protein annotation
+```{r}
+rowData(raw_protein_se) %>%
+    as_tibble() %>%
+    select(accession_number, geneSymbol) %>%
+    inner_join(protein_annotation_gr %>% mcols() %>% as_tibble(),
+              by = c('accession_number' = 'refseq_prot_id')) %>%
+    filter(geneSymbol != symbol)
+```
+
+Some proteins are not of RefSeq
+```{r}
+prot_ids_not_in_refseq = setdiff(
+    rowData(raw_protein_se)$accession_number,
+    protein_annotation_gr$refseq_prot_id
+)
+
+rowData(raw_protein_se)[prot_ids_not_in_refseq, ] %>%
+    as_tibble()
+```
+
+```{r}
+protein_row_tbl = rowData(raw_protein_se) %>%
+    as_tibble() %>%
+    # Keep only RefSeq proteins
+    filter(accession_number %in% protein_annotation_gr$refseq_prot_id) %>%
+    mutate(subgroupNum = as.character(subgroupNum)) %>%
+    extract(
+        subgroupNum,
+        c('protein_grp', 'protein_subgrp'),
+        "^(\\d+)\\.(\\d+)",
+        convert = TRUE, remove = FALSE
+    )
+```
+
+By default genes are not unique (isoform level)
+```{r}
+protein_row_tbl %>% count(geneSymbol, sort = TRUE) %>%
+    filter(n > 1)
+```
+
+Convert to gene level
+```{r}
+sgt_protein_row_tbl = protein_row_tbl %>%
+    arrange(geneSymbol, protein_subgrp) %>%
+    group_by(geneSymbol) %>%
+    filter(row_number() == 1)
+
+sgt_protein_row_tbl %>% head()
+```
+Add gene level annotation
+```{r}
+gene_annotation_tbl = protein_annotation_gr %>%
+    as_tibble() %>%
+    distinct(symbol, hgnc_id, entrez_gene_id, ensembl_gene_id)
+
+sgt_protein_full_row_tbl = sgt_protein_row_tbl %>%
+    select(
+        symbol = geneSymbol,
+        refseq_prot_id = accession_number,
+        numColumnsProteinObserved, numSpectraProteinObserved,
+        protein_mw, percentCoverage,
+        numPepsUnique, scoreUnique, subgroupNum
+    ) %>%
+    left_join(gene_annotation_tbl, by = "symbol")
+
+sgt_protein_full_row_tbl %>% head()
+```
+Organize colData
+```{r}
+protein_col_tbl = colData(raw_protein_se) %>%
+    as_tibble(rownames = 'preferred_sample_name') %>%
+    select(
+        preferred_sample_name, case_id = Participant,
+        aliquot_id = Human.Readable.Label,
+        tmt_experiment = Experiment, tmt_channel = Channel,
+        sample_type = Type,
+        tumor_id = Tumor.ID, normal_id = Normal.ID,
+        rnaseq_id = RNASeq.ID
+    ) %>%
+    mutate(
+        case_id = str_sub(case_id, start = 2L),
+        sample_type = case_when(
+            sample_type == 'Tumor' ~ 'Primary Tumor',
+            TRUE ~ NA_character_
+        )
+    )
+
+protein_col_tbl %>% head()
+```
+```{r}
+protein_se = raw_protein_se[sgt_protein_full_row_tbl$refseq_prot_id, ]
+rownames(protein_se) = sgt_protein_full_row_tbl$symbol
+rowData(protein_se) = sgt_protein_full_row_tbl %>% column_to_rownames('symbol')
+colData(protein_se) = protein_col_tbl %>% column_to_rownames('preferred_sample_name') %>% as('DataFrame')
+assayNames(protein_se) = 'normalized'
+
+metadata(protein_se) = se_metadata
+```
+
+```{r}
+protein_se
+```
+
+
+
+## Phospho
+```{r}
+phospho_gct = parse_gctx(phospho_pth)
+raw_phospho_se = as(phospho_gct, "SummarizedExperiment")
+
+phospho_loc_tbl = read_tsv(
+    phospho_loc_pth,
+    col_types = cols(
+        peptide_start = col_integer(),
+        peptide_end = col_integer()
+    ))
+```
+
+```{r}
+raw_phospho_row_tbl = rowData(raw_phospho_se) %>%
+    as_tibble(rownames = 'original_id') %>%
+    inner_join(phospho_loc_tbl, by = c('original_id' = 'rid'))
+
+raw_phospho_row_tbl %>% head()
+```
+```{r}
+phospho_na_percent = rowSums(is.na(assay(raw_phospho_se[raw_phospho_row_tbl$original_id, ]))) / ncol(raw_phospho_se)
+hist(phospho_na_percent)
+```
+
+```{r}
+phospho_row_tbl = raw_phospho_row_tbl %>%
+    bind_cols(tibble(na_percent = phospho_na_percent)) %>%
+    filter(
+        peptide_loc_valid,
+        na_percent <= 0.8
+    ) %>%
+    select(
+        original_id,
+        refseq_prot_id = accession_number,
+        phosphosites,
+        symbol = geneSymbol,
+        peptide = sequence,
+        peptide_start,
+        peptide_end,
+        na_percent
+    ) %>%
+    arrange(symbol, phosphosites, na_percent) %>%
+    mutate(
+        unique_site_id = base::make.unique(
+            str_c(symbol, refseq_prot_id, phosphosites, sep = ':'),
+            sep='.'
+        )
+    )
+
+phospho_row_tbl %>% head()
+```
+Some sites have duplication
+```{r}
+phospho_row_tbl %>%
+    count(symbol, phosphosites, sort = TRUE) %>%
+    filter(n > 1)
+```
+
+Combine the RefSeq annotation
+```{r}
+protein_annotation_tbl = protein_annotation_gr %>%
+    mcols() %>%
+    as_tibble() %>%
+    select(-symbol)
+```
+
+```{r}
+phospho_row_full_tbl = phospho_row_tbl %>%
+    select(unique_site_id, original_id, refseq_prot_id, symbol, phosphosites,
+           peptide, peptide_start, peptide_end) %>%
+    left_join(
+        protein_annotation_tbl,
+        by = 'refseq_prot_id'
+    )
+
+phospho_row_full_tbl %>% head()
+```
+
+```{r}
+identical(rownames(colData(raw_phospho_se)), protein_col_tbl$preferred_sample_name)
+```
+
+```{r}
+phospho_se = raw_phospho_se[phospho_row_full_tbl$original_id, ]
+
+rownames(phospho_se) = phospho_row_full_tbl$unique_site_id
+rowData(phospho_se) = phospho_row_full_tbl %>% column_to_rownames('unique_site_id')
+colData(phospho_se) = colData(protein_se)
+assayNames(phospho_se) = 'normalized'
+
+metadata(phospho_se) = se_metadata
+```
+
+```{r}
+phospho_se
+```
+
+
+
+## Acetyl
+```{r}
+acetyl_gct = parse_gctx(acetyl_pth)
+raw_acetyl_se = as(acetyl_gct, "SummarizedExperiment")
+
+acetyl_loc_tbl = read_tsv(
+    acetyl_loc_pth,
+    col_types = cols(
+        peptide_start = col_integer(),
+        peptide_end = col_integer()
+    ))
+```
+
+```{r}
+raw_acetyl_row_tbl = rowData(raw_acetyl_se) %>%
+    as_tibble(rownames = 'original_id') %>%
+    inner_join(acetyl_loc_tbl, by = c('original_id' = 'rid'))
+
+raw_acetyl_row_tbl %>% head()
+```
+```{r}
+acetyl_na_percent = rowSums(is.na(assay(raw_acetyl_se[raw_acetyl_row_tbl$original_id, ]))) / ncol(raw_acetyl_se)
+hist(acetyl_na_percent)
+```
+```{r}
+acetyl_row_tbl = raw_acetyl_row_tbl %>%
+    bind_cols(tibble(na_percent = acetyl_na_percent)) %>%
+    filter(
+        peptide_loc_valid,
+        na_percent <= 0.8
+    ) %>%
+    select(
+        original_id,
+        refseq_prot_id = accession_number,
+        acetylsites,
+        symbol = geneSymbol,
+        peptide = sequence,
+        peptide_start,
+        peptide_end,
+        na_percent
+    ) %>%
+    arrange(symbol, acetylsites, na_percent) %>%
+    mutate(
+        unique_site_id = base::make.unique(
+            str_c(symbol, refseq_prot_id, acetylsites, sep = ':'),
+            sep='.'
+        )
+    )
+
+acetyl_row_tbl %>% head()
+```
+
+Some sites have duplication
+```{r}
+acetyl_row_tbl %>%
+    count(symbol, acetylsites, sort = TRUE) %>%
+    filter(n > 1)
+```
+
+
+Combine the RefSeq annotation
+```{r}
+acetyl_row_full_tbl = acetyl_row_tbl %>%
+    select(unique_site_id, original_id, refseq_prot_id, symbol, acetylsites,
+           peptide, peptide_start, peptide_end) %>%
+    left_join(
+        protein_annotation_tbl,
+        by = 'refseq_prot_id'
+    )
+
+acetyl_row_full_tbl %>% head()
+```
+Check if we can re-use the protein col data
+```{r}
+identical(rownames(colData(raw_acetyl_se)), protein_col_tbl$preferred_sample_name)
+```
+
+```{r}
+acetyl_se = raw_acetyl_se[acetyl_row_full_tbl$original_id, ]
+
+rownames(acetyl_se) = acetyl_row_full_tbl$unique_site_id
+rowData(acetyl_se) = acetyl_row_full_tbl %>% column_to_rownames('unique_site_id')
+colData(acetyl_se) = colData(protein_se)
+assayNames(acetyl_se) = 'normalized'
+
+metadata(acetyl_se) = se_metadata
+```
+
+```{r}
+acetyl_se
+```
+
+
+
+## Export
+```{r}
+protein_se %>% saveRDS(here('final_output/CPTAC2_BRCA_prospective/CPTAC2_BRCA_prospective_broad_proteome.rds'))
+phospho_se %>% saveRDS(here('final_output/CPTAC2_BRCA_prospective/CPTAC2_BRCA_prospective_broad_phosphoproteome.rds'))
+acetyl_se %>% saveRDS(here('final_output/CPTAC2_BRCA_prospective/CPTAC2_BRCA_prospective_broad_acetylome.rds'))
+```
