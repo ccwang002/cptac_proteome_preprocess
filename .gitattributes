@@ -1,2 +1,2 @@
-notebooks/**/*.html -linguist-detectable
+*.html -linguist-detectable
 *.Rmd linguist-detectable
