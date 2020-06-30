@@ -1986,7 +1986,7 @@ acetyl_row_full_tbl %&gt;% head()</code></pre>
 
 rownames(acetyl_se) = acetyl_row_full_tbl$unique_site_id
 rowData(acetyl_se) = acetyl_row_full_tbl %&gt;% column_to_rownames(&#39;unique_site_id&#39;)
-colData(acetyl_se) = colData(acetyl_se)
+colData(acetyl_se) = colData(protein_se)
 assayNames(acetyl_se) = &#39;normalized&#39;
 
 metadata(acetyl_se) = list(
@@ -2003,7 +2003,8 @@ metadata(acetyl_se) = list(
 ## rowData names(21): original_id refseq_prot_id ...
 ##   uniparc_xref_ensembl_prot_ids uniparc_xref_uniprot_ids
 ## colnames(211): C3N.01799 C3N.01799.N ... C3L.02365 C3L.02365.N
-## colData names(79): Sample.ID Sample.IDs ... Putative.driver.mutation id</code></pre>
+## colData names(5): case_id aliquot_id tmt_experiment tmt_channel
+##   sample_type</code></pre>
 </div>
 <div id="export" class="section level2">
 <h2>Export</h2>

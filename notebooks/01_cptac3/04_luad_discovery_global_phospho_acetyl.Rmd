@@ -331,7 +331,7 @@ acetyl_se = raw_acetyl_se[acetyl_row_full_tbl$original_id, ]
 
 rownames(acetyl_se) = acetyl_row_full_tbl$unique_site_id
 rowData(acetyl_se) = acetyl_row_full_tbl %>% column_to_rownames('unique_site_id')
-colData(acetyl_se) = colData(acetyl_se)
+colData(acetyl_se) = colData(protein_se)
 assayNames(acetyl_se) = 'normalized'
 
 metadata(acetyl_se) = list(

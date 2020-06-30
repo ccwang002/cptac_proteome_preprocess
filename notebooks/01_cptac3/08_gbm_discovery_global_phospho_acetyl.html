@@ -1919,7 +1919,7 @@ acetyl_row_full_tbl %&gt;% head()</code></pre>
 
 rownames(acetyl_se) = acetyl_row_full_tbl$unique_site_id
 rowData(acetyl_se) = acetyl_row_full_tbl %&gt;% column_to_rownames(&#39;unique_site_id&#39;)
-colData(acetyl_se) = colData(acetyl_se)
+colData(acetyl_se) = colData(protein_se)
 
 metadata(acetyl_se) = list(
     cohort = &#39;CPTAC3 GBM discovery cohort&#39;,
@@ -1935,8 +1935,8 @@ metadata(acetyl_se) = list(
 ## rowData names(21): original_id refseq_prot_id ...
 ##   uniparc_xref_ensembl_prot_ids uniparc_xref_uniprot_ids
 ## colnames(109): C3L-00104 C3L-00365 ... PT-WVLH PT-Y8DK
-## colData names(5): tumor_normal tmt_plex tmt_channel parent_sample_ids
-##   aliquot_id</code></pre>
+## colData names(5): case_id aliquot_id tmt_experiment tmt_channel
+##   sample_type</code></pre>
 </div>
 <div id="export" class="section level2">
 <h2>Export</h2>
