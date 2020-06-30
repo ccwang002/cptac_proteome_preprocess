@@ -308,8 +308,8 @@ selected_phospho_se = phospho_se[, samples_to_keep]
 
 ## Export
 ```{r}
-selected_protein_se %>% saveRDS(here('final_output/CPTAC3_HNSCC_discovery/CPTAC3_HNSCC_umich_proteome.rds'))
-selected_phospho_se %>% saveRDS(here('final_output/CPTAC3_HNSCC_discovery/CPTAC3_HNSCC_umich_phosphoproteome.rds'))
+selected_protein_se %>% saveRDS(here('final_output/CPTAC3_HNSCC_discovery/CPTAC3_HNSCC_discovery_umich_proteome.rds'))
+selected_phospho_se %>% saveRDS(here('final_output/CPTAC3_HNSCC_discovery/CPTAC3_HNSCC_discovery_umich_phosphoproteome.rds'))
 ```
 
 Export as GCT formats

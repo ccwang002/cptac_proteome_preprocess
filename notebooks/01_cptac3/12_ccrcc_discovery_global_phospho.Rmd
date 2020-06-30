@@ -269,6 +269,6 @@ phospho_se
 
 ## Export
 ```{r}
-protein_se %>% saveRDS(here('final_output/CPTAC3_CCRCC_discovery/CPTAC3_CCRCC_umich_proteome.rds'))
-phospho_se %>% saveRDS(here('final_output/CPTAC3_CCRCC_discovery/CPTAC3_CCRCC_umich_phosphoproteome.rds'))
+protein_se %>% saveRDS(here('final_output/CPTAC3_CCRCC_discovery/CPTAC3_CCRCC_discovery_umich_proteome.rds'))
+phospho_se %>% saveRDS(here('final_output/CPTAC3_CCRCC_discovery/CPTAC3_CCRCC_discovery_umich_phosphoproteome.rds'))
 ```

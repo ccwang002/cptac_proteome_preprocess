@@ -376,7 +376,7 @@ ubiquitin_se
 
 ## Export
 ```{r}
-protein_se %>% saveRDS(here('final_output/CPTAC3_LSCC_discovery/CPTAC3_LSCC_broad_proteome.rds'))
-phospho_se %>% saveRDS(here('final_output/CPTAC3_LSCC_discovery/CPTAC3_LSCC_broad_phosphoproteome.rds'))
-ubiquitin_se %>% saveRDS(here('final_output/CPTAC3_LSCC_discovery/CPTAC3_LSCC_broad_ubiquitylome.rds'))
+protein_se %>% saveRDS(here('final_output/CPTAC3_LSCC_discovery/CPTAC3_LSCC_discovery_broad_proteome.rds'))
+phospho_se %>% saveRDS(here('final_output/CPTAC3_LSCC_discovery/CPTAC3_LSCC_discovery_broad_phosphoproteome.rds'))
+ubiquitin_se %>% saveRDS(here('final_output/CPTAC3_LSCC_discovery/CPTAC3_LSCC_discovery_broad_ubiquitylome.rds'))
 ```

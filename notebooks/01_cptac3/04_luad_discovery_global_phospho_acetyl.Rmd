@@ -348,7 +348,7 @@ acetyl_se
 
 ## Export
 ```{r}
-protein_se %>% saveRDS(here('final_output/CPTAC3_LUAD_discovery/CPTAC3_LUAD_broad_proteome.rds'))
-phospho_se %>% saveRDS(here('final_output/CPTAC3_LUAD_discovery/CPTAC3_LUAD_broad_phosphoproteome.rds'))
-acetyl_se %>% saveRDS(here('final_output/CPTAC3_LUAD_discovery/CPTAC3_LUAD_broad_acetylome.rds'))
+protein_se %>% saveRDS(here('final_output/CPTAC3_LUAD_discovery/CPTAC3_LUAD_discovery_broad_proteome.rds'))
+phospho_se %>% saveRDS(here('final_output/CPTAC3_LUAD_discovery/CPTAC3_LUAD_discovery_broad_phosphoproteome.rds'))
+acetyl_se %>% saveRDS(here('final_output/CPTAC3_LUAD_discovery/CPTAC3_LUAD_discovery_broad_acetylome.rds'))
 ```
