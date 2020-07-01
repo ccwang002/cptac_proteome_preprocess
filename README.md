@@ -2,10 +2,12 @@
 
 ### Folder structure
 ```
-intermediates
-final_output
-annotation
+notebooks       All the notebooks to preprocess the data
+intermediates   Intermediate/temporary files
+final_output    Final output files
+annotation      Annotation and their processing scripts
 ```
+
 
 ### Upstream data sources
 Upstream data sources were collected in `~/Box/MyCPTAC/CPTAC_data_collection_v1`.
@@ -26,6 +28,19 @@ conda create -n cptac \
 ```
 
 Additionally it needs R 4.0 and Bioconductor 3.11.
+
+
+### Run the workflow
+For the first run, one should run the R and Python notebooks in order.
+
+For subsequence runs, where intermediates files are available,
+one can update all the final output files by running all the R notebooks in parallel:
+
+```bash
+parallel -j4 --bar \
+    "R -e \"rmarkdown::render('{}')\"" \
+    ::: ??_*.Rmd
+```
 
 
 ### Ding lab internal
