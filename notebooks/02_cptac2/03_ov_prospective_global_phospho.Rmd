@@ -263,6 +263,12 @@ phospho_loc_tbl = read_tsv(
 phospho_loc_tbl %>% head()
 ```
 
+Many peptides have invalid location
+```{r}
+phospho_loc_tbl %>% 
+    count(peptide_loc_valid, peptide_loc_invalid_reason)
+```
+
 Create the phospho matrix
 ```{r}
 phospho_mat = raw_phospho_tbl %>%
@@ -296,11 +302,6 @@ raw_phospho_annotate_row_tbl = raw_phospho_row_tbl %>%
     )
 
 raw_phospho_annotate_row_tbl %>% head()
-```
-Many peptides have invalid location
-```{r}
-raw_phospho_annotate_row_tbl %>% 
-    count(peptide_loc_valid, peptide_loc_invalid_reason)
 ```
 ```{r}
 raw_phospho_annotate_row_tbl %>%
