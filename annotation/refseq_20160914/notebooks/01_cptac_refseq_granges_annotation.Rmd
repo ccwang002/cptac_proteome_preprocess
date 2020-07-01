@@ -333,8 +333,16 @@ refseq_human_anno_tbl = bind_rows(
     refseq_human_anno_tbl %>%
         filter(entrez_gene_id %in% hgnc_extra_tbl$entrez_gene_id) %>%
         select(-hgnc_id, -ensembl_gene_id) %>%
-        left_join(hgnc_extra_tbl, by = 'entrez_gene_id')
+        left_join(
+            hgnc_extra_tbl %>% 
+                select(entrez_gene_id, hgnc_id, ensembl_gene_id), 
+            by = 'entrez_gene_id'
+        )
 )
+```
+
+```{r}
+colnames(refseq_human_anno_tbl)
 ```
 
 List the entries without HGNC ID
