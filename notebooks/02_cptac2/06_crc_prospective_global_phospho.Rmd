@@ -176,7 +176,8 @@ protein_se
 
 ### Phospho
 ```{r}
-raw_phospho_tbl = read_tsv(phospho_pth)
+raw_phospho_tbl = read_tsv(phospho_pth) %>%
+    mutate(original_id = str_c(Peptide, Phosphosite, sep = ':'))
 ```
 ```{r}
 raw_phospho_tbl %>% count(Peptide) %>% filter(n > 1) 
@@ -192,6 +193,14 @@ phospho_loc_tbl = read_tsv(
     ))
 phospho_loc_tbl %>% head()
 ```
+Some entries are discarded because they are not in RefSeq 2018
+```{r}
+raw_phospho_tbl %>%
+    filter(!original_id %in% phospho_loc_tbl$original_id) %>%
+    extract(Phosphosite, c('refseq_prot_id', 'phosphosites'), '^([^:]+):((?:[a-z\\d+])+)$') %>%
+    count(Gene, refseq_prot_id, sort = TRUE)
+```
+
 ```{r}
 raw_phospho_row_tbl = raw_phospho_tbl %>%
     transmute(original_id = str_c(Peptide, Phosphosite, sep = ':')) %>%
@@ -209,10 +218,10 @@ phospho_mat = raw_phospho_tbl %>%
 # Re-order the samples
 phospho_mat = phospho_mat[, protein_sample_tbl$aliquot_id]
 colnames(phospho_mat) = protein_sample_tbl$preferred_sample_name
-rownames(phospho_mat) = str_c(raw_phospho_tbl$Peptide, raw_phospho_tbl$Phosphosite, sep = ':')
+rownames(phospho_mat) = raw_phospho_tbl$original_id
 
 phospho_mat = phospho_mat[raw_phospho_row_tbl$original_id, ]
-phospho_mat[1:5, 1:5]
+phospho_mat[1:5, 1:10]
 ```
 
 Calculate the NA% per peptide (to order the site)
