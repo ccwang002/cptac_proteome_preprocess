@@ -26,8 +26,8 @@ phospho_pth = fs::path(DATA_ROOT, 'CPTAC2/CRC_prospective/CPTAC2_Colon_Prospecti
 phospho_loc_pth = fs::path(DATA_ROOT, 'CPTAC2/CRC_prospective/CPTAC2_Colon_Prospective_Collection_PNNL_Phosphoproteome.phosphosite.tmt10.tsv.peptide_location.tsv.gz')
 
 se_metadata = list(
-    cohort = 'CPTAC2 OV prospective cohort',
-    pipeline = 'PNNL'
+    cohort = 'CPTAC2 CRC prospective cohort',
+    pipeline = 'CDAP'
 )
 ```
 
