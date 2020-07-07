@@ -36,7 +36,7 @@ def main(
     xs = xmlschema.XMLSchema('https://www.uniprot.org/docs/uniparc.xsd')
 
     records = []
-    for prot_id in prot_ids:
+    for i, prot_id in enumerate(prot_ids, 1):
         xml_pth = Path(xml_root, f'{prot_id}.xml')
         data, errors = xs.to_dict(str(xml_pth), validation='lax')
         if len(data['entry']) > 1:
@@ -56,6 +56,10 @@ def main(
             "refseq_prot_ids": ref_ids["RefSeq"],
         }
         records.append(record)
+
+        # Show progress
+        if i % 1000 == 1:
+            logger.info(f"... processed {i:,d} entries")
 
     # Collect the results
     logger.info(f"Write query results to {out_tsv_pth}")
