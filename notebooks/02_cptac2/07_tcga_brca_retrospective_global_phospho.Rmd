@@ -237,12 +237,6 @@ Make sure all the phosphosites are in the metadata table
 setdiff(rownames(raw_phospho_se), phospho_meta_tbl$original_site_id)
 ```
 
-TODO:
-- extract phospho row info
-- get phospho loc
-- parse
-
-
 ```{r}
 raw_phospho_row_tbl = tibble(original_site_id = rownames(raw_phospho_se)) %>%
     left_join(phospho_meta_tbl, by = 'original_site_id')

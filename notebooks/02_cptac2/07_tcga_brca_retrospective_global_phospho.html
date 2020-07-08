@@ -1912,7 +1912,6 @@ setdiff(protein_tbl$accession_number, refseq_prot_no_ver_tbl$refseq_prot_no_ver_
 <p>Make sure all the phosphosites are in the metadata table</p>
 <pre class="r"><code>setdiff(rownames(raw_phospho_se), phospho_meta_tbl$original_site_id)</code></pre>
 <pre><code>## character(0)</code></pre>
-<p>TODO: - extract phospho row info - get phospho loc - parse</p>
 <pre class="r"><code>raw_phospho_row_tbl = tibble(original_site_id = rownames(raw_phospho_se)) %&gt;%
     left_join(phospho_meta_tbl, by = &#39;original_site_id&#39;)
 
