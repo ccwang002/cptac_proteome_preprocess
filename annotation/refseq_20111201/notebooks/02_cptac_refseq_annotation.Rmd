@@ -1,0 +1,193 @@
+---
+title: "Make Genomic Annotation of CPTAC3 RefSeq 20111201"
+output:
+    html_document:
+        df_print: paged
+---
+
+```{r, message=FALSE}
+library(SummarizedExperiment)
+library(here)
+library(tidyverse)
+```
+
+All source annotation files downloaded from DCC:
+```{r}
+REFSEQ_GENE_ID_MAP_PTH = '~/Box/MyCPTAC/CPTAC_data_collection_v1/DCC/RefSeq_20111201/release49.accession2geneid.gz'
+```
+
+Extra UniParc annotations:
+```{r}
+UNIPARC_TSV_PTH = here('annotation/intermediates/refseq_20111201/refseq_uniparc_mapping.tsv.gz')
+```
+
+Extra HGNC query based on Entrez/NCBI gene IDs:
+```{r}
+HGNC_EXTRA_TSV_PTH = here('annotation/refseq_20111201/custom_sources/entrez_gene_ids_extra_hgnc_biomart_2020-07-08.txt.gz')
+```
+
+Load the UniParc tables
+```{r}
+uniparc_tbl = read_tsv(UNIPARC_TSV_PTH) %>%
+    rename(
+        refseq_prot_id = original_prot_id,
+        uniparc_crc64_checksum = uniparc_checksum,
+        uniparc_xref_uniprot_ids = uniprot_ids,
+        uniparc_xref_ensembl_prot_ids = ensembl_prot_ids,
+        uniparc_xref_refseq_prot_ids = refseq_prot_ids
+    ) %>%
+    mutate(original_prot_id = str_replace(refseq_prot_id, '\\.\\d+$', ''))
+
+uniparc_tbl %>% head()
+```
+
+Make sure the IDs cover all the TCGA OV entries:
+```{r}
+all_tcga_ov_refseq_ids = read_lines(here('annotation/intermediates/refseq_20111201/tcga_ov_all_refseq_ids.list'))
+setdiff(all_tcga_ov_refseq_ids, uniparc_tbl$original_prot_id)
+```
+
+```{r}
+refseq_release_id_map_tbl = read_tsv(
+    REFSEQ_GENE_ID_MAP_PTH,
+    col_names = c('tax_id', 'entrez_gene_id', 'refseq_tx_id', 'refseq_prot_id'),
+    na = c("", "NA", "na"),
+    col_types = cols(
+      tax_id = col_double(),
+      entrez_gene_id = col_double(),
+      refseq_tx_id = col_character(),
+      refseq_prot_id = col_character()
+    )
+) %>%
+    filter(tax_id == 9606) %>%
+    select(refseq_prot_id, entrez_gene_id)
+```
+
+```{r}
+refseq_human_with_entrez_gene_tbl = uniparc_tbl %>%
+    left_join(refseq_release_id_map_tbl, by = 'refseq_prot_id') 
+```
+
+```{r}
+refseq_ids_missing_entrez_gene = refseq_human_with_entrez_gene_tbl %>%
+    filter(is.na(entrez_gene_id)) %>%
+    pull(refseq_prot_id)
+
+length(refseq_ids_missing_entrez_gene)
+```
+
+Export the list of RefSeq IDs without entrez IDs
+```{r}
+refseq_ids_missing_entrez_gene %>%
+    write_lines('../custom_sources/refseq_ids_missing_entrez_gene_id.list')
+```
+
+```{r}
+biodbnet_entrez_map_tbl = read_tsv(
+        '../custom_sources/bioDBnet_db2db_refseq_to_entrez_gene.2007-07-08.manual.txt',
+        na = c("", "NA", "-")
+    ) %>%
+    rename(original_id = `RefSeq Protein Accession`, biodbnet_entrez_gene_id = `Gene ID`)
+```
+```{r}
+biodbnet_entrez_map_tbl %>% count(original_id) %>% filter(n > 1)
+```
+```{r}
+biodbnet_entrez_map_tbl %>% filter(is.na(biodbnet_entrez_gene_id))
+```
+
+
+```{r}
+refseq_human_with_entrez_gene_tbl = refseq_human_with_entrez_gene_tbl %>%
+    left_join(biodbnet_entrez_map_tbl, by = c("original_prot_id" = "original_id")) %>%
+    mutate(
+        entrez_gene_id = case_when(
+            !is.na(entrez_gene_id) ~ entrez_gene_id,
+            !is.na(biodbnet_entrez_gene_id) ~ biodbnet_entrez_gene_id,
+            TRUE ~ NA_real_
+        )
+    ) %>%
+    select(original_prot_id, refseq_prot_id, uniparc_id, uniparc_crc64_checksum,
+           uniparc_xref_ensembl_prot_ids, uniparc_xref_uniprot_ids, uniparc_xref_refseq_prot_ids,
+           entrez_gene_id)
+```
+
+
+## Recover HGNC IDs
+Export the NCBI/Entrez Gene ID
+```
+refseq_human_with_entrez_gene_tbl$entrez_gene_id %>%
+    write_lines('../../intermediates/refseq_20111201/entrez_gene_ids.list')
+```
+
+Export the list of Entrez gene IDs and query the Biomart with following attributes: HGNC ID, Status, Approved symbol, Approved name, Date approved, Date modified, Date symbol changed, Date name changed, Locus group, Locus type, HGNC family ID, HGNC family name, Ensembl gene ID, NCBI gene ID.
+
+Read in the extra HGNC query table
+```{r}
+hgnc_extra_tbl = read_tsv(
+    HGNC_EXTRA_TSV_PTH,
+    col_types = cols(
+        .default = col_character(),
+        `Date approved` = col_date(format = '%Y-%m-%d'),
+        `Date symbol changed` = col_date(format = '%Y-%m-%d'),
+        `Date name changed` = col_date(format = '%Y-%m-%d'),
+        `Date modified` = col_date(format = '%Y-%m-%d')
+    )
+) %>%
+    select(hgnc_id = `HGNC ID`, hgnc_symbol = `Approved symbol`, 
+           entrez_gene_id=`NCBI gene ID`, ensembl_gene_id=`Ensembl gene ID`) %>%
+    mutate(entrez_gene_id = as.integer(entrez_gene_id))
+```
+
+```{r}
+refseq_human_anno_tbl = refseq_human_with_entrez_gene_tbl %>%
+    left_join(hgnc_extra_tbl, by = 'entrez_gene_id') %>%
+    select(
+        hgnc_symbol, refseq_prot_id,
+        uniparc_id,
+        hgnc_id, entrez_gene_id, ensembl_gene_id,
+        uniparc_crc64_checksum,
+        uniparc_xref_refseq_prot_ids,
+        uniparc_xref_ensembl_prot_ids,
+        uniparc_xref_uniprot_ids,
+        original_prot_id,
+    )
+
+
+refseq_human_anno_tbl %>% head()
+```
+
+List the entries without gene ID or HGNC ID
+```{r}
+refseq_human_anno_tbl %>%
+    mutate(has_entrez = !is.na(entrez_gene_id), has_hgnc = !is.na(hgnc_id)) %>%
+    count(has_entrez, has_hgnc)
+```
+
+Some Entrez Gene IDs cannot be mapped to HGNC
+```{r}
+refseq_human_anno_tbl %>%
+    filter(!is.na(entrez_gene_id), is.na(hgnc_id)) %>%
+    select(refseq_prot_id, entrez_gene_id, hgnc_symbol)
+```
+
+
+Some entries don't have a gene symbol
+```{r}
+refseq_human_anno_tbl %>%
+    filter(is.na(hgnc_symbol))
+```
+
+
+
+The de_dup version is easier to use, so use it as default:
+```{r}
+refseq_20111201_tbl = refseq_human_anno_tbl
+```
+
+## Export
+```{r}
+refseq_20111201_tbl %>% 
+    write_tsv(here('annotation/refseq_20111201/tracked_results/refseq_20111201_human_only.tsv.gz'))
+```
+
