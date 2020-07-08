@@ -212,6 +212,14 @@ refseq_human_anno_tbl %>%
 ```
 
 
+Some entries don't have a gene symbol
+```{r}
+refseq_human_anno_tbl %>%
+    filter(is.na(symbol))
+```
+
+
+
 The de_dup version is easier to use, so use it as default:
 ```{r}
 refseq_20130727_tbl = refseq_human_anno_tbl
