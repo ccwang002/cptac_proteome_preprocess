@@ -14,11 +14,11 @@ library(tidyverse)
 
 All source annotation files downloaded from DCC:
 ```{r}
-REFSEQ_IDS_TSV_PTH = '~/Box/MyCPTAC/CPTAC_data_collection_v1/DCC/RefSeq_20160914/RefSeq.20160914_Human_ucsc_hg19_customProDBnr_mito_150contams.fasta.SGSN.categories.tsv.gz'
-REFSEQ_IDS_DF_PTH = '~/Box/MyCPTAC/CPTAC_data_collection_v1/DCC/RefSeq_20160914/intermediate_20160914_hg19/ids.RData'
-TXDB_PTH = '~/Box/MyCPTAC/CPTAC_data_collection_v1/DCC/RefSeq_20160914/intermediate_20160914_hg19/txdb.sqlite'
-CHRM_REFSEQ_TSV_PTH = '~/Box/MyCPTAC/CPTAC_data_collection_v1/DCC/RefSeq_20160914/refseq_hg19_20200629_chrMT_only.tsv.gz'
-HGNC_PROTEIN_CODING_TSV_PTH = '~/Box/MyCPTAC/CPTAC_data_collection_v1/DCC/RefSeq_20160914/intermediate_20160914_hg19/protein-coding_gene.txt.gz'
+REFSEQ_IDS_TSV_PTH = '~/Box/MyCPTAC/CPTAC_proteome_v1/DCC/RefSeq_20160914/RefSeq.20160914_Human_ucsc_hg19_customProDBnr_mito_150contams.fasta.SGSN.categories.tsv.gz'
+REFSEQ_IDS_DF_PTH = '~/Box/MyCPTAC/CPTAC_proteome_v1/DCC/RefSeq_20160914/intermediate_20160914_hg19/ids.RData'
+TXDB_PTH = '~/Box/MyCPTAC/CPTAC_proteome_v1/DCC/RefSeq_20160914/intermediate_20160914_hg19/txdb.sqlite'
+CHRM_REFSEQ_TSV_PTH = '~/Box/MyCPTAC/CPTAC_proteome_v1/DCC/RefSeq_20160914/refseq_hg19_20200629_chrMT_only.tsv.gz'
+HGNC_PROTEIN_CODING_TSV_PTH = '~/Box/MyCPTAC/CPTAC_proteome_v1/DCC/RefSeq_20160914/intermediate_20160914_hg19/protein-coding_gene.txt.gz'
 ```
 
 Extra UniParc annotations:

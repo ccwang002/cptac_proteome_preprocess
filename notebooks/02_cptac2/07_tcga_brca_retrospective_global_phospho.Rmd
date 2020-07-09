@@ -14,7 +14,7 @@ library(tidyverse)
 ```
 
 ```{r}
-DATA_ROOT = '~/Box/MyCPTAC/CPTAC_data_collection_v1'
+DATA_ROOT = '~/Box/MyCPTAC/CPTAC_proteome_v1'
 ```
 
 ```{r}
@@ -210,7 +210,7 @@ phospho_meta_tbl %>% head()
 
 CDAP is not useful because we don't have the annotation of their search database
 ```
-cdap_phospho_tbl = read_tsv('~/Box/MyCPTAC/CPTAC_data_collection_v1/CPTAC2/TCGA_BRCA_retrospective/CDAP/TCGA_Breast_BI_Phosphoproteome.phosphosite.itraq.tsv')
+cdap_phospho_tbl = read_tsv('~/Box/MyCPTAC/CPTAC_proteome_v1/CPTAC2/TCGA_BRCA_retrospective/CDAP/TCGA_Breast_BI_Phosphoproteome.phosphosite.itraq.tsv')
 
 cdap_phospho_row_tbl = cdap_phospho_tbl %>%
     select(Phosphosite) %>%
@@ -248,7 +248,7 @@ raw_phospho_row_tbl %>% head()
 Export the phosphosite peptide information to find location
 ```
 raw_phospho_row_tbl %>% 
-    write_tsv('~/Box/MyCPTAC/CPTAC_data_collection_v1/CPTAC2/TCGA_BRCA_retrospective/phosphoproteome_P3_peptide_annotation.tsv.gz')
+    write_tsv('~/Box/MyCPTAC/CPTAC_proteome_v1/CPTAC2/TCGA_BRCA_retrospective/phosphoproteome_P3_peptide_annotation.tsv.gz')
 ```
 
 

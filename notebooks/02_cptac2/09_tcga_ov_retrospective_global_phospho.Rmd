@@ -13,7 +13,7 @@ library(tidyverse)
 ```
 
 ```{r}
-DATA_ROOT = '~/Box/MyCPTAC/CPTAC_data_collection_v1'
+DATA_ROOT = '~/Box/MyCPTAC/CPTAC_proteome_v1'
 ```
 
 ```{r}
@@ -226,7 +226,7 @@ Export the phosphosite peptide information to find location
 raw_phospho_row_tbl %>%
     filter(!is.na(Site)) %>%
     select(refseq_prot_id, Peptide, Site) %>%
-    write_tsv('~/Box/MyCPTAC/CPTAC_data_collection_v1/CPTAC2/TCGA_OV_retrospective/mmc3_phosphoproteome_ischemia_filtered_peptide_annotation.tsv.gz')
+    write_tsv('~/Box/MyCPTAC/CPTAC_proteome_v1/CPTAC2/TCGA_OV_retrospective/mmc3_phosphoproteome_ischemia_filtered_peptide_annotation.tsv.gz')
 ```
 
 

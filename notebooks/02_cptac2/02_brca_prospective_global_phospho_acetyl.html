@@ -1654,7 +1654,7 @@ summary {
 library(cmapR)
 library(here)
 library(tidyverse)</code></pre>
-<pre class="r"><code>DATA_ROOT = &#39;~/Box/MyCPTAC/CPTAC_data_collection_v1&#39;</code></pre>
+<pre class="r"><code>DATA_ROOT = &#39;~/Box/MyCPTAC/CPTAC_proteome_v1&#39;</code></pre>
 <pre class="r"><code>protein_pth = fs::path(DATA_ROOT, &#39;CPTAC2/BRCA_prospective/prosp-brca-v5.3-proteome-ratio-norm-NArm.gct&#39;)
 
 phospho_pth = fs::path(DATA_ROOT, &#39;CPTAC2/BRCA_prospective/prosp-brca-v5.3-phosphoproteome-ratio-norm-NArm.gct&#39;)
@@ -1683,7 +1683,7 @@ names(mcols(protein_annotation_gr))</code></pre>
 <h2>Protein</h2>
 <pre class="r"><code>protein_gct = parse_gctx(protein_pth)</code></pre>
 <pre><code>## parsing as GCT v1.3</code></pre>
-<pre><code>## ~/Box/MyCPTAC/CPTAC_data_collection_v1/CPTAC2/BRCA_prospective/prosp-brca-v5.3-proteome-ratio-norm-NArm.gct 10107 rows, 122 cols, 15 row descriptors, 82 col descriptors</code></pre>
+<pre><code>## ~/Box/MyCPTAC/CPTAC_proteome_v1/CPTAC2/BRCA_prospective/prosp-brca-v5.3-proteome-ratio-norm-NArm.gct 10107 rows, 122 cols, 15 row descriptors, 82 col descriptors</code></pre>
 <pre class="r"><code>raw_protein_se = as(protein_gct, &quot;SummarizedExperiment&quot;)</code></pre>
 <p>Make sure the gene symbols are the same as the protein annotation</p>
 <pre class="r"><code>rowData(raw_protein_se) %&gt;%
@@ -1809,7 +1809,7 @@ metadata(protein_se) = se_metadata</code></pre>
 <h2>Phospho</h2>
 <pre class="r"><code>phospho_gct = parse_gctx(phospho_pth)</code></pre>
 <pre><code>## parsing as GCT v1.3</code></pre>
-<pre><code>## ~/Box/MyCPTAC/CPTAC_data_collection_v1/CPTAC2/BRCA_prospective/prosp-brca-v5.3-phosphoproteome-ratio-norm-NArm.gct 38968 rows, 122 cols, 21 row descriptors, 82 col descriptors</code></pre>
+<pre><code>## ~/Box/MyCPTAC/CPTAC_proteome_v1/CPTAC2/BRCA_prospective/prosp-brca-v5.3-phosphoproteome-ratio-norm-NArm.gct 38968 rows, 122 cols, 21 row descriptors, 82 col descriptors</code></pre>
 <pre class="r"><code>raw_phospho_se = as(phospho_gct, &quot;SummarizedExperiment&quot;)
 
 phospho_loc_tbl = read_tsv(
@@ -1915,7 +1915,7 @@ metadata(phospho_se) = se_metadata</code></pre>
 <h2>Acetyl</h2>
 <pre class="r"><code>acetyl_gct = parse_gctx(acetyl_pth)</code></pre>
 <pre><code>## parsing as GCT v1.3</code></pre>
-<pre><code>## ~/Box/MyCPTAC/CPTAC_data_collection_v1/CPTAC2/BRCA_prospective/prosp-brca-v5.3-acetylome-ratio-norm-NArm.gct 9869 rows, 122 cols, 19 row descriptors, 82 col descriptors</code></pre>
+<pre><code>## ~/Box/MyCPTAC/CPTAC_proteome_v1/CPTAC2/BRCA_prospective/prosp-brca-v5.3-acetylome-ratio-norm-NArm.gct 9869 rows, 122 cols, 19 row descriptors, 82 col descriptors</code></pre>
 <pre class="r"><code>raw_acetyl_se = as(acetyl_gct, &quot;SummarizedExperiment&quot;)
 
 acetyl_loc_tbl = read_tsv(
