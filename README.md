@@ -1,4 +1,30 @@
 ## CPTAC proteome data preprocess
+Preprocessing the CPTAC proteome data (global/phospho/acetyl/ubiquityl).
+
+Currently it covers (`-` = not available):
+
+|    CPTAC stage     | Cohort | Global | Phospho | Acetyl | Ubiquityl | Peptide search database |
+| :----------------- | ------ | ------ | ------- | ------ | --------- | ----------------------- |
+| CPTAC2/TCGA        | BRCA   | v      | v       | -      | -         | RefSeq 20130727         |
+|                    | OV     | v      | v       | -      | -         | RefSeq 20111201         |
+| CPTAC2 prospective | BRCA   | v      | v       | v      | -         | RefSeq 20160914         |
+|                    | CRC    | v      | v       | -      | -         | RefSeq 20171003†        |
+|                    | OV     | v      | v       | -      | -         | RefSeq 20160914         |
+| CPTAC3 discovery   | CCRCC  | v      | v       | -      | -         | RefSeq 20180629         |
+|                    | HNSCC  | v      | v       | -      | -         | RefSeq 20180629         |
+|                    | LUAD   | v      | v       | v      | -         | RefSeq 20180629*        |
+|                    | LSCC   | v      | v       | -      | v         | RefSeq 20180629*        |
+|                    | GBM    | v      | v       | v      | -         | RefSeq 20180629         |
+|                    | UCEC   | v      | v       | v      | -         | RefSeq 20180629         |
+
+Notes for the peptide databases:
+- RefSeq 20111201: CDAP (RefSeq release 37); Incomplete annotation; hg19
+- RefSeq 20130727: Incomplete annotation; hg19
+- RefSeq 20171003: Currently overwrite the annotation using RefSeq 20180629; hg38
+- RefSeq 20160914: CDAP (Refseq 2016); hg19
+- RefSeq 20180629: CDAP (RefSeq 2018); hg38
+- RefSeq 20180629*: database includes smORFs
+
 
 ### Folder structure
 ```
