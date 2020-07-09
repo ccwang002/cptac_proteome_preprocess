@@ -268,9 +268,7 @@ phospho_row_full_tbl = raw_phospho_annotate_row_tbl %>%
             sep='.'
         )
     ) %>%
-    select(unique_site_id, refseq_prot_id, symbol, phosphosites, 
-           peptide, peptide_start, peptide_end, 
-           original_id)
+    select(-na_percent)
 
 phospho_row_full_tbl %>% head()
 ```
