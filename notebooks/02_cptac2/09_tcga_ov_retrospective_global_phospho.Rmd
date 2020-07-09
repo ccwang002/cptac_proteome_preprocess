@@ -1,0 +1,343 @@
+---
+title: "R Notebook"
+output:
+    html_document:
+        df_print: paged
+---
+
+```{r, message=FALSE}
+library(SummarizedExperiment)
+library(here)
+library(readxl)
+library(tidyverse)
+```
+
+```{r}
+DATA_ROOT = '~/Box/MyCPTAC/CPTAC_data_collection_v1'
+```
+
+```{r}
+protein_pth = fs::path(DATA_ROOT, 'CPTAC2/TCGA_OV_retrospective/mmc3.xlsx')
+
+phospho_pth = fs::path(DATA_ROOT, 'CPTAC2/TCGA_OV_retrospective/mmc3.xlsx')
+phospho_loc_pth = fs::path(DATA_ROOT, 'CPTAC2/TCGA_OV_retrospective/mmc3_phosphoproteome_ischemia_filtered_peptide_annotation.peptide_location.tsv.gz')
+
+se_metadata = list(
+    cohort = 'TCGA OV retrospective cohort',
+    pipeline = 'PNNL'
+)
+```
+
+
+## Annotation
+Get all the RefSeq IDs:
+```
+all_refseq_ids = union(
+    read_excel(phospho_pth, "FullOvarianPhosphoproteomeData")$RefSeq,
+    read_excel(phospho_pth, "FullOvarianPhosphoproteomeData")$RefSeq
+) %>%
+    unique()
+
+all_refseq_ids %>% write_lines(here('annotation/intermediates/refseq_20111201/tcga_ov_all_refseq_ids.list'))
+```
+
+```{r}
+protein_annotation_tbl = read_tsv(here(
+    'annotation/refseq_20111201/tracked_results/refseq_20111201_human_only.tsv.gz'
+))
+colnames(protein_annotation_tbl)
+```
+
+Make a mapping to obtain the RefSeq full version
+```{r}
+refseq_prot_no_ver_tbl = protein_annotation_tbl %>%
+    select(refseq_prot_no_ver_id = original_prot_id, refseq_prot_id, hgnc_symbol)
+
+refseq_prot_no_ver_tbl %>% head()
+```
+```{r}
+gene_annotation_tbl = protein_annotation_tbl %>%
+    filter(!is.na(hgnc_symbol)) %>%
+    distinct(hgnc_symbol, hgnc_id, entrez_gene_id, ensembl_gene_id)
+```
+
+
+
+## Protein
+```{r}
+excel_sheets(protein_pth)
+```
+
+We use the `VariableOvarianProteomeData` which combined PNNL and JHU data:
+```{r}
+protein_tbl = read_excel(protein_pth, "VariableOvarianProteomeData", na = c("", "NA"))
+protein_tbl %>% head()
+```
+
+Make sure all the RefSeq IDs are in the database. The missing protein is not human:
+```{r}
+setdiff(protein_tbl$refseq_peptide, refseq_prot_no_ver_tbl$refseq_prot_no_ver_id)
+```
+
+```{r}
+protein_mat = protein_tbl %>% 
+    select(-refseq_peptide:-hgnc_symbol) %>%
+    as.matrix()
+
+rownames(protein_mat) = as.character(protein_tbl$refseq_peptide)
+
+protein_mat[1:5, 1:5]
+```
+
+```{r}
+protein_row_tbl = protein_tbl %>%
+    select(
+        original_prot_id = refseq_peptide,
+        original_symbol = hgnc_symbol
+    ) %>%
+    left_join(
+        protein_annotation_tbl,
+        by = c('original_prot_id')
+    ) %>%
+    rename(symbol = hgnc_symbol)
+```
+
+Genes are not unique (isoform level)
+```{r}
+protein_row_tbl %>% count(symbol, sort = TRUE) %>%
+    filter(n > 1) %>%
+    head(100)
+```
+
+Some entries have their gene name masked:
+```{r}
+protein_row_tbl %>%
+    filter(symbol != original_symbol)
+```
+
+Some genes don't have symbol (will remove them)
+```{r}
+protein_row_tbl %>%
+    filter(is.na(symbol))
+```
+
+Use NA% to pick the unique protein per symbol
+```{r}
+protein_na_percent = rowSums(is.na(protein_mat)) / ncol(protein_mat)
+hist(protein_na_percent)
+```
+
+
+```{r}
+unique_protein_row_tbl = protein_row_tbl %>%
+    bind_cols(tibble(na_percent = protein_na_percent)) %>%
+    filter(!is.na(symbol)) %>%
+    arrange(symbol, na_percent) %>%
+    group_by(symbol) %>%
+    filter(row_number() == 1)
+
+unique_protein_row_tbl %>% head()
+```
+
+```{r}
+unique_protein_full_row_tbl = unique_protein_row_tbl %>%
+    select(symbol, refseq_prot_id, original_prot_id, original_symbol, 
+           hgnc_id, entrez_gene_id, ensembl_gene_id)
+
+unique_protein_full_row_tbl %>% head()
+```
+
+Process the proteome sample names
+```{r}
+protein_sample_tbl = tibble(
+    preferred_sample_name = colnames(protein_mat) 
+) %>%
+    mutate(case_id = preferred_sample_name,
+           sample_type = 'Tumor')
+
+protein_sample_tbl %>% head()
+```
+
+```{r}
+selected_protein_mat = protein_mat[unique_protein_full_row_tbl$original_prot_id, protein_sample_tbl$preferred_sample_name]
+rownames(selected_protein_mat) = unique_protein_full_row_tbl$symbol
+colnames(selected_protein_mat) = protein_sample_tbl$preferred_sample_name
+
+selected_protein_mat[1:5, 1:5]
+```
+
+```{r}
+protein_se = SummarizedExperiment(
+    assays = list('normalized' = selected_protein_mat),
+    rowData = unique_protein_full_row_tbl %>% column_to_rownames('symbol'),
+    colData = protein_sample_tbl %>% column_to_rownames('preferred_sample_name'),
+    metadata = se_metadata
+)
+
+protein_se
+```
+
+
+
+### Phospho
+```{r}
+excel_sheets(phospho_pth)
+```
+
+```{r}
+phospho_val_tbl = read_excel(phospho_pth, "FullOvarianPhosphoproteomeData", na = c("", "NA")) %>%
+    mutate(original_site_id = str_c(RefSeq, Peptide, sep = ':'))
+
+raw_phospho_tbl = read_excel(phospho_pth, "OVPhosNetDiff_IschemiaFiltered", na = c("", "NA")) %>%
+    mutate(original_site_id = str_c(refseq, PepSeq, sep = ':'))
+```
+
+Peptide is not unique
+```{r}
+raw_phospho_tbl %>%
+    count(PepSeq, sort = TRUE) %>%
+    head(10)
+```
+
+
+Make sure all the phosphosites are in the metadata table
+```{r}
+setdiff(raw_phospho_tbl$PepSeq, phospho_val_tbl$Peptide)
+```
+
+```{r}
+raw_phospho_row_tbl = phospho_val_tbl %>%
+    select(Gene:AScores, original_site_id) %>%
+    semi_join(raw_phospho_tbl, by = c("original_site_id")) %>%
+    rename(original_symbol = Gene, original_prot_id = RefSeq) %>%
+    left_join(refseq_prot_no_ver_tbl, by = c('original_prot_id' = 'refseq_prot_no_ver_id'))
+
+raw_phospho_row_tbl %>% head()
+```
+```{r}
+raw_phospho_row_tbl %>%
+    filter(is.na(Site) | is.na(hgnc_symbol))
+```
+
+
+
+Export the phosphosite peptide information to find location
+```
+raw_phospho_row_tbl %>%
+    filter(!is.na(Site)) %>%
+    select(refseq_prot_id, Peptide, Site) %>%
+    write_tsv('~/Box/MyCPTAC/CPTAC_data_collection_v1/CPTAC2/TCGA_OV_retrospective/mmc3_phosphoproteome_ischemia_filtered_peptide_annotation.tsv.gz')
+```
+
+
+Read peptide location
+```{r}
+phospho_loc_tbl = read_tsv(
+    phospho_loc_pth,
+    col_types = cols(
+        peptide_start = col_integer(), 
+        peptide_end = col_integer()
+    ))
+phospho_loc_tbl %>% head()
+```
+
+```{r}
+phospho_loc_tbl %>%
+    count(peptide_loc_valid, peptide_loc_invalid_reason)
+```
+
+
+Create the phospho matrix
+```{r}
+# Take the values but only keep the filtered sites
+phospho_mat = phospho_val_tbl %>% select(-Gene:-AScores, -original_site_id) %>% as.matrix()
+rownames(phospho_mat) = phospho_val_tbl$original_site_id
+
+phospho_mat = phospho_mat[raw_phospho_row_tbl$original_site_id, ]
+phospho_mat[1:5, 1:10]
+```
+
+Calculate the NA% per peptide (to order the site)
+```{r}
+phospho_na_percent = rowSums(is.na(phospho_mat)) / ncol(phospho_mat)
+hist(phospho_na_percent)
+```
+
+Construct the phospho rowData table
+```{r}
+raw_phospho_annotate_row_tbl = raw_phospho_row_tbl %>%
+    rename(original_peptide=Peptide) %>%
+    bind_cols(tibble(na_percent = phospho_na_percent)) %>%
+    inner_join(phospho_loc_tbl, by = c('refseq_prot_id', 'original_peptide')) %>%
+    filter(
+        !is.na(hgnc_symbol),
+        peptide_loc_valid,
+        na_percent <= 0.8
+    ) %>%
+    select(refseq_prot_id, symbol = hgnc_symbol, phosphosites, AScores, original_site_id, original_symbol,
+           peptide, peptide_start, peptide_end, na_percent)
+
+raw_phospho_annotate_row_tbl %>% head()
+```
+```{r}
+raw_phospho_annotate_row_tbl %>%
+    filter(symbol != original_symbol)
+```
+
+
+
+```{r}
+phospho_row_full_tbl = raw_phospho_annotate_row_tbl %>%
+    left_join(
+        protein_annotation_tbl %>% select(-hgnc_symbol),
+        by = 'refseq_prot_id'
+    ) %>%
+    # Order the phospho site based on the NA%
+    arrange(symbol, phosphosites, na_percent) %>%
+    mutate(
+        unique_site_id = base::make.unique(
+            str_c(symbol, refseq_prot_id, phosphosites, sep = ':'), 
+            sep='.'
+        )
+    ) %>%
+    select(-na_percent, -original_prot_id) %>%
+    select(refseq_prot_id, symbol, phosphosites, peptide, everything())
+
+phospho_row_full_tbl %>% head()
+```
+Many gene symbols don't match the original data
+```{r}
+phospho_row_full_tbl %>%
+    filter(symbol != original_symbol) %>%
+    distinct(original_symbol, symbol, refseq_prot_id)
+```
+
+```{r}
+phospho_sample_tbl = tibble(case_id=colnames(phospho_mat)) %>%
+    mutate(preferred_sample_name = case_id, sample_type = 'Tumor')
+
+phospho_sample_tbl %>% head()
+```
+
+Make the summarized experiment object
+```{r}
+phospho_mat.selected = phospho_mat[phospho_row_full_tbl$original_site_id, ]
+rownames(phospho_mat.selected) = phospho_row_full_tbl$unique_site_id
+
+phospho_se = SummarizedExperiment(
+    assays = list('normalized' = phospho_mat.selected),
+    rowData = phospho_row_full_tbl %>% column_to_rownames('unique_site_id'),
+    colData = phospho_sample_tbl %>% column_to_rownames('preferred_sample_name'),
+    metadata = se_metadata
+)
+
+phospho_se
+```
+
+
+
+## Export
+```{r}
+protein_se %>% saveRDS(here('final_output/TCGA_OV_retrospective/TCGA_OV_retrospective_pnnl_proteome.rds'))
+phospho_se %>% saveRDS(here('final_output/TCGA_OV_retrospective/TCGA_OV_retrospective_pnnl_phosphoproteome.rds'))
+```
