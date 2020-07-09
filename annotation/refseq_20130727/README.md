@@ -23,3 +23,13 @@ python scripts/parse_uniparc_xmls.py \
     intermediates/refseq_20130727/refseq_uniparc_mapping.tsv.gz \
     2> intermediates/refseq_20130727/refseq_uniparc_mapping.log
 ```
+
+Compress the XMLs:
+
+```bash
+cd xmls
+zstd -T8 -9 *.xml
+rm -rf *.xml
+cd ..
+zip -r -0 xmls.zip xmls/
+```

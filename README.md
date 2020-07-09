@@ -28,10 +28,10 @@ Notes for the peptide databases (bold ones are recommended):
 
 ### Folder structure
 ```
+annotation      Annotation and their processing scripts
 notebooks       All the notebooks to preprocess the data
 intermediates   Intermediate/temporary files
 final_output    Final output files
-annotation      Annotation and their processing scripts
 ```
 
 

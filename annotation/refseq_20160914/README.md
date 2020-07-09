@@ -26,4 +26,14 @@ python scripts/parse_uniparc_xmls.py \
     2> intermediates/refseq_20160914/refseq_uniparc_mapping.log
 ```
 
+Compress the XMLs:
+
+```bash
+cd xmls
+zstd -T8 -9 *.xml
+rm -rf *.xml
+cd ..
+zip -r -0 xmls.zip xmls/
+```
+
 Run `notebooks/01_cptac3_refseq_granges_annotation.Rmd` to merge the RefSeq annotations with UniParc.

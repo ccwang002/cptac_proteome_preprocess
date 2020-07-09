@@ -40,7 +40,8 @@ python scripts/parse_uniparc_xmls.py \
     2> intermediates/refseq_20111201/refseq_uniparc_mapping.log
 ```
 
-Zip the XMLs:
+Compress the XMLs:
+
 ```bash
 cd xmls
 zstd -T8 -9 *.xml

@@ -1,5 +1,4 @@
-## Annotations
-
+## Annotation of the peptide search database
 Generate file list and their MD5 checksums under `intermediates` by:
 
 ```bash

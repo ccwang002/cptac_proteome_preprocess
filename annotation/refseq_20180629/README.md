@@ -1,4 +1,4 @@
-## RefSeq 20180629 
+## RefSeq 20180629
 
 ### Workflow
 Use EBI protein API to get UniParc IDs (but with many missing IDs):
@@ -30,6 +30,16 @@ python scripts/parse_uniparc_xmls.py \
     ../intermediates/refseq_20180629/ebi_api_missing/refseq_uniparc_mapping.ebi_missing.tsv.gz \
     ../intermediates/refseq_20180629/ebi_api_missing/xmls \
     2> intermediates/refseq_20180629/ebi_api_missing/refseq_uniparc_mapping.ebi_missing.log
+```
+
+Compress the XMLs:
+
+```bash
+cd xmls
+zstd -T8 -9 *.xml
+rm -rf *.xml
+cd ..
+zip -r -0 xmls.zip xmls/
 ```
 
 Run `01_cptac3_refseq_granges_annotation.Rmd` to merge the RefSeq annotations with UniParc.
