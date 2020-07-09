@@ -36,7 +36,7 @@ final_output    Final output files
 
 
 ### Upstream data sources
-Upstream data sources were collected in `~/Box/MyCPTAC/CPTAC_data_collection_v1`.
+Upstream data sources were collected in `~/Box/MyCPTAC/CPTAC_data_collection_v1`, which is compressed at `~/Box/Ding_Lab/Projects_Current/PTMcosmos/Data_freeze/ptmcosmos_data_freeze_v1.0/Bobo_CPTAC_data_collection_v1.zip`.
 
 
 ### Setup
@@ -72,12 +72,10 @@ parallel -j4 --bar \
 ### Ding lab internal
 The project is mirrored on katmai:
 - This repo: `/diskmnt/Projects/PTMcosmos/cptac_proteome_preprocess`
-- Upstream data sources: `/diskmnt/Projects/PTMcosmos/CPTAC_data/CPTAC_data_collection_v1`
+- Upstream data sources: `/diskmnt/Projects/PTMcosmos/Bobo_CPTAC_data_collection/CPTAC_data_collection_v1`
 
 Mirror script (from local to katmai):
 ```bash
-rsync -a --info=progress2 ~/Box/MyCPTAC/ katmai:/diskmnt/Projects/PTMcosmos/CPTAC_data/
-
 # Add -n for dry run
 rsync -arv --delete --files-from=remote_rsync_files.list --exclude='.DS_Store' \
     ./ katmai:/diskmnt/Projects/PTMcosmos/cptac_proteome_preprocess/
