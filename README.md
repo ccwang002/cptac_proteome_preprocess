@@ -8,7 +8,7 @@ Currently it covers (`-` = not available):
 | CPTAC2/TCGA        | BRCA   | v      | v       | -      | -         | RefSeq 20130727         |
 |                    | OV     | v      | v       | -      | -         | RefSeq 20111201         |
 | CPTAC2 prospective | BRCA   | v      | v       | v      | -         | RefSeq 20160914         |
-|                    | CRC    | v      | v       | -      | -         | RefSeq 20171003†        |
+|                    | CRC    | v      | v       | -      | -         | RefSeq 20171003         |
 |                    | OV     | v      | v       | -      | -         | RefSeq 20160914         |
 | CPTAC3 discovery   | CCRCC  | v      | v       | -      | -         | RefSeq 20180629         |
 |                    | HNSCC  | v      | v       | -      | -         | RefSeq 20180629         |
@@ -17,12 +17,12 @@ Currently it covers (`-` = not available):
 |                    | GBM    | v      | v       | v      | -         | RefSeq 20180629         |
 |                    | UCEC   | v      | v       | v      | -         | RefSeq 20180629         |
 
-Notes for the peptide databases:
+Notes for the peptide databases (bold ones are recommended):
 - RefSeq 20111201: CDAP (RefSeq release 37); Incomplete annotation; hg19
 - RefSeq 20130727: Incomplete annotation; hg19
 - RefSeq 20171003: Currently overwrite the annotation using RefSeq 20180629; hg38
-- RefSeq 20160914: CDAP (Refseq 2016); hg19
-- RefSeq 20180629: CDAP (RefSeq 2018); hg38
+- **RefSeq 20160914**: CDAP (Refseq 2016); hg19
+- **RefSeq 20180629**: CDAP (RefSeq 2018); hg38
 - RefSeq 20180629*: database includes smORFs
 
 
