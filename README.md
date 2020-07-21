@@ -13,7 +13,7 @@ Currently it covers (`-` = not available):
 | CPTAC3 discovery   | CCRCC  | v      | v       | -      | -         | RefSeq 20180629         |
 |                    | HNSCC  | v      | v       | -      | -         | RefSeq 20180629         |
 |                    | LUAD   | v      | v       | v      | -         | RefSeq 20180629*        |
-|                    | LSCC   | v      | v       | -      | v         | RefSeq 20180629*        |
+|                    | LSCC   | v      | v       | v      | v         | RefSeq 20180629*        |
 |                    | GBM    | v      | v       | v      | -         | RefSeq 20180629         |
 |                    | UCEC   | v      | v       | v      | -         | RefSeq 20180629         |
 

@@ -13,7 +13,7 @@ library(tidyverse)
 ```
 
 ```{r}
-DATA_ROOT = '~/Box/MyCPTAC/CPTAC_proteome_v1'
+DATA_ROOT = '~/Box/MyCPTAC/CPTAC_proteome_v1.1'
 ```
 
 ```{r}
@@ -21,6 +21,9 @@ protein_pth = fs::path(DATA_ROOT, 'CPTAC3/LSCC_discovery/lscc-v3.2-proteome-rati
 
 phospho_pth = fs::path(DATA_ROOT, 'CPTAC3/LSCC_discovery/lscc-v3.2-phosphoproteome-ratio-norm-NArm.gct')
 phospho_loc_pth = fs::path(DATA_ROOT, 'CPTAC3/LSCC_discovery/lscc-v3.2-phosphoproteome-ratio-norm-NArm.peptide_location.tsv')
+
+acetyl_pth = fs::path(DATA_ROOT, 'CPTAC3/LSCC_discovery/lscc-v3.2-acetylome-ratio-norm-NArm.gct')
+acetyl_loc_pth = fs::path(DATA_ROOT, 'CPTAC3/LSCC_discovery/lscc-v3.2-acetylome-ratio-norm-NArm.peptide_location.tsv')
 
 ubiquitin_pth = fs::path(DATA_ROOT, 'CPTAC3/LSCC_discovery/lscc-v3.2-ubiquitylome-ratio-norm-NArm.gct')
 ubiquitin_loc_pth = fs::path(DATA_ROOT, 'CPTAC3/LSCC_discovery/lscc-v3.2-ubiquitylome-ratio-norm-NArm.peptide_location.tsv')
@@ -256,6 +259,101 @@ phospho_se
 
 
 
+## Acetyl
+```{r}
+acetyl_gct = parse_gctx(acetyl_pth)
+raw_acetyl_se = as(acetyl_gct, "SummarizedExperiment")
+
+acetyl_loc_tbl = read_tsv(
+    acetyl_loc_pth,
+    col_types = cols(
+        peptide_start = col_integer(),
+        peptide_end = col_integer()
+    ))
+```
+
+```{r}
+raw_acetyl_row_tbl = rowData(raw_acetyl_se) %>%
+    as_tibble(rownames = 'original_id') %>%
+    inner_join(acetyl_loc_tbl, by = c('original_id' = 'rid'))
+
+raw_acetyl_row_tbl %>% head()
+```
+```{r}
+acetyl_na_percent = rowSums(is.na(assay(raw_acetyl_se[raw_acetyl_row_tbl$original_id, ]))) / ncol(raw_acetyl_se)
+hist(acetyl_na_percent)
+```
+```{r}
+acetyl_row_tbl = raw_acetyl_row_tbl %>%
+    bind_cols(tibble(na_percent = acetyl_na_percent)) %>%
+    filter(
+        peptide_loc_valid,
+        na_percent <= 0.8
+    ) %>%
+    select(
+        original_id,
+        refseq_prot_id = accession_number,
+        acetylsites,
+        symbol = geneSymbol,
+        peptide = sequence,
+        peptide_start,
+        peptide_end,
+        na_percent
+    ) %>%
+    arrange(symbol, acetylsites, na_percent) %>%
+    mutate(
+        unique_site_id = base::make.unique(
+            str_c(symbol, refseq_prot_id, acetylsites, sep = ':'),
+            sep='.'
+        )
+    )
+
+acetyl_row_tbl %>% head()
+```
+Some sites have duplication
+```{r}
+acetyl_row_tbl %>%
+    count(symbol, acetylsites, sort = TRUE) %>%
+    filter(n > 1)
+```
+
+Combine the RefSeq annotation
+```{r}
+acetyl_row_full_tbl = acetyl_row_tbl %>%
+    select(unique_site_id, original_id, refseq_prot_id, symbol, acetylsites,
+           peptide, peptide_start, peptide_end) %>%
+    left_join(
+        protein_annotation_tbl,
+        by = 'refseq_prot_id'
+    )
+
+acetyl_row_full_tbl %>% head()
+```
+
+Check if we can re-use the protein col data
+```{r}
+identical(rownames(colData(raw_acetyl_se)), protein_col_tbl$preferred_sample_name)
+```
+
+```{r}
+acetyl_se = raw_acetyl_se[acetyl_row_full_tbl$original_id, ]
+
+rownames(acetyl_se) = acetyl_row_full_tbl$unique_site_id
+rowData(acetyl_se) = acetyl_row_full_tbl %>% column_to_rownames('unique_site_id')
+colData(acetyl_se) = colData(protein_se)
+assayNames(acetyl_se) = 'normalized'
+
+metadata(acetyl_se) = list(
+    cohort = 'CPTAC3 LUAD discovery cohort',
+    pipeline = 'Broad'
+)
+```
+
+```{r}
+acetyl_se
+```
+
+
 ## Ubiquitin
 ```{r}
 ubiquitin_gct = parse_gctx(ubiquitin_pth)
@@ -378,5 +476,6 @@ ubiquitin_se
 ```{r}
 protein_se %>% saveRDS(here('final_output/CPTAC3_LSCC_discovery/CPTAC3_LSCC_discovery_broad_proteome.rds'))
 phospho_se %>% saveRDS(here('final_output/CPTAC3_LSCC_discovery/CPTAC3_LSCC_discovery_broad_phosphoproteome.rds'))
+acetyl_se %>% saveRDS(here('final_output/CPTAC3_LSCC_discovery/CPTAC3_LSCC_discovery_broad_acetylome.rds'))
 ubiquitin_se %>% saveRDS(here('final_output/CPTAC3_LSCC_discovery/CPTAC3_LSCC_discovery_broad_ubiquitylome.rds'))
 ```
