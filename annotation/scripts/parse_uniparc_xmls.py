@@ -17,9 +17,16 @@ def parse_dbref(entry):
         ids = set()
         for d in entry['dbReference']:
             if d["@type"].startswith(db_type):
+                # Skip non-human entries
+                ncbi_taxid = next(
+                    (p['@value'] for p in d['property'] if p['@type'] == 'NCBI_taxonomy_id'),
+                    None
+                )
+                if ncbi_taxid != '9606':
+                    continue
+
                 if '@version' not in d:
-                    # Use the internal version
-                    # logger.warning(f'This dbRef has no external version: {d!r}')
+                    # Use the UniParc internal version (for UniProt)
                     id_str = f"{d['@id']}.{d['@version_i']}"
                 else:
                     id_str = f"{d['@id']}.{d['@version']}"
