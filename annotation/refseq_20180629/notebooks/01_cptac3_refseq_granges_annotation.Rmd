@@ -14,17 +14,16 @@ library(tidyverse)
 
 All source annotation files downloaded from DCC:
 ```{r}
-REFSEQ_IDS_TSV_PTH = '~/Box/MyCPTAC/CPTAC_proteome_v1/DCC/RefSeq_20180629/RefSeq.20180629_Human_ucsc_hg38_cpdbnr_mito_264contams.fasta.SGSN.categories.tsv.gz'
-REFSEQ_IDS_DF_PTH = '~/Box/MyCPTAC/CPTAC_proteome_v1/DCC/RefSeq_20180629/intermediate_2018-06-29_hg38/2_annotation_files_customProDB/ids.RData'
-TXDB_PTH = '~/Box/MyCPTAC/CPTAC_proteome_v1/DCC/RefSeq_20180629/intermediate_2018-06-29_hg38/2_annotation_files_customProDB/txdb.sqlite'
-CHRM_REFSEQ_TSV_PTH = '~/Box/MyCPTAC/CPTAC_proteome_v1/DCC/RefSeq_20180629/refseq_hg38_20200503_chrM_only.tsv.gz'
-HGNC_PROTEIN_CODING_TSV_PTH = '~/Box/MyCPTAC/CPTAC_proteome_v1/DCC/RefSeq_20180629/intermediate_2018-06-29_hg38/3_annotate_fasta/protein-coding_gene.txt.gz'
+REFSEQ_IDS_TSV_PTH = '~/Box/MyCPTAC/CPTAC_proteome_v2.0/DCC/RefSeq_20180629/RefSeq.20180629_Human_ucsc_hg38_cpdbnr_mito_264contams.fasta.SGSN.categories.tsv.gz'
+REFSEQ_IDS_DF_PTH = '~/Box/MyCPTAC/CPTAC_proteome_v2.0/DCC/RefSeq_20180629/intermediate_2018-06-29_hg38/2_annotation_files_customProDB/ids.RData'
+TXDB_PTH = '~/Box/MyCPTAC/CPTAC_proteome_v2.0/DCC/RefSeq_20180629/intermediate_2018-06-29_hg38/2_annotation_files_customProDB/txdb.sqlite'
+CHRM_REFSEQ_TSV_PTH = '~/Box/MyCPTAC/CPTAC_proteome_v2.0/DCC/RefSeq_20180629/refseq_hg38_20200503_chrM_only.tsv.gz'
+HGNC_PROTEIN_CODING_TSV_PTH = '~/Box/MyCPTAC/CPTAC_proteome_v2.0/DCC/RefSeq_20180629/intermediate_2018-06-29_hg38/3_annotate_fasta/protein-coding_gene.txt.gz'
 ```
 
 Extra UniParc annotations:
 ```{r}
-UNIPARC_EBI_TSV_PTH = here('annotation/intermediates/refseq_20180629/refseq_uniparc_mapping.tsv.gz')
-UNIPARC_REMAINING_TSV_PTH = here('annotation/intermediates/refseq_20180629/ebi_api_missing/refseq_uniparc_mapping.ebi_missing.tsv.gz')
+UNIPARC_TSV_PTH = here('annotation/intermediates/refseq_20180629/refseq_uniparc_mapping.tsv.gz')
 ```
 
 Extra HGNC query based on Entrez/NCBI gene IDs:
@@ -92,10 +91,7 @@ refseq_full_ids_tbl.human_only %>% head()
 
 Load the UniParc tables
 ```{r}
-uniparc_tbl = bind_rows(
-  read_tsv(UNIPARC_EBI_TSV_PTH) %>% filter(!is.na(uniparc_id)),
-  read_tsv(UNIPARC_REMAINING_TSV_PTH)
-) %>% 
+uniparc_tbl = read_tsv(UNIPARC_TSV_PTH) %>% 
   rename(
     uniparc_crc64_checksum = uniparc_checksum,
     uniparc_xref_uniprot_ids = uniprot_ids,
