@@ -18,8 +18,9 @@ def parse_dbref(entry):
         for d in entry['dbReference']:
             if d["@type"].startswith(db_type):
                 # Skip non-human entries
+                d_property = d.get('property', [])
                 ncbi_taxid = next(
-                    (p['@value'] for p in d['property'] if p['@type'] == 'NCBI_taxonomy_id'),
+                    (p['@value'] for p in d_property if p['@type'] == 'NCBI_taxonomy_id'),
                     None
                 )
                 if ncbi_taxid != '9606':
