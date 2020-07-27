@@ -14,7 +14,7 @@ library(tidyverse)
 ```
 
 ```{r}
-DATA_ROOT = '~/Box/MyCPTAC/CPTAC_proteome_v1'
+DATA_ROOT = '~/Box/MyCPTAC/CPTAC_proteome_v2.0'
 ```
 
 ```{r}
@@ -170,7 +170,7 @@ protein_sample_tbl = tibble(
     mutate(case_id = map_chr(str_split(preferred_sample_name, '\\.'), ~ .x[[1]])) %>%
     left_join(sample_detail_tbl, by = c("case_id" = "Sample ID")) %>%
     select(preferred_sample_name, case_id, tcga_case_id = `TCGA ID`) %>%
-    mutate(sample_type = ifelse(is.na(tcga_case_id), 'Tumor', 'Normal'))
+    mutate(sample_type = ifelse(is.na(tcga_case_id), 'Primary Tumor', 'Solid Tissue Normal'))
 
 protein_sample_tbl %>% head()
 ```
@@ -288,7 +288,7 @@ raw_phospho_annotate_row_tbl = raw_phospho_row_tbl %>%
     inner_join(phospho_loc_tbl, by = 'original_site_id') %>%
     filter(
         peptide_loc_valid,
-        na_percent <= 0.8
+        # na_percent <= 0.8
     ) %>%
     rename(original_prot_id = accession_number, peptide = sequence)
 
@@ -342,6 +342,8 @@ phospho_se
 
 ## Export
 ```{r}
-protein_se %>% saveRDS(here('final_output/TCGA_BRCA_retrospective/TCGA_BRCA_retrospective_broad_proteome.rds'))
-phospho_se %>% saveRDS(here('final_output/TCGA_BRCA_retrospective/TCGA_BRCA_retrospective_broad_phosphoproteome.rds'))
+fs::dir_create(here('final_output/TCGA_BRCA_retrospective'))
+
+protein_se %>% saveRDS(here('final_output/TCGA_BRCA_retrospective/TCGA_BRCA_retrospective_broad_proteome.v2.0.rds'))
+phospho_se %>% saveRDS(here('final_output/TCGA_BRCA_retrospective/TCGA_BRCA_retrospective_broad_phosphoproteome.v2.0.rds'))
 ```

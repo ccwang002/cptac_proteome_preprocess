@@ -13,7 +13,7 @@ library(tidyverse)
 ```
 
 ```{r}
-DATA_ROOT = '~/Box/MyCPTAC/CPTAC_proteome_v1'
+DATA_ROOT = '~/Box/MyCPTAC/CPTAC_proteome_v2.0'
 ```
 
 ```{r}
@@ -67,7 +67,14 @@ tmt_map_clean_tbl = tmt_map_tbl %>%
         sample_type == 'Tumor' ~ str_c('C', case_id),
         sample_type == 'Normal' ~ str_c('N', case_id),
         TRUE ~ NA_character_
-    ))
+    )) %>%
+    mutate(
+        sample_type = case_when(
+            sample_type == 'Tumor' ~ 'Primary Tumor',
+            sample_type == 'Normal' ~ 'Solid Tissue Normal',
+            TRUE ~ NA_character_
+        )
+    )
 
 tmt_map_clean_tbl %>% head()
 ```
@@ -298,7 +305,7 @@ raw_phospho_annotate_row_tbl = raw_phospho_row_tbl %>%
     filter(
         !is.na(site),
         peptide_loc_valid,
-        na_percent <= 0.8
+        # na_percent <= 0.8
     )
 
 raw_phospho_annotate_row_tbl %>% head()
@@ -394,6 +401,8 @@ phospho_se
 
 ## Export
 ```{r}
-protein_se %>% saveRDS(here('final_output/CPTAC2_OV_prospective/CPTAC2_OV_prospective_pnnl_proteome.rds'))
-phospho_se %>% saveRDS(here('final_output/CPTAC2_OV_prospective/CPTAC2_OV_prospective_pnnl_phosphoproteome.rds'))
+fs::dir_create(here('final_output/CPTAC2_OV_prospective'))
+
+protein_se %>% saveRDS(here('final_output/CPTAC2_OV_prospective/CPTAC2_OV_prospective_pnnl_proteome.v2.0.rds'))
+phospho_se %>% saveRDS(here('final_output/CPTAC2_OV_prospective/CPTAC2_OV_prospective_pnnl_phosphoproteome.v2.0.rds'))
 ```

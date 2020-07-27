@@ -13,7 +13,7 @@ library(tidyverse)
 ```
 
 ```{r}
-DATA_ROOT = '~/Box/MyCPTAC/CPTAC_proteome_v1'
+DATA_ROOT = '~/Box/MyCPTAC/CPTAC_proteome_v2.0'
 ```
 
 ```{r}
@@ -153,7 +153,7 @@ protein_sample_tbl = tibble(
     preferred_sample_name = colnames(protein_mat) 
 ) %>%
     mutate(case_id = preferred_sample_name,
-           sample_type = 'Tumor')
+           sample_type = 'Primary Tumor')
 
 protein_sample_tbl %>% head()
 ```
@@ -272,7 +272,7 @@ raw_phospho_annotate_row_tbl = raw_phospho_row_tbl %>%
     filter(
         !is.na(hgnc_symbol),
         peptide_loc_valid,
-        na_percent <= 0.8
+        # na_percent <= 0.8
     ) %>%
     select(refseq_prot_id, symbol = hgnc_symbol, phosphosites, AScores, original_site_id, original_symbol,
            peptide, peptide_start, peptide_end, na_percent)
@@ -338,6 +338,8 @@ phospho_se
 
 ## Export
 ```{r}
-protein_se %>% saveRDS(here('final_output/TCGA_OV_retrospective/TCGA_OV_retrospective_pnnl_proteome.rds'))
-phospho_se %>% saveRDS(here('final_output/TCGA_OV_retrospective/TCGA_OV_retrospective_pnnl_phosphoproteome.rds'))
+fs::dir_create(here('final_output/TCGA_OV_retrospective'))
+
+protein_se %>% saveRDS(here('final_output/TCGA_OV_retrospective/TCGA_OV_retrospective_pnnl_proteome.v2.0.rds'))
+phospho_se %>% saveRDS(here('final_output/TCGA_OV_retrospective/TCGA_OV_retrospective_pnnl_phosphoproteome.v2.0.rds'))
 ```

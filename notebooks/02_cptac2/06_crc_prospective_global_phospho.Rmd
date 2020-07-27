@@ -13,7 +13,7 @@ library(tidyverse)
 ```
 
 ```{r}
-DATA_ROOT = '~/Box/MyCPTAC/CPTAC_proteome_v1'
+DATA_ROOT = '~/Box/MyCPTAC/CPTAC_proteome_v2.0'
 ```
 
 ```{r}
@@ -240,7 +240,7 @@ raw_phospho_annotate_row_tbl = raw_phospho_row_tbl %>%
     ungroup() %>%
     filter(
         peptide_loc_valid,
-        na_percent <= 0.8
+        # na_percent <= 0.8
     )
 
 raw_phospho_annotate_row_tbl %>% head()
@@ -291,6 +291,8 @@ phospho_se
 
 ## Export
 ```{r}
-protein_se %>% saveRDS(here('final_output/CPTAC2_CRC_prospective/CPTAC2_CRC_prospective_pnnl_proteome.rds'))
-phospho_se %>% saveRDS(here('final_output/CPTAC2_CRC_prospective/CPTAC2_CRC_prospective_pnnl_phosphoproteome.rds'))
+fs::dir_create(here('final_output/CPTAC2_CRC_prospective'))
+
+protein_se %>% saveRDS(here('final_output/CPTAC2_CRC_prospective/CPTAC2_CRC_prospective_pnnl_proteome.v2.0.rds'))
+phospho_se %>% saveRDS(here('final_output/CPTAC2_CRC_prospective/CPTAC2_CRC_prospective_pnnl_phosphoproteome.v2.0.rds'))
 ```
