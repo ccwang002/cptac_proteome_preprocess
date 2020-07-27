@@ -11,14 +11,14 @@ Extract the list of protein IDs
 gzcat ~/Box/MyCPTAC/CPTAC_proteome_v1/DCC/RefSeq_20130727/RefSeq.20130727-Human.contams.categories.tsv.gz \
     | tail -n+2 \
     | cut -f1 \
-    > ../intermediates/refseq_20130727/refseq_protein_ids.list
+    > ../intermediates/refseq_20130727/refseq_protein_ids.no_ver.list
 ```
 
 Parse the XMLs:
 
 ```bash
 python scripts/parse_uniparc_xmls.py \
-    intermediates/refseq_20130727/refseq_protein_ids.list \
+    intermediates/refseq_20130727/refseq_protein_ids.no_ver.list \
     intermediates/refseq_20130727/xmls \
     intermediates/refseq_20130727/refseq_uniparc_mapping.tsv.gz \
     2> intermediates/refseq_20130727/refseq_uniparc_mapping.log

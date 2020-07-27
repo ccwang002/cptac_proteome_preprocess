@@ -1,35 +1,31 @@
 ## RefSeq 20180629
 
 ### Workflow
-Use EBI protein API to get UniParc IDs (but with many missing IDs):
+Get the list of RefSeq protein IDs by:
 
 ```bash
-python scripts/query_uniparc_by_seq.py \
-    ../intermediates/refseq_20180629/refseq_protein_ids.list \
-    <data_root>/DCC/RefSeq_20180629/RefSeq.20180629_Human_ucsc_hg38_cpdbnr_mito_264contams.fasta.gz \
-    ../intermediates/refseq_20180629/refseq_uniparc_mapping.tsv.gz \
-    --json-dir ../intermediates/refseq_20180629/uniparc_jsons
-    2> ../intermediates/refseq_20180629/refseq_uniparc_mapping.log
+gzip -cd custom_sources/cptac3_refseq_20180629/refseq_20180629_human_only_unique_loci.tsv.gz \
+    | xsv select -d "\t" refseq_prot_id \
+    | tail -n+2 \
+    > intermediates/refseq_20180629/refseq_protein_ids.list
 ```
 
-Run `playground/query_uniparc_xml.ipynb` to generate the CRC64 checksum for the missing RefSeq IDs.
+Run `notebooks/02_make_uniparc_xml_query_tsv.ipynb` to generate the CRC64 checksum for the missing RefSeq IDs.
 
-Use the checksum to query UniProt to get the UniParc XMLs:
+Download the UniParc XMLs by:
 
 ```bash
-tail -n+2 refseq_checksums.tsv \
-    | parallel --bar -j5 --colsep \t \
-        "curl -L 'https://www.uniprot.org/uniparc/?query=checksum%3A{2}&format=xml' > xmls/{1}.xml"
+aria2c -c -j10 --download-result=hide --console-log-level=warn -i uniparc_aria2_downloads.links
 ```
 
 Parse the XMLs:
 
 ```bash
 python scripts/parse_uniparc_xmls.py \
-    custom_sources/refseq_20180629_missing_uniparc_ids.list \
-    ../intermediates/refseq_20180629/ebi_api_missing/refseq_uniparc_mapping.ebi_missing.tsv.gz \
-    ../intermediates/refseq_20180629/ebi_api_missing/xmls \
-    2> intermediates/refseq_20180629/ebi_api_missing/refseq_uniparc_mapping.ebi_missing.log
+    intermediates/refseq_20180629/refseq_protein_ids.list \
+    intermediates/refseq_20180629/xmls \
+    intermediates/refseq_20180629/refseq_uniparc_mapping.tsv.gz \
+    2> intermediates/refseq_20180629/refseq_uniparc_mapping.log
 ```
 
 Compress the XMLs:
@@ -42,4 +38,4 @@ cd ..
 zip -r -0 xmls.zip xmls/
 ```
 
-Run `01_cptac3_refseq_granges_annotation.Rmd` to merge the RefSeq annotations with UniParc.
+Run `notesbooks/01_cptac3_refseq_granges_annotation.Rmd` to merge the RefSeq annotations with UniParc.
