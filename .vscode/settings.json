@@ -7,4 +7,5 @@
         "--follow-imports=normal",
         "--show-column-numbers"
     ],
+    "python.dataScience.allowUnauthorizedRemoteConnection": true,
 }
