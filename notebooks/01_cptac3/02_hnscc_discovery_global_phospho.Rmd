@@ -220,10 +220,10 @@ phospho_row_tbl = phospho_tbl %>%
         # na_percent <= 0.8,
         peptide_loc_valid
     ) %>%
-    # mutate(
-    #     phosphosites_list = str_extract_all(phosphosites, '([STY]\\d+)'),
-    #     phosphosites = map_chr(phosphosites_list, str_c, collapse = ';')
-    # ) %>%
+    mutate(
+        phosphosites_list = str_extract_all(phosphosites, '([STY]\\d+)'),
+        phosphosites = map_chr(phosphosites_list, str_c, collapse = ';')
+    ) %>%
     # Keep the less NA% peptide as the default site
     arrange(symbol, phosphosites, na_percent) %>%
     mutate(
@@ -309,7 +309,7 @@ selected_phospho_se = phospho_se[, samples_to_keep]
 ## Export
 ```{r}
 fs::dir_create(here('final_output/CPTAC3_HNSCC_discovery'))
-selected_protein_se %>% saveRDS(here('final_output/CPTAC3_HNSCC_discovery/CPTAC3_HNSCC_discovery_umich_proteome.v2.0.rds'))
-selected_phospho_se %>% saveRDS(here('final_output/CPTAC3_HNSCC_discovery/CPTAC3_HNSCC_discovery_umich_phosphoproteome.v2.0.rds'))
+selected_protein_se %>% saveRDS(here('final_output/CPTAC3_HNSCC_discovery/CPTAC3_HNSCC_discovery_umich_proteome.v2.1.rds'))
+selected_phospho_se %>% saveRDS(here('final_output/CPTAC3_HNSCC_discovery/CPTAC3_HNSCC_discovery_umich_phosphoproteome.v2.1.rds'))
 ```
 
