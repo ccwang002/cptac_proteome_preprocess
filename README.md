@@ -45,9 +45,9 @@ conda create -n cptac \
     python=3.8 \
     htslib=1.10 samtools=1.10 \
     snakemake=5.19 \
-    notebook=6.0 pandas=1.0 \
+    notebook=6.0 pandas=1.1 \
     zstd zstandard=0.14 \
-    xsv xmlschema
+    xsv xmlschema orjson
 
     pysam=0.16 # not in bioconda yet
     crc64iso
