@@ -1,8 +1,4 @@
-## Installation
-
-```
-conda create -n uniprot python=3.8 notebook flake8 xmlschema zstandard orjson pandas
-```
+## UniProt release 2020_03 reviewed human proteome
 
 ```
 fd '.json$' | parallel --bar -j6 'zstd -9 --rm -q {}'
@@ -20,6 +16,8 @@ python 2_parse_entries.py -j6  \
     ../intermediates/uniprot_release_2020_03/uniprot_entries_tsv.gz
 ```
 
+
+### UniParc annotation
 Make UniParc XML download links:
 ```python
 import pandas as pd
@@ -55,9 +53,8 @@ python scripts/parse_uniparc_xmls_parallel.py \
 Compress the XMLs:
 
 ```bash
-cd xmls
-zstd -T8 -9 *.xml
-rm -rf *.xml
+cd uniparc_xmls
+fd '.xml$' | parallel --bar -j6 'zstd -9 -q  --rm {}'
 cd ..
-zip -r -0 xmls.zip xmls/
+zip -r -0 uniparc_xmls.zip uniparc_xmls/
 ```
