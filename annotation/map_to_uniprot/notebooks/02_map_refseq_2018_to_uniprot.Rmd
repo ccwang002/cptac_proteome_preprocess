@@ -1,0 +1,101 @@
+---
+title: "R Notebook"
+output:
+  html_document:
+    df_print: paged
+---
+
+```{r, message=FALSE}
+library(here)
+library(tidyverse)
+```
+
+Source here is RefSeq 20180629 and Target is UniProt 2020_03
+```{r}
+source_annotation_tbl = read_tsv(here('annotation/refseq_20180629/tracked_results/refseq_20180629_human_only_unique_loci.tsv.gz'))
+target_tbl = read_tsv(here('annotation/map_to_uniprot/tracked_results/uniprot_reviewed_human_proteome_hgnc_only.v2020_03.tsv.gz'))
+```
+
+```{r}
+colnames(source_annotation_tbl)
+colnames(target_tbl)
+```
+
+These source proteins will not be mapped due to the lack of HGNC ID
+```{r}
+source_annotation_tbl %>%
+    filter(is.na(hgnc_id)) %>%
+    nrow()
+```
+
+Find the matching records that has identical protein sequence in the target set
+```{r}
+source_annotation_tbl %>%
+    filter(uniparc_id %in% target_tbl$uniparc_id) %>%
+    nrow()
+```
+
+```{r}
+mapping_tbl.identical = source_annotation_tbl %>%
+    select(refseq_prot_id, hgnc_id, source_uniparc_id = uniparc_id) %>%
+    inner_join(target_tbl %>% select(uniprot_acc, target_uniparc_id = uniparc_id), 
+               by = c('source_uniparc_id' = 'target_uniparc_id')) %>%
+    mutate(
+        target_uniparc_id = source_uniparc_id,
+        mapping_approach = 'identical_sequence'
+    )
+
+mapping_tbl.identical %>% head()
+```
+```{r}
+source_annotation_tbl.remaining = source_annotation_tbl
+source_annotation_tbl.remaining = source_annotation_tbl.remaining %>%
+    filter(!refseq_prot_id %in% mapping_tbl.identical$refseq_prot_id)
+```
+
+```{r}
+mapping_tbl.align = source_annotation_tbl.remaining %>%
+    select(refseq_prot_id, hgnc_id, source_uniparc_id = uniparc_id) %>%
+    inner_join(
+        target_tbl %>% 
+            select(uniprot_acc, hgnc_id = hgnc_gene_id, target_uniparc_id = uniparc_id),
+        by = "hgnc_id"
+    ) %>%
+    mutate(mapping_approach = 'global_seq_align')
+
+mapping_tbl.align %>% head()
+```
+```{r}
+source_annotation_tbl.failed = source_annotation_tbl.remaining %>%
+    filter(!refseq_prot_id %in% mapping_tbl.align$refseq_prot_id)
+```
+
+```{r}
+source_annotation_tbl.failed %>%
+    count(!is.na(hgnc_id))
+```
+Make the mapping table
+```{r}
+mapping_tbl = bind_rows(
+    mapping_tbl.identical,
+    mapping_tbl.align
+) %>%
+    arrange(refseq_prot_id)
+
+mapping_tbl %>% head()
+```
+Some source proteins can be mapped to multiple targets:
+```{r}
+mapping_tbl %>%
+    count(refseq_prot_id, sort = TRUE) %>%
+    filter(n > 1)
+```
+
+```{r}
+mapping_tbl %>% 
+    write_tsv('../tracked_results/mappings/refseq_20180629_to_uniprot_2020_03_mappable.tsv.gz')
+
+source_annotation_tbl.failed %>%
+    write_tsv('../tracked_results/mappings/refseq_20180629_to_uniprot_2020_03_not_mappable.tsv.gz')
+```
+
