@@ -1,8 +1,8 @@
 ---
 title: "R Notebook"
 output:
-  html_document:
-    df_print: paged
+    html_document:
+        df_print: paged
 ---
 
 ```{r, message=FALSE}
@@ -15,6 +15,11 @@ library(tidyverse)
 DATA_ROOT = '~/Box/MyCPTAC/CPTAC_proteome_v2.0'
 ```
 
+Load extra functions for mapping
+```{r}
+source('utils.R')
+```
+
 ```{r}
 protein_pth = fs::path(DATA_ROOT, 'CPTAC3/GBM_discovery/proteome_mssm_per_gene_clean.v4.0.20200430.rds')
 
@@ -25,12 +30,19 @@ acetyl_pth = fs::path(DATA_ROOT, 'CPTAC3/GBM_discovery/acetylome_mssm_per_gene_c
 acetyl_loc_pth = fs::path(DATA_ROOT, 'CPTAC3/GBM_discovery/acetylome_mssm_per_gene_clean.v4.0.20200430.tsv.peptide_location.tsv.gz')
 ```
 
+
 ```{r}
 protein_annotation_gr = read_rds(here(
     'annotation/refseq_20180629/tracked_results/refseq_20180629_human_only_unique_loci_GRanges.rds'
 ))
 names(mcols(protein_annotation_gr))
 ```
+
+Read UniProt 2020_03 coord_mapping
+```{r}
+uniprot2020_03_coord_mapping_tbl = read_refseq20180629_to_uniprot2020_03_coord_mapping()
+```
+
 
 ## Protein
 ```{r}
@@ -139,7 +151,7 @@ phospho_row_tbl = raw_phospho_row_tbl %>%
     bind_cols(tibble(na_percent = phospho_na_percent)) %>%
     filter(
         peptide_loc_valid,
-        na_percent <= 0.8
+        # na_percent <= 0.8
     ) %>%
     arrange(symbol, phosphosites, na_percent) %>%
     mutate(
@@ -173,10 +185,12 @@ phospho_row_full_tbl = phospho_row_tbl %>%
     left_join(
         protein_annotation_tbl,
         by = 'refseq_prot_id'
-    )
+    ) %>%
+    annotate_uniprot_mapping("phosphosites", uniprot2020_03_coord_mapping_tbl)
 
 phospho_row_full_tbl %>% head()
 ```
+
 Make sure the sample name order is the same
 ```{r}
 identical(rownames(colData(raw_phospho_se)), protein_col_tbl$preferred_sample_name)
@@ -259,7 +273,8 @@ acetyl_row_full_tbl = acetyl_row_tbl %>%
     left_join(
         protein_annotation_tbl,
         by = 'refseq_prot_id'
-    )
+    ) %>%
+    annotate_uniprot_mapping("acetylsites", uniprot2020_03_coord_mapping_tbl)
 
 acetyl_row_full_tbl %>% head()
 ```
@@ -291,6 +306,6 @@ acetyl_se
 ```{r}
 fs::dir_create(here('final_output/CPTAC3_GBM_discovery'))
 protein_se %>% saveRDS(here('final_output/CPTAC3_GBM_discovery/CPTAC3_GBM_discovery_pnnl_proteome.v2.0.rds'))
-phospho_se %>% saveRDS(here('final_output/CPTAC3_GBM_discovery/CPTAC3_GBM_discovery_pnnl_phosphoproteome.v2.0.rds'))
-acetyl_se %>% saveRDS(here('final_output/CPTAC3_GBM_discovery/CPTAC3_GBM_discovery_pnnl_acetylome.v2.0.rds'))
+phospho_se %>% saveRDS(here('final_output/CPTAC3_GBM_discovery/CPTAC3_GBM_discovery_pnnl_phosphoproteome.v2.2.rds'))
+acetyl_se %>% saveRDS(here('final_output/CPTAC3_GBM_discovery/CPTAC3_GBM_discovery_pnnl_acetylome.v2.2.rds'))
 ```

@@ -15,6 +15,11 @@ library(tidyverse)
 DATA_ROOT = '~/Box/MyCPTAC/CPTAC_proteome_v2.0'
 ```
 
+Load extra functions for mapping
+```{r}
+source('utils.R')
+```
+
 ```{r}
 tmt_pth = fs::path(DATA_ROOT, 'CPTAC3/CCRCC_discovery/cptac-metadata.csv')
 
@@ -22,6 +27,12 @@ protein_pth = fs::path(DATA_ROOT, 'CPTAC3/CCRCC_discovery/6_CPTAC3_CCRCC_Whole_a
 phospho_pth = fs::path(DATA_ROOT, 'CPTAC3/CCRCC_discovery/6_CPTAC3_CCRCC_Phospho_abundance_phosphosite_protNorm=2_CB.tsv.gz')
 phospho_loc_pth = fs::path(DATA_ROOT, 'CPTAC3/CCRCC_discovery/6_CPTAC3_CCRCC_Phospho_abundance_phosphosite_protNorm=2_CB.tsv.peptide_location.tsv.gz')
 ```
+
+Read UniProt 2020_03 coord_mapping
+```{r}
+uniprot2020_03_coord_mapping_tbl = read_refseq20180629_to_uniprot2020_03_coord_mapping()
+```
+
 
 
 ## TMT map
@@ -249,7 +260,8 @@ phospho_row_full_tbl = phospho_row_tbl %>%
     left_join(
         protein_annotation_tbl,
         by = 'refseq_prot_id'
-    )
+    ) %>%
+    annotate_uniprot_mapping("phosphosites", uniprot2020_03_coord_mapping_tbl)
 
 phospho_row_full_tbl %>% head()
 ```
@@ -279,5 +291,5 @@ phospho_se
 fs::dir_create(here('final_output/CPTAC3_CCRCC_discovery'))
 
 protein_se %>% saveRDS(here('final_output/CPTAC3_CCRCC_discovery/CPTAC3_CCRCC_discovery_umich_proteome.v2.0.rds'))
-phospho_se %>% saveRDS(here('final_output/CPTAC3_CCRCC_discovery/CPTAC3_CCRCC_discovery_umich_phosphoproteome.v2.0.rds'))
+phospho_se %>% saveRDS(here('final_output/CPTAC3_CCRCC_discovery/CPTAC3_CCRCC_discovery_umich_phosphoproteome.v2.2.rds'))
 ```

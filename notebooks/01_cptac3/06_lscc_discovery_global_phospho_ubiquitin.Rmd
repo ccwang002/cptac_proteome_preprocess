@@ -16,6 +16,11 @@ library(tidyverse)
 DATA_ROOT = '~/Box/MyCPTAC/CPTAC_proteome_v2.0'
 ```
 
+Load extra functions for mapping
+```{r}
+source('utils.R')
+```
+
 ```{r}
 protein_pth = fs::path(DATA_ROOT, 'CPTAC3/LSCC_discovery/lscc-v3.2-proteome-ratio-norm-NArm.gct')
 
@@ -34,6 +39,11 @@ protein_annotation_gr = read_rds(here(
     'annotation/refseq_20180629/tracked_results/refseq_20180629_human_only_unique_loci_GRanges.rds'
 ))
 names(mcols(protein_annotation_gr))
+```
+
+Read UniProt 2020_03 coord_mapping
+```{r}
+uniprot2020_03_coord_mapping_tbl = read_refseq20180629_to_uniprot2020_03_coord_mapping()
 ```
 
 
@@ -229,7 +239,8 @@ phospho_row_full_tbl = phospho_row_tbl %>%
     left_join(
         protein_annotation_tbl,
         by = 'refseq_prot_id'
-    )
+    )  %>%
+    annotate_uniprot_mapping("phosphosites", uniprot2020_03_coord_mapping_tbl)
 
 phospho_row_full_tbl %>% head()
 ```
@@ -325,7 +336,8 @@ acetyl_row_full_tbl = acetyl_row_tbl %>%
     left_join(
         protein_annotation_tbl,
         by = 'refseq_prot_id'
-    )
+    ) %>%
+    annotate_uniprot_mapping("acetylsites", uniprot2020_03_coord_mapping_tbl)
 
 acetyl_row_full_tbl %>% head()
 ```
@@ -422,7 +434,8 @@ ubiquitin_row_full_tbl = ubiquitin_row_tbl %>%
     left_join(
         protein_annotation_tbl,
         by = 'refseq_prot_id'
-    )
+    )  %>%
+    annotate_uniprot_mapping("ubiquitinsites", uniprot2020_03_coord_mapping_tbl)
 
 ubiquitin_row_full_tbl %>% head()
 ```
@@ -476,7 +489,7 @@ ubiquitin_se
 ```{r}
 fs::dir_create(here('final_output/CPTAC3_LSCC_discovery'))
 protein_se %>% saveRDS(here('final_output/CPTAC3_LSCC_discovery/CPTAC3_LSCC_discovery_broad_proteome.v2.0.rds'))
-phospho_se %>% saveRDS(here('final_output/CPTAC3_LSCC_discovery/CPTAC3_LSCC_discovery_broad_phosphoproteome.v2.0.rds'))
-acetyl_se %>% saveRDS(here('final_output/CPTAC3_LSCC_discovery/CPTAC3_LSCC_discovery_broad_acetylome.v2.0.rds'))
-ubiquitin_se %>% saveRDS(here('final_output/CPTAC3_LSCC_discovery/CPTAC3_LSCC_discovery_broad_ubiquitylome.v2.0.rds'))
+phospho_se %>% saveRDS(here('final_output/CPTAC3_LSCC_discovery/CPTAC3_LSCC_discovery_broad_phosphoproteome.v2.2.rds'))
+acetyl_se %>% saveRDS(here('final_output/CPTAC3_LSCC_discovery/CPTAC3_LSCC_discovery_broad_acetylome.v2.2.rds'))
+ubiquitin_se %>% saveRDS(here('final_output/CPTAC3_LSCC_discovery/CPTAC3_LSCC_discovery_broad_ubiquitylome.v2.2.rds'))
 ```
