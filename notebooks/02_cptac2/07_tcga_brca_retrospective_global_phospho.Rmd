@@ -17,6 +17,11 @@ library(tidyverse)
 DATA_ROOT = '~/Box/MyCPTAC/CPTAC_proteome_v2.0'
 ```
 
+Load extra functions for mapping
+```{r}
+source('utils.R')
+```
+
 ```{r}
 sample_detail_pth = fs::path(DATA_ROOT, 'CPTAC2/TCGA_BRCA_retrospective/CPTAC_BC_SupplementaryTable01.xlsx')
 
@@ -41,6 +46,11 @@ protein_annotation_tbl = read_tsv(here(
 colnames(protein_annotation_tbl)
 ```
 
+Read UniProt 2020_03 coord_mapping
+```{r}
+uniprot2020_03_coord_mapping_tbl = read_refseq20130727_to_uniprot2020_03_coord_mapping()
+```
+
 Make a mapping to obtain the RefSeq full version
 ```{r}
 refseq_prot_no_ver_tbl = protein_annotation_tbl %>%
@@ -48,6 +58,7 @@ refseq_prot_no_ver_tbl = protein_annotation_tbl %>%
 
 refseq_prot_no_ver_tbl %>% head()
 ```
+
 ```{r}
 gene_annotation_tbl = protein_annotation_tbl %>%
     distinct(symbol, hgnc_id, entrez_gene_id, ensembl_gene_id)
@@ -311,10 +322,12 @@ phospho_row_full_tbl = raw_phospho_annotate_row_tbl %>%
     ) %>%
     rename(original_symbol = geneName) %>%
     select(-na_percent, -peptide_loc_valid, -peptide_loc_invalid_reason, -variableSites) %>%
-    select(refseq_prot_id, symbol, phosphosites, peptide, everything())
+    select(refseq_prot_id, symbol, phosphosites, peptide, everything()) %>%
+    annotate_uniprot_mapping("phosphosites", uniprot2020_03_coord_mapping_tbl)
 
 phospho_row_full_tbl %>% head()
 ```
+
 Many gene symbols don't match the original data
 ```{r}
 phospho_row_full_tbl %>%
@@ -345,5 +358,5 @@ phospho_se
 fs::dir_create(here('final_output/TCGA_BRCA_retrospective'))
 
 protein_se %>% saveRDS(here('final_output/TCGA_BRCA_retrospective/TCGA_BRCA_retrospective_broad_proteome.v2.0.rds'))
-phospho_se %>% saveRDS(here('final_output/TCGA_BRCA_retrospective/TCGA_BRCA_retrospective_broad_phosphoproteome.v2.0.rds'))
+phospho_se %>% saveRDS(here('final_output/TCGA_BRCA_retrospective/TCGA_BRCA_retrospective_broad_phosphoproteome.v2.2.rds'))
 ```
