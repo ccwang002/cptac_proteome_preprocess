@@ -1,5 +1,5 @@
 ---
-title: "Create UniProt entry mapping between RefSeq 20180629 and UniProt 2020_03"
+title: "Create UniProt entry mapping between RefSeq 20160914 and UniProt 2020_03"
 output:
     html_document:
         df_print: paged
@@ -10,9 +10,9 @@ library(here)
 library(tidyverse)
 ```
 
-Source here is RefSeq 20180629 and Target is UniProt 2020_03
+Source here is RefSeq 20160914 and Target is UniProt 2020_03
 ```{r}
-source_annotation_tbl = read_tsv(here('annotation/refseq_20180629/tracked_results/refseq_20180629_human_only_unique_loci.tsv.gz'))
+source_annotation_tbl = read_tsv(here('annotation/refseq_20160914/tracked_results/refseq_20160914_human_only_unique_loci.tsv.gz'))
 target_tbl = read_tsv(here('annotation/mapping_uniprot_2020_03/tracked_results/uniprot_reviewed_human_proteome_hgnc_only.v2020_03.tsv.gz'))
 ```
 
@@ -21,7 +21,7 @@ colnames(source_annotation_tbl)
 colnames(target_tbl)
 ```
 
-These source proteins will not be mapped due to the lack of HGNC ID
+Some source protein entries lack HGNC ID
 ```{r}
 source_annotation_tbl %>%
     filter(is.na(hgnc_id)) %>%
@@ -29,12 +29,6 @@ source_annotation_tbl %>%
 ```
 
 Find the matching records that has identical protein sequence in the target set
-```{r}
-source_annotation_tbl %>%
-    filter(uniparc_id %in% target_tbl$uniparc_id) %>%
-    nrow()
-```
-
 ```{r}
 mapping_tbl.identical = source_annotation_tbl %>%
     select(refseq_prot_id, hgnc_id, source_uniparc_id = uniparc_id) %>%
@@ -53,6 +47,8 @@ source_annotation_tbl.remaining = source_annotation_tbl.remaining %>%
     filter(!refseq_prot_id %in% mapping_tbl.identical$refseq_prot_id)
 ```
 
+
+The remaining entries will require sequence alignment (choosing the ones with the same HGNC ID)
 ```{r}
 mapping_tbl.align = source_annotation_tbl.remaining %>%
     select(refseq_prot_id, hgnc_id, source_uniparc_id = uniparc_id) %>%
@@ -65,9 +61,13 @@ mapping_tbl.align = source_annotation_tbl.remaining %>%
 
 mapping_tbl.align %>% head()
 ```
+
+The remaining annotations will fail the mapping
 ```{r}
 source_annotation_tbl.failed = source_annotation_tbl.remaining %>%
     filter(!refseq_prot_id %in% mapping_tbl.align$refseq_prot_id)
+
+nrow(source_annotation_tbl.failed)
 ```
 
 ```{r}
@@ -117,9 +117,9 @@ mapping_tbl %>%
 
 ```{r}
 mapping_tbl %>% 
-    write_tsv('../tracked_results/mappings/refseq_20180629_to_uniprot_2020_03_mappable.tsv.gz')
+    write_tsv('../tracked_results/mappings/refseq_20160914_to_uniprot_2020_03_mappable.tsv.gz')
 
 source_annotation_tbl.failed %>%
-    write_tsv('../tracked_results/mappings/refseq_20180629_to_uniprot_2020_03_not_mappable.tsv.gz')
+    write_tsv('../tracked_results/mappings/refseq_20160914_to_uniprot_2020_03_not_mappable.tsv.gz')
 ```
 
