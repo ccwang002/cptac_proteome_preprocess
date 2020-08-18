@@ -44,16 +44,27 @@ def parse_uniprot_entry(entry_d):
         gene_name = None
 
     # parse HGNC
-    hgnc_d = next(
-        (d for d in entry_d['dbReference'] if d['@type'] == 'HGNC'),
-        None
-    )
-    if hgnc_d is not None:
-        hgnc_gene_id = hgnc_d['@id']
-        hgnc_gene_name = next(
-            (d['@value'] for d in hgnc_d['property'] if d['@type'] == 'gene designation'),
-            None
-        )
+    # note that one UniProt entry can have multiple HGNC mappings
+    # e.g. Q9BQY6
+    hgnc_ds = [d for d in entry_d['dbReference'] if d['@type'] == 'HGNC']
+    if hgnc_ds:
+        if len(hgnc_ds) == 1:
+            hgnc_d = hgnc_ds[0]
+            hgnc_gene_id = hgnc_d['@id']
+            hgnc_gene_name = next(
+                (d['@value'] for d in hgnc_d['property'] if d['@type'] == 'gene designation'),
+                None
+            )
+        else:
+            hgnc_gene_id = ";".join([d['@id'] for d in hgnc_ds])
+            hgnc_gene_name = ";".join([
+                next(
+                    (d['@value'] for d in hgnc_d['property'] if d['@type'] == 'gene designation'),
+                    ""  # keep the empty value
+                )
+                for hgnc_d in hgnc_ds
+            ])
+            logger.warning(f"Entry {uniprot_acc} has multiple HGNC mappings: {hgnc_gene_id}")
     else:
         hgnc_gene_id = None
         hgnc_gene_name = None
@@ -64,8 +75,8 @@ def parse_uniprot_entry(entry_d):
         'uniprot_name': uniprot_name,
         'uniprot_protein_name': protein_name,
         'uniprot_gene_name': gene_name,
-        'hgnc_gene_id': hgnc_gene_id,
-        'hgnc_gene_name': hgnc_gene_name,
+        'hgnc_gene_ids': hgnc_gene_id,
+        'hgnc_gene_names': hgnc_gene_name,
         'sequence_modified_date': seq_d['@modified'],
         'sequence_crc64_checksum': seq_d['@checksum'],
         'sequence': seq_d['$']
@@ -97,7 +108,7 @@ def main(json_folder: Path, out_tsv_pth: Path, num_processes: int):
         columns=[
             'uniprot_acc', 'uniprot_name',
             'uniprot_protein_name', 'uniprot_gene_name',
-            'hgnc_gene_id', 'hgnc_gene_name',
+            'hgnc_gene_ids', 'hgnc_gene_names',
             'sequence_modified_date', 'sequence_crc64_checksum',
             'sequence'
         ]
