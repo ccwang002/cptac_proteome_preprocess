@@ -21,7 +21,7 @@ cd ../intermediates/uniprot_release_2020_03/parsed_jsons/
 fd '.json$' parsed_jsons | parallel --bar -j6 'zstd -9 --rm -q {}'
 
 # Parse the JSONs
-python 2_parse_entries.py -j6  \
+python 2_parse_entries.py -j8  \
     ../intermediates/uniprot_release_2020_03/parsed_jsons \
     ../intermediates/uniprot_release_2020_03/uniprot_entries_tsv.gz
 

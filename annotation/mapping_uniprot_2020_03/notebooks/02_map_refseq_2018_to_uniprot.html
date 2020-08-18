@@ -1714,7 +1714,7 @@ library(tidyverse)</code></pre>
 mapping_tbl.identical %&gt;% head()</code></pre>
 <div data-pagedtable="false">
 <script data-pagedtable-source type="application/json">
-{"columns":[{"label":["refseq_prot_id"],"name":[1],"type":["chr"],"align":["left"]},{"label":["hgnc_id"],"name":[2],"type":["chr"],"align":["left"]},{"label":["source_uniparc_id"],"name":[3],"type":["chr"],"align":["left"]},{"label":["uniprot_acc"],"name":[4],"type":["chr"],"align":["left"]},{"label":["target_uniparc_id"],"name":[5],"type":["chr"],"align":["left"]},{"label":["mapping_approach"],"name":[6],"type":["chr"],"align":["left"]}],"data":[{"1":"NP_001005484.1","2":"HGNC:14825","3":"UPI0000041BC1","4":"Q8NH21","5":"UPI0000041BC1","6":"identical_sequence"},{"1":"NP_001005221.2","2":"HGNC:31275","3":"UPI0000041D3C","4":"Q6IEY1","5":"UPI0000041D3C","6":"identical_sequence"},{"1":"NP_938073.1","2":"HGNC:24023","3":"UPI00001DFBF0","4":"Q6TDP4","5":"UPI00001DFBF0","6":"identical_sequence"},{"1":"NP_115505.2","2":"HGNC:25284","3":"UPI00001416D8","4":"Q494U1","5":"UPI00001416D8","6":"identical_sequence"},{"1":"NP_001278295.1","2":"HGNC:28208","3":"UPI0003E30FA7","4":"Q5SV97","5":"UPI0003E30FA7","6":"identical_sequence"},{"1":"NP_066993.1","2":"HGNC:24149","3":"UPI000006EC19","4":"Q9HCC6","5":"UPI000006EC19","6":"identical_sequence"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
+{"columns":[{"label":["refseq_prot_id"],"name":[1],"type":["chr"],"align":["left"]},{"label":["hgnc_id"],"name":[2],"type":["chr"],"align":["left"]},{"label":["source_uniparc_id"],"name":[3],"type":["chr"],"align":["left"]},{"label":["uniprot_acc"],"name":[4],"type":["chr"],"align":["left"]},{"label":["target_uniparc_id"],"name":[5],"type":["chr"],"align":["left"]},{"label":["mapping_approach"],"name":[6],"type":["chr"],"align":["left"]}],"data":[{"1":"NP_001005484.1","2":"HGNC:14825","3":"UPI0000041BC1","4":"Q8NH21","5":"UPI0000041BC1","6":"identical_sequence"},{"1":"NP_001005221.2","2":"HGNC:31275","3":"UPI0000041D3C","4":"Q6IEY1","5":"UPI0000041D3C","6":"identical_sequence"},{"1":"NP_001005221.2","2":"HGNC:31275","3":"UPI0000041D3C","4":"Q6IEY1","5":"UPI0000041D3C","6":"identical_sequence"},{"1":"NP_001005221.2","2":"HGNC:31275","3":"UPI0000041D3C","4":"Q6IEY1","5":"UPI0000041D3C","6":"identical_sequence"},{"1":"NP_938073.1","2":"HGNC:24023","3":"UPI00001DFBF0","4":"Q6TDP4","5":"UPI00001DFBF0","6":"identical_sequence"},{"1":"NP_115505.2","2":"HGNC:25284","3":"UPI00001416D8","4":"Q494U1","5":"UPI00001416D8","6":"identical_sequence"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
   </script>
 </div>
 <pre class="r"><code>source_annotation_tbl.remaining = source_annotation_tbl
@@ -1741,7 +1741,7 @@ mapping_tbl.align %&gt;% head()</code></pre>
     count(!is.na(hgnc_id))</code></pre>
 <div data-pagedtable="false">
 <script data-pagedtable-source type="application/json">
-{"columns":[{"label":["!is.na(hgnc_id)"],"name":[1],"type":["lgl"],"align":["right"]},{"label":["n"],"name":[2],"type":["int"],"align":["right"]}],"data":[{"1":"FALSE","2":"95"},{"1":"TRUE","2":"173"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
+{"columns":[{"label":["!is.na(hgnc_id)"],"name":[1],"type":["lgl"],"align":["right"]},{"label":["n"],"name":[2],"type":["int"],"align":["right"]}],"data":[{"1":"FALSE","2":"95"},{"1":"TRUE","2":"141"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
   </script>
 </div>
 <p>Make the mapping table</p>
@@ -1765,27 +1765,27 @@ mapping_tbl %&gt;% head()</code></pre>
 num_source_ids_with_dup_mapping %&gt;% head()</code></pre>
 <div data-pagedtable="false">
 <script data-pagedtable-source type="application/json">
-{"columns":[{"label":["refseq_prot_id"],"name":[1],"type":["chr"],"align":["left"]},{"label":["n"],"name":[2],"type":["int"],"align":["right"]}],"data":[{"1":"NP_001123876.1","2":"5"},{"1":"NP_001070956.1","2":"4"},{"1":"NP_001070957.1","2":"4"},{"1":"NP_001091875.1","2":"4"},{"1":"NP_001296769.1","2":"4"},{"1":"NP_001296771.1","2":"4"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
+{"columns":[{"label":["refseq_prot_id"],"name":[1],"type":["chr"],"align":["left"]},{"label":["n"],"name":[2],"type":["int"],"align":["right"]}],"data":[{"1":"NP_001029249.1","2":"14"},{"1":"NP_001073606.1","2":"12"},{"1":"NP_003520.1","2":"10"},{"1":"NP_001229255.1","2":"7"},{"1":"NP_001093157.1","2":"6"},{"1":"NP_001091063.2","2":"5"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
   </script>
 </div>
 <p>Showing some statistics</p>
 <pre><code>## Total source entries: 41470
-## Total target entries: 20174
-## Source entries without any mapping: 268
-## Mapping table (unique source ID) entry pairs: 41202
+## Total target entries: 20313
+## Source entries without any mapping: 236
+## Mapping table (unique source ID) entry pairs: 41234
 ## Mapping type breakdown (unique source ID):
 ## # A tibble: 2 x 2
 ##   mapping_approach       n
 ##   &lt;chr&gt;              &lt;int&gt;
-## 1 global_seq_align   23347
+## 1 global_seq_align   23379
 ## 2 identical_sequence 17855
-## Mapping table (with duplication) entry pairs: 41344
-##     ... source entries with duplicated mapping: 122
+## Mapping table (with duplication) entry pairs: 41505
+##     ... source entries with duplicated mapping: 192
 ## # A tibble: 2 x 2
 ##   mapping_approach       n
 ##   &lt;chr&gt;              &lt;int&gt;
-## 1 global_seq_align   23441
-## 2 identical_sequence 17903</code></pre>
+## 1 global_seq_align   23474
+## 2 identical_sequence 18031</code></pre>
 <pre class="r"><code>mapping_tbl %&gt;% 
     write_tsv(&#39;../tracked_results/mappings/refseq_20180629_to_uniprot_2020_03_mappable.tsv.gz&#39;)
 
