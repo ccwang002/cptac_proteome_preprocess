@@ -32,7 +32,7 @@ Find the matching records that has identical protein sequence in the target set
 ```{r}
 mapping_tbl.identical = source_annotation_tbl %>%
     select(refseq_prot_id, hgnc_id, source_uniparc_id = uniparc_id) %>%
-    inner_join(target_tbl %>% select(uniprot_acc, target_uniparc_id = uniparc_id), 
+    inner_join(target_tbl %>% distinct(uniprot_acc, target_uniparc_id = uniparc_id), 
                by = c('source_uniparc_id' = 'target_uniparc_id')) %>%
     mutate(
         target_uniparc_id = source_uniparc_id,
@@ -61,29 +61,48 @@ mapping_tbl.align = source_annotation_tbl.remaining %>%
 
 mapping_tbl.align %>% head()
 ```
-
-The remaining annotations will fail the mapping
 ```{r}
-source_annotation_tbl.failed = source_annotation_tbl.remaining %>%
+source_annotation_tbl.remaining = source_annotation_tbl.remaining %>%
     filter(!refseq_prot_id %in% mapping_tbl.align$refseq_prot_id)
 
-nrow(source_annotation_tbl.failed)
+source_annotation_tbl.remaining %>%
+    count(!is.na(hgnc_id))
+```
+
+```{r}
+mapping_tbl.align_by_symbol = source_annotation_tbl.remaining %>%
+    select(refseq_prot_id, hgnc_id, symbol, source_uniparc_id = uniparc_id) %>%
+    inner_join(
+        target_tbl %>% 
+            select(uniprot_acc, symbol = hgnc_gene_name, target_uniparc_id = uniparc_id),
+        by = "symbol"
+    ) %>%
+    mutate(mapping_approach = 'global_seq_align')
+
+mapping_tbl.align_by_symbol %>% head()
+```
+```{r}
+source_annotation_tbl.failed = source_annotation_tbl.remaining %>%
+    filter(!refseq_prot_id %in% mapping_tbl.align_by_symbol$refseq_prot_id)
 ```
 
 ```{r}
 source_annotation_tbl.failed %>%
     count(!is.na(hgnc_id))
 ```
+
 Make the mapping table
 ```{r}
 mapping_tbl = bind_rows(
     mapping_tbl.identical,
-    mapping_tbl.align
+    mapping_tbl.align,
+    mapping_tbl.align_by_symbol %>% select(-symbol)
 ) %>%
     arrange(refseq_prot_id)
 
 mapping_tbl %>% head()
 ```
+
 Some source proteins can be mapped to multiple targets:
 ```{r}
 num_source_ids_with_dup_mapping = mapping_tbl %>%

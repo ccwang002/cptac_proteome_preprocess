@@ -64,7 +64,8 @@ def gen_align_coord_str(aligner, source_seq: str, target_seq: str):
     }
 
 
-def main(mapping_pth, source_fa_pth, target_fa_pth, out_pth):
+def main(mapping_pth, source_fa_pth, target_fa_pth, out_pth,
+         remove_source_id_version=False):
     # Read the mapping table
     logger.info(f"Read mapping table from {mapping_pth}")
     mapping_df = pd.read_table(
@@ -103,6 +104,8 @@ def main(mapping_pth, source_fa_pth, target_fa_pth, out_pth):
     logger.info("Start global sequence alignment ...")
     aln_results = []
     for i, (source_id, target_id) in enumerate(zip(to_align_df['refseq_prot_id'], to_align_df['uniprot_acc']), 1):
+        if remove_source_id_version:
+            source_id = source_id[:source_id.rfind('.')]
         # Need to replace U's since it's an unknown letter to the scoring matrix.
         source_seq = source_fa.fetch(source_id).replace('U', 'X')
         target_seq = target_fa.fetch(target_id).replace('U', 'X')
@@ -163,6 +166,7 @@ def setup_cli():
     parser.add_argument("source_fa", help="Path to the source protein FASTA")
     parser.add_argument("target_fa", help="Path to the target protein FASTA")
     parser.add_argument("out_tsv", help="Output coordinate mapping TSV")
+    parser.add_argument("--remove-source-id-version", action='store_true', help="Remove the source entry ID version")
 
     return parser
 
@@ -174,5 +178,6 @@ if __name__ == "__main__":
         args.mapping_tsv,
         args.source_fa,
         args.target_fa,
-        args.out_tsv
+        args.out_tsv,
+        remove_source_id_version=args.remove_source_id_version
     )

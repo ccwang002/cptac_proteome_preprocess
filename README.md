@@ -47,7 +47,7 @@ conda create -n cptac \
     snakemake=5.19 \
     notebook=6.0 pandas=1.1 \
     zstd zstandard=0.14 \
-    xsv xmlschema orjson \
+    xsv xmlschema orjson loguru \
     biopython=1.77
 
     pysam=0.16 # not in bioconda yet

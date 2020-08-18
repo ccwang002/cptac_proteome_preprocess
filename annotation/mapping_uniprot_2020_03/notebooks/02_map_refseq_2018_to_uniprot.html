@@ -1704,7 +1704,7 @@ library(tidyverse)</code></pre>
 <pre><code>## [1] 17855</code></pre>
 <pre class="r"><code>mapping_tbl.identical = source_annotation_tbl %&gt;%
     select(refseq_prot_id, hgnc_id, source_uniparc_id = uniparc_id) %&gt;%
-    inner_join(target_tbl %&gt;% select(uniprot_acc, target_uniparc_id = uniparc_id), 
+    inner_join(target_tbl %&gt;% distinct(uniprot_acc, target_uniparc_id = uniparc_id), 
                by = c(&#39;source_uniparc_id&#39; = &#39;target_uniparc_id&#39;)) %&gt;%
     mutate(
         target_uniparc_id = source_uniparc_id,
@@ -1714,7 +1714,7 @@ library(tidyverse)</code></pre>
 mapping_tbl.identical %&gt;% head()</code></pre>
 <div data-pagedtable="false">
 <script data-pagedtable-source type="application/json">
-{"columns":[{"label":["refseq_prot_id"],"name":[1],"type":["chr"],"align":["left"]},{"label":["hgnc_id"],"name":[2],"type":["chr"],"align":["left"]},{"label":["source_uniparc_id"],"name":[3],"type":["chr"],"align":["left"]},{"label":["uniprot_acc"],"name":[4],"type":["chr"],"align":["left"]},{"label":["target_uniparc_id"],"name":[5],"type":["chr"],"align":["left"]},{"label":["mapping_approach"],"name":[6],"type":["chr"],"align":["left"]}],"data":[{"1":"NP_001005484.1","2":"HGNC:14825","3":"UPI0000041BC1","4":"Q8NH21","5":"UPI0000041BC1","6":"identical_sequence"},{"1":"NP_001005221.2","2":"HGNC:31275","3":"UPI0000041D3C","4":"Q6IEY1","5":"UPI0000041D3C","6":"identical_sequence"},{"1":"NP_001005221.2","2":"HGNC:31275","3":"UPI0000041D3C","4":"Q6IEY1","5":"UPI0000041D3C","6":"identical_sequence"},{"1":"NP_001005221.2","2":"HGNC:31275","3":"UPI0000041D3C","4":"Q6IEY1","5":"UPI0000041D3C","6":"identical_sequence"},{"1":"NP_938073.1","2":"HGNC:24023","3":"UPI00001DFBF0","4":"Q6TDP4","5":"UPI00001DFBF0","6":"identical_sequence"},{"1":"NP_115505.2","2":"HGNC:25284","3":"UPI00001416D8","4":"Q494U1","5":"UPI00001416D8","6":"identical_sequence"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
+{"columns":[{"label":["refseq_prot_id"],"name":[1],"type":["chr"],"align":["left"]},{"label":["hgnc_id"],"name":[2],"type":["chr"],"align":["left"]},{"label":["source_uniparc_id"],"name":[3],"type":["chr"],"align":["left"]},{"label":["uniprot_acc"],"name":[4],"type":["chr"],"align":["left"]},{"label":["target_uniparc_id"],"name":[5],"type":["chr"],"align":["left"]},{"label":["mapping_approach"],"name":[6],"type":["chr"],"align":["left"]}],"data":[{"1":"NP_001005484.1","2":"HGNC:14825","3":"UPI0000041BC1","4":"Q8NH21","5":"UPI0000041BC1","6":"identical_sequence"},{"1":"NP_001005221.2","2":"HGNC:31275","3":"UPI0000041D3C","4":"Q6IEY1","5":"UPI0000041D3C","6":"identical_sequence"},{"1":"NP_938073.1","2":"HGNC:24023","3":"UPI00001DFBF0","4":"Q6TDP4","5":"UPI00001DFBF0","6":"identical_sequence"},{"1":"NP_115505.2","2":"HGNC:25284","3":"UPI00001416D8","4":"Q494U1","5":"UPI00001416D8","6":"identical_sequence"},{"1":"NP_001278295.1","2":"HGNC:28208","3":"UPI0003E30FA7","4":"Q5SV97","5":"UPI0003E30FA7","6":"identical_sequence"},{"1":"NP_066993.1","2":"HGNC:24149","3":"UPI000006EC19","4":"Q9HCC6","5":"UPI000006EC19","6":"identical_sequence"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
   </script>
 </div>
 <pre class="r"><code>source_annotation_tbl.remaining = source_annotation_tbl
@@ -1735,8 +1735,33 @@ mapping_tbl.align %&gt;% head()</code></pre>
 {"columns":[{"label":["refseq_prot_id"],"name":[1],"type":["chr"],"align":["left"]},{"label":["hgnc_id"],"name":[2],"type":["chr"],"align":["left"]},{"label":["source_uniparc_id"],"name":[3],"type":["chr"],"align":["left"]},{"label":["uniprot_acc"],"name":[4],"type":["chr"],"align":["left"]},{"label":["target_uniparc_id"],"name":[5],"type":["chr"],"align":["left"]},{"label":["mapping_approach"],"name":[6],"type":["chr"],"align":["left"]}],"data":[{"1":"NP_689699.2","2":"HGNC:28706","3":"UPI00005C3DB1","4":"Q96NU1","5":"UPI0000D61E04","6":"global_seq_align"},{"1":"NP_056473.2","2":"HGNC:24517","3":"UPI000013C171","4":"Q9Y3T9","5":"UPI000041820C","6":"global_seq_align"},{"1":"NP_001153656.1","2":"HGNC:25284","3":"UPI00005764FF","4":"Q494U1","5":"UPI00001416D8","6":"global_seq_align"},{"1":"NP_001278296.1","2":"HGNC:28208","3":"UPI0000418FB0","4":"Q5SV97","5":"UPI0003E30FA7","6":"global_seq_align"},{"1":"NP_001135939.1","2":"HGNC:24149","3":"UPI0001881B51","4":"Q9HCC6","5":"UPI000006EC19","6":"global_seq_align"},{"1":"NP_940978.2","2":"HGNC:329","3":"UPI00001D7C8B","4":"O00468","5":"UPI000387D73E","6":"global_seq_align"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
   </script>
 </div>
+<pre class="r"><code>source_annotation_tbl.remaining = source_annotation_tbl.remaining %&gt;%
+    filter(!refseq_prot_id %in% mapping_tbl.align$refseq_prot_id)
+
+source_annotation_tbl.remaining %&gt;%
+    count(!is.na(hgnc_id))</code></pre>
+<div data-pagedtable="false">
+<script data-pagedtable-source type="application/json">
+{"columns":[{"label":["!is.na(hgnc_id)"],"name":[1],"type":["lgl"],"align":["right"]},{"label":["n"],"name":[2],"type":["int"],"align":["right"]}],"data":[{"1":"FALSE","2":"95"},{"1":"TRUE","2":"141"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
+  </script>
+</div>
+<pre class="r"><code>mapping_tbl.align_by_symbol = source_annotation_tbl.remaining %&gt;%
+    select(refseq_prot_id, hgnc_id, symbol, source_uniparc_id = uniparc_id) %&gt;%
+    inner_join(
+        target_tbl %&gt;% 
+            select(uniprot_acc, symbol = hgnc_gene_name, target_uniparc_id = uniparc_id),
+        by = &quot;symbol&quot;
+    ) %&gt;%
+    mutate(mapping_approach = &#39;global_seq_align&#39;)
+
+mapping_tbl.align_by_symbol %&gt;% head()</code></pre>
+<div data-pagedtable="false">
+<script data-pagedtable-source type="application/json">
+{"columns":[{"label":["refseq_prot_id"],"name":[1],"type":["chr"],"align":["left"]},{"label":["hgnc_id"],"name":[2],"type":["chr"],"align":["left"]},{"label":["symbol"],"name":[3],"type":["chr"],"align":["left"]},{"label":["source_uniparc_id"],"name":[4],"type":["chr"],"align":["left"]},{"label":["uniprot_acc"],"name":[5],"type":["chr"],"align":["left"]},{"label":["target_uniparc_id"],"name":[6],"type":["chr"],"align":["left"]},{"label":["mapping_approach"],"name":[7],"type":["chr"],"align":["left"]}],"data":[],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
+  </script>
+</div>
 <pre class="r"><code>source_annotation_tbl.failed = source_annotation_tbl.remaining %&gt;%
-    filter(!refseq_prot_id %in% mapping_tbl.align$refseq_prot_id)</code></pre>
+    filter(!refseq_prot_id %in% mapping_tbl.align_by_symbol$refseq_prot_id)</code></pre>
 <pre class="r"><code>source_annotation_tbl.failed %&gt;%
     count(!is.na(hgnc_id))</code></pre>
 <div data-pagedtable="false">
@@ -1747,7 +1772,8 @@ mapping_tbl.align %&gt;% head()</code></pre>
 <p>Make the mapping table</p>
 <pre class="r"><code>mapping_tbl = bind_rows(
     mapping_tbl.identical,
-    mapping_tbl.align
+    mapping_tbl.align,
+    mapping_tbl.align_by_symbol %&gt;% select(-symbol)
 ) %&gt;%
     arrange(refseq_prot_id)
 
@@ -1765,7 +1791,7 @@ mapping_tbl %&gt;% head()</code></pre>
 num_source_ids_with_dup_mapping %&gt;% head()</code></pre>
 <div data-pagedtable="false">
 <script data-pagedtable-source type="application/json">
-{"columns":[{"label":["refseq_prot_id"],"name":[1],"type":["chr"],"align":["left"]},{"label":["n"],"name":[2],"type":["int"],"align":["right"]}],"data":[{"1":"NP_001029249.1","2":"14"},{"1":"NP_001073606.1","2":"12"},{"1":"NP_003520.1","2":"10"},{"1":"NP_001229255.1","2":"7"},{"1":"NP_001093157.1","2":"6"},{"1":"NP_001091063.2","2":"5"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
+{"columns":[{"label":["refseq_prot_id"],"name":[1],"type":["chr"],"align":["left"]},{"label":["n"],"name":[2],"type":["int"],"align":["right"]}],"data":[{"1":"NP_001123876.1","2":"5"},{"1":"NP_001070956.1","2":"4"},{"1":"NP_001070957.1","2":"4"},{"1":"NP_001091875.1","2":"4"},{"1":"NP_001296769.1","2":"4"},{"1":"NP_001296771.1","2":"4"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
   </script>
 </div>
 <p>Showing some statistics</p>
@@ -1779,13 +1805,13 @@ num_source_ids_with_dup_mapping %&gt;% head()</code></pre>
 ##   &lt;chr&gt;              &lt;int&gt;
 ## 1 global_seq_align   23379
 ## 2 identical_sequence 17855
-## Mapping table (with duplication) entry pairs: 41505
-##     ... source entries with duplicated mapping: 192
+## Mapping table (with duplication) entry pairs: 41377
+##     ... source entries with duplicated mapping: 123
 ## # A tibble: 2 x 2
 ##   mapping_approach       n
 ##   &lt;chr&gt;              &lt;int&gt;
 ## 1 global_seq_align   23474
-## 2 identical_sequence 18031</code></pre>
+## 2 identical_sequence 17903</code></pre>
 <pre class="r"><code>mapping_tbl %&gt;% 
     write_tsv(&#39;../tracked_results/mappings/refseq_20180629_to_uniprot_2020_03_mappable.tsv.gz&#39;)
 

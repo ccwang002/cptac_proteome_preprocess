@@ -1700,7 +1700,7 @@ library(tidyverse)</code></pre>
 <p>Find the matching records that has identical protein sequence in the target set</p>
 <pre class="r"><code>mapping_tbl.identical = source_annotation_tbl %&gt;%
     select(refseq_prot_id, hgnc_id, source_uniparc_id = uniparc_id) %&gt;%
-    inner_join(target_tbl %&gt;% select(uniprot_acc, target_uniparc_id = uniparc_id), 
+    inner_join(target_tbl %&gt;% distinct(uniprot_acc, target_uniparc_id = uniparc_id), 
                by = c(&#39;source_uniparc_id&#39; = &#39;target_uniparc_id&#39;)) %&gt;%
     mutate(
         target_uniparc_id = source_uniparc_id,
@@ -1732,23 +1732,45 @@ mapping_tbl.align %&gt;% head()</code></pre>
 {"columns":[{"label":["refseq_prot_id"],"name":[1],"type":["chr"],"align":["left"]},{"label":["hgnc_id"],"name":[2],"type":["chr"],"align":["left"]},{"label":["source_uniparc_id"],"name":[3],"type":["chr"],"align":["left"]},{"label":["uniprot_acc"],"name":[4],"type":["chr"],"align":["left"]},{"label":["target_uniparc_id"],"name":[5],"type":["chr"],"align":["left"]},{"label":["mapping_approach"],"name":[6],"type":["chr"],"align":["left"]}],"data":[{"1":"NP_689699.2","2":"HGNC:28706","3":"UPI00005C3DB1","4":"Q96NU1","5":"UPI0000D61E04","6":"global_seq_align"},{"1":"NP_056473.2","2":"HGNC:24517","3":"UPI000013C171","4":"Q9Y3T9","5":"UPI000041820C","6":"global_seq_align"},{"1":"NP_001153656.1","2":"HGNC:25284","3":"UPI00005764FF","4":"Q494U1","5":"UPI00001416D8","6":"global_seq_align"},{"1":"NP_001278296.1","2":"HGNC:28208","3":"UPI0000418FB0","4":"Q5SV97","5":"UPI0003E30FA7","6":"global_seq_align"},{"1":"NP_001135939.1","2":"HGNC:24149","3":"UPI0001881B51","4":"Q9HCC6","5":"UPI000006EC19","6":"global_seq_align"},{"1":"NP_940978.2","2":"HGNC:329","3":"UPI00001D7C8B","4":"O00468","5":"UPI000387D73E","6":"global_seq_align"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
   </script>
 </div>
-<p>The remaining annotations will fail the mapping</p>
-<pre class="r"><code>source_annotation_tbl.failed = source_annotation_tbl.remaining %&gt;%
+<pre class="r"><code>source_annotation_tbl.remaining = source_annotation_tbl.remaining %&gt;%
     filter(!refseq_prot_id %in% mapping_tbl.align$refseq_prot_id)
 
-nrow(source_annotation_tbl.failed)</code></pre>
-<pre><code>## [1] 250</code></pre>
+source_annotation_tbl.remaining %&gt;%
+    count(!is.na(hgnc_id))</code></pre>
+<div data-pagedtable="false">
+<script data-pagedtable-source type="application/json">
+{"columns":[{"label":["!is.na(hgnc_id)"],"name":[1],"type":["lgl"],"align":["right"]},{"label":["n"],"name":[2],"type":["int"],"align":["right"]}],"data":[{"1":"FALSE","2":"81"},{"1":"TRUE","2":"141"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
+  </script>
+</div>
+<pre class="r"><code>mapping_tbl.align_by_symbol = source_annotation_tbl.remaining %&gt;%
+    select(refseq_prot_id, hgnc_id, symbol, source_uniparc_id = uniparc_id) %&gt;%
+    inner_join(
+        target_tbl %&gt;% 
+            select(uniprot_acc, symbol = hgnc_gene_name, target_uniparc_id = uniparc_id),
+        by = &quot;symbol&quot;
+    ) %&gt;%
+    mutate(mapping_approach = &#39;global_seq_align&#39;)
+
+mapping_tbl.align_by_symbol %&gt;% head()</code></pre>
+<div data-pagedtable="false">
+<script data-pagedtable-source type="application/json">
+{"columns":[{"label":["refseq_prot_id"],"name":[1],"type":["chr"],"align":["left"]},{"label":["hgnc_id"],"name":[2],"type":["chr"],"align":["left"]},{"label":["symbol"],"name":[3],"type":["chr"],"align":["left"]},{"label":["source_uniparc_id"],"name":[4],"type":["chr"],"align":["left"]},{"label":["uniprot_acc"],"name":[5],"type":["chr"],"align":["left"]},{"label":["target_uniparc_id"],"name":[6],"type":["chr"],"align":["left"]},{"label":["mapping_approach"],"name":[7],"type":["chr"],"align":["left"]}],"data":[],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
+  </script>
+</div>
+<pre class="r"><code>source_annotation_tbl.failed = source_annotation_tbl.remaining %&gt;%
+    filter(!refseq_prot_id %in% mapping_tbl.align_by_symbol$refseq_prot_id)</code></pre>
 <pre class="r"><code>source_annotation_tbl.failed %&gt;%
     count(!is.na(hgnc_id))</code></pre>
 <div data-pagedtable="false">
 <script data-pagedtable-source type="application/json">
-{"columns":[{"label":["!is.na(hgnc_id)"],"name":[1],"type":["lgl"],"align":["right"]},{"label":["n"],"name":[2],"type":["int"],"align":["right"]}],"data":[{"1":"FALSE","2":"81"},{"1":"TRUE","2":"169"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
+{"columns":[{"label":["!is.na(hgnc_id)"],"name":[1],"type":["lgl"],"align":["right"]},{"label":["n"],"name":[2],"type":["int"],"align":["right"]}],"data":[{"1":"FALSE","2":"81"},{"1":"TRUE","2":"141"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
   </script>
 </div>
 <p>Make the mapping table</p>
 <pre class="r"><code>mapping_tbl = bind_rows(
     mapping_tbl.identical,
-    mapping_tbl.align
+    mapping_tbl.align,
+    mapping_tbl.align_by_symbol %&gt;% select(-symbol)
 ) %&gt;%
     arrange(refseq_prot_id)
 
@@ -1771,21 +1793,21 @@ num_source_ids_with_dup_mapping %&gt;% head()</code></pre>
 </div>
 <p>Showing some statistics</p>
 <pre><code>## Total source entries: 37592
-## Total target entries: 20174
-## Source entries without any mapping: 250
-## Mapping table (unique source ID) entry pairs: 37342
+## Total target entries: 20313
+## Source entries without any mapping: 222
+## Mapping table (unique source ID) entry pairs: 37370
 ## Mapping type breakdown (unique source ID):
 ## # A tibble: 2 x 2
 ##   mapping_approach       n
 ##   &lt;chr&gt;              &lt;int&gt;
-## 1 global_seq_align   19638
+## 1 global_seq_align   19666
 ## 2 identical_sequence 17704
-## Mapping table (with duplication) entry pairs: 37473
-##     ... source entries with duplicated mapping: 111
+## Mapping table (with duplication) entry pairs: 37502
+##     ... source entries with duplicated mapping: 112
 ## # A tibble: 2 x 2
 ##   mapping_approach       n
 ##   &lt;chr&gt;              &lt;int&gt;
-## 1 global_seq_align   19726
+## 1 global_seq_align   19755
 ## 2 identical_sequence 17747</code></pre>
 <pre class="r"><code>mapping_tbl %&gt;% 
     write_tsv(&#39;../tracked_results/mappings/refseq_20160914_to_uniprot_2020_03_mappable.tsv.gz&#39;)
