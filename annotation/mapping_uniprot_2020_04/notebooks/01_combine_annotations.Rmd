@@ -1,0 +1,86 @@
+---
+title: "R Notebook"
+output:
+  html_document:
+    df_print: paged
+---
+
+```{r, message=FALSE}
+library(here)
+library(tidyverse)
+```
+
+```{r}
+uniprot_tbl = read_tsv(here('annotation/intermediates/uniprot_release_2020_04/uniprot_entries_tsv.gz'))
+uniprot_uniparc_tbl = read_tsv(here('annotation/intermediates/uniprot_release_2020_04/uniprot_uniparc_mapping.tsv.gz')) %>%
+    rename(
+        uniparc_crc64_checksum = uniparc_checksum,
+        uniparc_xref_uniprot_ids = uniprot_ids,
+        uniparc_xref_ensembl_prot_ids = ensembl_prot_ids,
+        uniparc_xref_refseq_prot_ids = refseq_prot_ids
+    )
+```
+
+```{r}
+uniprot_annotated_tbl = uniprot_tbl %>%
+    left_join(
+        uniprot_uniparc_tbl, by = c("uniprot_acc" = "original_prot_id")
+    )
+```
+
+Some UniProt entries do not have HGNC IDs
+```{r}
+uniprot_annotated_tbl %>%
+    filter(is.na(hgnc_gene_ids)) %>%
+    pull(uniprot_acc)
+```
+
+Only export the protein entries with HGNC ID
+```{r}
+uniprot_annotated_tbl.hgnc_only = uniprot_annotated_tbl %>%
+    filter(!is.na(hgnc_gene_ids)) %>%
+    mutate(across(c(hgnc_gene_ids, hgnc_gene_names), str_split, fixed(';'))) %>%
+    unnest(cols = c(hgnc_gene_ids, hgnc_gene_names)) %>%
+    rename(hgnc_gene_id = hgnc_gene_ids, hgnc_gene_name = hgnc_gene_names)
+```
+
+Some UniProt entries mapped to multiple HGNC IDs
+```{r}
+uniprot_annotated_tbl.hgnc_only %>% 
+    arrange(uniprot_acc) %>%
+    group_by(uniprot_acc) %>%
+    filter(n() > 1) %>%
+    select(uniprot_acc:sequence_modified_date)
+```
+
+Some UniProt entries shared the same UniParc IDs
+```{r}
+uniprot_annotated_tbl.hgnc_only %>% 
+    distinct(uniparc_id, uniprot_acc, .keep_all = TRUE) %>%
+    group_by(uniparc_id) %>%
+    filter(n() > 1) %>%
+    select(uniparc_id, uniprot_acc:sequence_modified_date)
+```
+
+```{r}
+uniprot_annotated_tbl.hgnc_only %>% 
+    select(-sequence) %>%
+    write_tsv('../tracked_results/uniprot_reviewed_human_proteome_hgnc_only.v2020_04.tsv.gz')
+```
+
+```{r}
+uniprot_annotated_tbl.hgnc_only.distinct = uniprot_annotated_tbl.hgnc_only %>%
+    distinct(uniprot_acc, uniparc_id, sequence)
+```
+
+```{r}
+uniprot_sequences = Biostrings::AAStringSet(
+    uniprot_annotated_tbl.hgnc_only.distinct$sequence
+)
+names(uniprot_sequences) = uniprot_annotated_tbl.hgnc_only.distinct %>%
+    glue::glue_data("{uniprot_acc} {uniparc_id}")
+
+uniprot_sequences %>%
+    rtracklayer::export('../tracked_results/uniprot_reviewed_human_proteome_hgnc_only.v2020_04.fasta')
+```
+

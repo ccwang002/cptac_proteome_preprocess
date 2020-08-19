@@ -21,6 +21,7 @@ def main(xsd_pth, xml_gz_pth, out_folder):
                 uniprot_acc = entry_d['accession'][0]
             except TypeError:
                 logger.warning(f'Skip an element not an UniProt entry: {entry_d}')
+                continue
 
             out_pth = Path(out_folder, f'{uniprot_acc}.json')
             with out_pth.open('wb') as of:
