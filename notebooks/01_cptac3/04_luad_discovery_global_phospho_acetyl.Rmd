@@ -29,6 +29,12 @@ phospho_loc_pth = fs::path(DATA_ROOT, 'CPTAC3/LUAD_discovery/luad-v3.1-phosphopr
 
 acetyl_pth = fs::path(DATA_ROOT, 'CPTAC3/LUAD_discovery/luad-v3.1-acetylome-ratio-norm-unfiltered.gct')
 acetyl_loc_pth = fs::path(DATA_ROOT, 'CPTAC3/LUAD_discovery/luad-v3.1-acetylome-ratio-norm-unfiltered.peptide_location.tsv')
+
+se_metadata = list(
+    cohort = 'CPTAC3 LUAD discovery cohort',
+    pipeline = 'Broad',
+    mapped_uniprot_release = '2020_04'
+)
 ```
 
 ```{r}
@@ -38,9 +44,12 @@ protein_annotation_gr = read_rds(here(
 names(mcols(protein_annotation_gr))
 ```
 
-Read UniProt 2020_03 coord_mapping
+Read UniProt coord_mapping
 ```{r}
-uniprot2020_03_coord_mapping_tbl = read_refseq20180629_to_uniprot2020_03_coord_mapping()
+uniprot_coord_mapping_tbl = read_refseq_to_uniprot_coord_mapping(
+    refseq_ver = "20180629", 
+    uniprot_ver = se_metadata$mapped_uniprot_release
+)
 ```
 
 
@@ -145,10 +154,7 @@ rowData(protein_se) = sgt_protein_full_row_tbl %>% column_to_rownames('symbol')
 colData(protein_se) = protein_col_tbl %>% column_to_rownames('preferred_sample_name') %>% as('DataFrame')
 assayNames(protein_se) = 'normalized'
 
-metadata(protein_se) = list(
-    cohort = 'CPTAC3 LUAD discovery cohort',
-    pipeline = 'Broad'
-)
+metadata(protein_se) = se_metadata
 ```
 
 ```{r}
@@ -232,7 +238,7 @@ phospho_row_full_tbl = phospho_row_tbl %>%
         protein_annotation_tbl,
         by = 'refseq_prot_id'
     )  %>%
-    annotate_uniprot_mapping("phosphosites", uniprot2020_03_coord_mapping_tbl)
+    annotate_uniprot_mapping("phosphosites", uniprot_coord_mapping_tbl)
 
 phospho_row_full_tbl %>% head()
 ```
@@ -252,10 +258,7 @@ rowData(phospho_se) = phospho_row_full_tbl %>% column_to_rownames('unique_site_i
 colData(phospho_se) = colData(protein_se)
 assayNames(phospho_se) = 'normalized'
 
-metadata(phospho_se) = list(
-    cohort = 'CPTAC3 LUAD discovery cohort',
-    pipeline = 'Broad'
-)
+metadata(phospho_se) = se_metadata
 ```
 
 ```{r}
@@ -333,7 +336,7 @@ acetyl_row_full_tbl = acetyl_row_tbl %>%
         protein_annotation_tbl,
         by = 'refseq_prot_id'
     ) %>%
-    annotate_uniprot_mapping("acetylsites", uniprot2020_03_coord_mapping_tbl)
+    annotate_uniprot_mapping("acetylsites", uniprot_coord_mapping_tbl)
 
 acetyl_row_full_tbl %>% head()
 ```
@@ -351,10 +354,7 @@ rowData(acetyl_se) = acetyl_row_full_tbl %>% column_to_rownames('unique_site_id'
 colData(acetyl_se) = colData(protein_se)
 assayNames(acetyl_se) = 'normalized'
 
-metadata(acetyl_se) = list(
-    cohort = 'CPTAC3 LUAD discovery cohort',
-    pipeline = 'Broad'
-)
+metadata(acetyl_se) = se_metadata
 ```
 
 ```{r}

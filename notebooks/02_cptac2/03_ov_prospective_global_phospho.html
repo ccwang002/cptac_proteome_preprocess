@@ -1653,7 +1653,8 @@ phospho_loc_pth = fs::path(DATA_ROOT, &#39;CPTAC2/OV_prospective/mmc3_phospho_pe
 
 se_metadata = list(
     cohort = &#39;CPTAC2 OV prospective cohort&#39;,
-    pipeline = &#39;PNNL&#39;
+    pipeline = &#39;PNNL&#39;,
+    mapped_uniprot_release = &#39;2020_04&#39;
 )</code></pre>
 <div id="tmt-map" class="section level2">
 <h2>TMT map</h2>
@@ -1727,8 +1728,11 @@ names(mcols(protein_annotation_gr))</code></pre>
 ## [11] &quot;tx_len&quot;                        &quot;cds_len&quot;                      
 ## [13] &quot;uniparc_crc64_checksum&quot;        &quot;uniparc_xref_refseq_prot_ids&quot; 
 ## [15] &quot;uniparc_xref_ensembl_prot_ids&quot; &quot;uniparc_xref_uniprot_ids&quot;</code></pre>
-<p>Read UniProt 2020_03 coord_mapping</p>
-<pre class="r"><code>uniprot2020_03_coord_mapping_tbl = read_refseq20160914_to_uniprot2020_03_coord_mapping()</code></pre>
+<p>Read UniProt coord_mapping</p>
+<pre class="r"><code>uniprot_coord_mapping_tbl = read_refseq_to_uniprot_coord_mapping(
+    refseq_ver = &quot;20160914&quot;, 
+    uniprot_ver = se_metadata$mapped_uniprot_release
+)</code></pre>
 <pre class="r"><code>refseq_no_ver_tbl = protein_annotation_gr %&gt;% 
     mcols() %&gt;% 
     as_tibble() %&gt;%
@@ -1833,7 +1837,7 @@ protein_sample_tbl %&gt;% head()</code></pre>
 protein_se</code></pre>
 <pre><code>## class: SummarizedExperiment 
 ## dim: 10095 103 
-## metadata(2): cohort pipeline
+## metadata(3): cohort pipeline mapped_uniprot_release
 ## assays(1): normalized
 ## rownames(10095): A1BG A2M ... ZZEF1 ZZZ3
 ## rowData names(5): refseq_prot_id hgnc_id entrez_gene_id ensembl_gene_id
@@ -2035,7 +2039,7 @@ phospho_row_tbl %&gt;% head()</code></pre>
         protein_annotation_tbl,
         by = &#39;refseq_prot_id&#39;
     ) %&gt;%
-    annotate_uniprot_mapping(&quot;phosphosites&quot;, uniprot2020_03_coord_mapping_tbl)
+    annotate_uniprot_mapping(&quot;phosphosites&quot;, uniprot_coord_mapping_tbl)
 
 phospho_row_full_tbl %&gt;% head()</code></pre>
 <div data-pagedtable="false">
@@ -2057,7 +2061,7 @@ phospho_se = SummarizedExperiment(
 phospho_se</code></pre>
 <pre><code>## class: SummarizedExperiment 
 ## dim: 48571 103 
-## metadata(2): cohort pipeline
+## metadata(3): cohort pipeline mapped_uniprot_release
 ## assays(1): normalized
 ## rownames(48571): AAAS:NP_056480.1:S495 AAGAB:NP_078942.3:S311 ...
 ##   ZZZ3:NP_056349.1:S90 ZZZ3:NP_056349.1:S91

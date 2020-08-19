@@ -1654,7 +1654,8 @@ acetyl_loc_pth = fs::path(DATA_ROOT, &#39;CPTAC2/BRCA_prospective/prosp-brca-v5.
 
 se_metadata = list(
     cohort = &#39;CPTAC2 BRCA prospective cohort&#39;,
-    pipeline = &#39;Broad&#39;
+    pipeline = &#39;Broad&#39;,
+    mapped_uniprot_release = &#39;2020_04&#39;
 )</code></pre>
 <pre class="r"><code>protein_annotation_gr = read_rds(here(
     &#39;annotation/refseq_20160914/tracked_results/refseq_20160914_human_only_unique_loci_GRanges.rds&#39;
@@ -1668,8 +1669,11 @@ names(mcols(protein_annotation_gr))</code></pre>
 ## [11] &quot;tx_len&quot;                        &quot;cds_len&quot;                      
 ## [13] &quot;uniparc_crc64_checksum&quot;        &quot;uniparc_xref_refseq_prot_ids&quot; 
 ## [15] &quot;uniparc_xref_ensembl_prot_ids&quot; &quot;uniparc_xref_uniprot_ids&quot;</code></pre>
-<p>Read UniProt 2020_03 coord_mapping</p>
-<pre class="r"><code>uniprot2020_03_coord_mapping_tbl = read_refseq20160914_to_uniprot2020_03_coord_mapping()</code></pre>
+<p>Read UniProt coord_mapping</p>
+<pre class="r"><code>uniprot_coord_mapping_tbl = read_refseq_to_uniprot_coord_mapping(
+    refseq_ver = &quot;20160914&quot;, 
+    uniprot_ver = se_metadata$mapped_uniprot_release
+)</code></pre>
 <div id="protein" class="section level2">
 <h2>Protein</h2>
 <pre class="r"><code>protein_gct = parse_gctx(protein_pth)</code></pre>
@@ -1788,7 +1792,7 @@ metadata(protein_se) = se_metadata</code></pre>
 <pre class="r"><code>protein_se</code></pre>
 <pre><code>## class: SummarizedExperiment 
 ## dim: 9764 122 
-## metadata(2): cohort pipeline
+## metadata(3): cohort pipeline mapped_uniprot_release
 ## assays(1): normalized
 ## rownames(9764): A1BG A2M ... ZZEF1 ZZZ3
 ## rowData names(11): refseq_prot_id numColumnsProteinObserved ...
@@ -1873,7 +1877,7 @@ phospho_row_tbl %&gt;% head()</code></pre>
         protein_annotation_tbl,
         by = &#39;refseq_prot_id&#39;
     ) %&gt;%
-    annotate_uniprot_mapping(&quot;phosphosites&quot;, uniprot2020_03_coord_mapping_tbl)
+    annotate_uniprot_mapping(&quot;phosphosites&quot;, uniprot_coord_mapping_tbl)
 
 phospho_row_full_tbl %&gt;% head()</code></pre>
 <div data-pagedtable="false">
@@ -1904,7 +1908,7 @@ metadata(phospho_se) = se_metadata</code></pre>
 <pre class="r"><code>phospho_se</code></pre>
 <pre><code>## class: SummarizedExperiment 
 ## dim: 63330 122 
-## metadata(2): cohort pipeline
+## metadata(3): cohort pipeline mapped_uniprot_release
 ## assays(1): normalized
 ## rownames(63330): A2M:NP_000005.2:S10;T21;S26 A2M:NP_000005.2:S710 ...
 ##   ZZZ3:NP_056349.1:S89 ZZZ3:NP_056349.1:T428
@@ -1986,7 +1990,7 @@ acetyl_row_tbl %&gt;% head()</code></pre>
         protein_annotation_tbl,
         by = &#39;refseq_prot_id&#39;
     ) %&gt;%
-    annotate_uniprot_mapping(&quot;acetylsites&quot;, uniprot2020_03_coord_mapping_tbl)
+    annotate_uniprot_mapping(&quot;acetylsites&quot;, uniprot_coord_mapping_tbl)
 
 acetyl_row_full_tbl %&gt;% head()</code></pre>
 <div data-pagedtable="false">
@@ -2017,7 +2021,7 @@ metadata(acetyl_se) = se_metadata</code></pre>
 <pre class="r"><code>acetyl_se</code></pre>
 <pre><code>## class: SummarizedExperiment 
 ## dim: 18328 122 
-## metadata(2): cohort pipeline
+## metadata(3): cohort pipeline mapped_uniprot_release
 ## assays(1): normalized
 ## rownames(18328): A1BG:NP_570602.2:K248 A1BG:NP_570602.2:K78 ...
 ##   ZZZ3:NP_056349.1:K701 ZZZ3:NP_056349.1:K799

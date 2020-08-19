@@ -1,8 +1,8 @@
 ---
 title: "R Notebook"
 output:
-  html_document:
-    df_print: paged
+    html_document:
+        df_print: paged
 ---
 
 ```{r, message=FALSE}
@@ -32,7 +32,8 @@ acetyl_loc_pth = fs::path(DATA_ROOT, 'CPTAC2/BRCA_prospective/prosp-brca-v5.3-ac
 
 se_metadata = list(
     cohort = 'CPTAC2 BRCA prospective cohort',
-    pipeline = 'Broad'
+    pipeline = 'Broad',
+    mapped_uniprot_release = '2020_04'
 )
 ```
 
@@ -43,9 +44,12 @@ protein_annotation_gr = read_rds(here(
 names(mcols(protein_annotation_gr))
 ```
 
-Read UniProt 2020_03 coord_mapping
+Read UniProt coord_mapping
 ```{r}
-uniprot2020_03_coord_mapping_tbl = read_refseq20160914_to_uniprot2020_03_coord_mapping()
+uniprot_coord_mapping_tbl = read_refseq_to_uniprot_coord_mapping(
+    refseq_ver = "20160914", 
+    uniprot_ver = se_metadata$mapped_uniprot_release
+)
 ```
 
 
@@ -236,7 +240,7 @@ phospho_row_full_tbl = phospho_row_tbl %>%
         protein_annotation_tbl,
         by = 'refseq_prot_id'
     ) %>%
-    annotate_uniprot_mapping("phosphosites", uniprot2020_03_coord_mapping_tbl)
+    annotate_uniprot_mapping("phosphosites", uniprot_coord_mapping_tbl)
 
 phospho_row_full_tbl %>% head()
 ```
@@ -334,7 +338,7 @@ acetyl_row_full_tbl = acetyl_row_tbl %>%
         protein_annotation_tbl,
         by = 'refseq_prot_id'
     ) %>%
-    annotate_uniprot_mapping("acetylsites", uniprot2020_03_coord_mapping_tbl)
+    annotate_uniprot_mapping("acetylsites", uniprot_coord_mapping_tbl)
 
 acetyl_row_full_tbl %>% head()
 ```

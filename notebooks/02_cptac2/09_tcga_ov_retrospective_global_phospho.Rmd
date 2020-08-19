@@ -29,7 +29,8 @@ phospho_loc_pth = fs::path(DATA_ROOT, 'CPTAC2/TCGA_OV_retrospective/mmc3_phospho
 
 se_metadata = list(
     cohort = 'TCGA OV retrospective cohort',
-    pipeline = 'PNNL'
+    pipeline = 'PNNL',
+    mapped_uniprot_release = '2020_04'
 )
 ```
 
@@ -53,9 +54,12 @@ protein_annotation_tbl = read_tsv(here(
 colnames(protein_annotation_tbl)
 ```
 
-Read UniProt 2020_03 coord_mapping
+Read UniProt coord_mapping
 ```{r}
-uniprot2020_03_coord_mapping_tbl = read_refseq20111201_to_uniprot2020_03_coord_mapping()
+uniprot_coord_mapping_tbl = read_refseq_to_uniprot_coord_mapping(
+    refseq_ver = "20111201", 
+    uniprot_ver = se_metadata$mapped_uniprot_release
+)
 ```
 
 Make a mapping to obtain the RefSeq full version
@@ -313,7 +317,7 @@ phospho_row_full_tbl = raw_phospho_annotate_row_tbl %>%
     ) %>%
     select(-na_percent, -original_prot_id) %>%
     select(refseq_prot_id, symbol, phosphosites, peptide, everything()) %>%
-    annotate_uniprot_mapping("phosphosites", uniprot2020_03_coord_mapping_tbl)
+    annotate_uniprot_mapping("phosphosites", uniprot_coord_mapping_tbl)
 
 phospho_row_full_tbl %>% head()
 ```

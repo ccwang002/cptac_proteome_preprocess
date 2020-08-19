@@ -26,11 +26,20 @@ tmt_pth = fs::path(DATA_ROOT, 'CPTAC3/CCRCC_discovery/cptac-metadata.csv')
 protein_pth = fs::path(DATA_ROOT, 'CPTAC3/CCRCC_discovery/6_CPTAC3_CCRCC_Whole_abundance_gene_protNorm=2_CB.tsv.gz')
 phospho_pth = fs::path(DATA_ROOT, 'CPTAC3/CCRCC_discovery/6_CPTAC3_CCRCC_Phospho_abundance_phosphosite_protNorm=2_CB.tsv.gz')
 phospho_loc_pth = fs::path(DATA_ROOT, 'CPTAC3/CCRCC_discovery/6_CPTAC3_CCRCC_Phospho_abundance_phosphosite_protNorm=2_CB.tsv.peptide_location.tsv.gz')
+
+se_metadata = list(
+    cohort = 'CPTAC3 CCRCC discovery cohort',
+    pipeline = 'UMich',
+    mapped_uniprot_release = '2020_04'
+)
 ```
 
-Read UniProt 2020_03 coord_mapping
+Read UniProt coord_mapping
 ```{r}
-uniprot2020_03_coord_mapping_tbl = read_refseq20180629_to_uniprot2020_03_coord_mapping()
+uniprot_coord_mapping_tbl = read_refseq_to_uniprot_coord_mapping(
+    refseq_ver = "20180629", 
+    uniprot_ver = se_metadata$mapped_uniprot_release
+)
 ```
 
 
@@ -133,10 +142,7 @@ protein_se = SummarizedExperiment(
     assays = list('normalized' = protein_mat),
     rowData = protein_row_tbl %>% column_to_rownames('symbol'),
     colData = protein_sample_tbl %>% column_to_rownames('preferred_sample_name'),
-    metadata = list(
-        cohort = 'CPTAC3 CCRCC discovery cohort',
-        pipeline = 'UMich'
-    )
+    metadata = se_metadata
 )
 
 protein_se
@@ -261,7 +267,7 @@ phospho_row_full_tbl = phospho_row_tbl %>%
         protein_annotation_tbl,
         by = 'refseq_prot_id'
     ) %>%
-    annotate_uniprot_mapping("phosphosites", uniprot2020_03_coord_mapping_tbl)
+    annotate_uniprot_mapping("phosphosites", uniprot_coord_mapping_tbl)
 
 phospho_row_full_tbl %>% head()
 ```
@@ -275,10 +281,7 @@ phospho_se = SummarizedExperiment(
     assays = list('normalized' = phospho_mat.selected),
     rowData = phospho_row_full_tbl %>% column_to_rownames('unique_site_id'),
     colData = protein_sample_tbl %>% column_to_rownames('preferred_sample_name'),
-    metadata = list(
-        cohort = 'CPTAC3 CCRCC discovery cohort',
-        pipeline = 'UMich'
-    )
+    metadata = se_metadata
 )
 
 phospho_se

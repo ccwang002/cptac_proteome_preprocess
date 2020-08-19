@@ -1649,7 +1649,13 @@ phospho_pth = fs::path(DATA_ROOT, &#39;CPTAC3/GBM_discovery/phosphoproteome_mssm
 phospho_loc_pth = fs::path(DATA_ROOT, &#39;CPTAC3/GBM_discovery/phosphoproteome_mssm_per_gene_clean.v4.0.20200430.tsv.peptide_location.tsv.gz&#39;)
 
 acetyl_pth = fs::path(DATA_ROOT, &#39;CPTAC3/GBM_discovery/acetylome_mssm_per_gene_clean.v4.0.20200430.rds&#39;)
-acetyl_loc_pth = fs::path(DATA_ROOT, &#39;CPTAC3/GBM_discovery/acetylome_mssm_per_gene_clean.v4.0.20200430.tsv.peptide_location.tsv.gz&#39;)</code></pre>
+acetyl_loc_pth = fs::path(DATA_ROOT, &#39;CPTAC3/GBM_discovery/acetylome_mssm_per_gene_clean.v4.0.20200430.tsv.peptide_location.tsv.gz&#39;)
+
+se_metadata = list(
+    cohort = &#39;CPTAC3 GBM discovery cohort&#39;,
+    pipeline = &#39;PNNL&#39;,
+    mapped_uniprot_release = &#39;2020_04&#39;
+)</code></pre>
 <pre class="r"><code>protein_annotation_gr = read_rds(here(
     &#39;annotation/refseq_20180629/tracked_results/refseq_20180629_human_only_unique_loci_GRanges.rds&#39;
 ))
@@ -1662,8 +1668,11 @@ names(mcols(protein_annotation_gr))</code></pre>
 ## [11] &quot;tx_len&quot;                        &quot;cds_len&quot;                      
 ## [13] &quot;uniparc_crc64_checksum&quot;        &quot;uniparc_xref_refseq_prot_ids&quot; 
 ## [15] &quot;uniparc_xref_ensembl_prot_ids&quot; &quot;uniparc_xref_uniprot_ids&quot;</code></pre>
-<p>Read UniProt 2020_03 coord_mapping</p>
-<pre class="r"><code>uniprot2020_03_coord_mapping_tbl = read_refseq20180629_to_uniprot2020_03_coord_mapping()</code></pre>
+<p>Read UniProt coord_mapping</p>
+<pre class="r"><code>uniprot_coord_mapping_tbl = read_refseq_to_uniprot_coord_mapping(
+    refseq_ver = &quot;20180629&quot;, 
+    uniprot_ver = se_metadata$mapped_uniprot_release
+)</code></pre>
 <div id="protein" class="section level2">
 <h2>Protein</h2>
 <pre class="r"><code>raw_protein_se = readRDS(protein_pth)</code></pre>
@@ -1735,14 +1744,11 @@ rownames(protein_se) = protein_full_row_tbl$symbol
 rowData(protein_se) = protein_full_row_tbl %&gt;% column_to_rownames(&#39;symbol&#39;)
 colData(protein_se) = protein_col_tbl %&gt;% column_to_rownames(&#39;preferred_sample_name&#39;) %&gt;% as(&#39;DataFrame&#39;)
 
-metadata(protein_se) = list(
-    cohort = &#39;CPTAC3 GBM discovery cohort&#39;,
-    pipeline = &#39;PNNL&#39;
-)</code></pre>
+metadata(protein_se) = se_metadata</code></pre>
 <pre class="r"><code>protein_se</code></pre>
 <pre><code>## class: SummarizedExperiment 
 ## dim: 11141 109 
-## metadata(2): cohort pipeline
+## metadata(3): cohort pipeline mapped_uniprot_release
 ## assays(1): clean
 ## rownames(11141): A1BG A2M ... ZZEF1 ZZZ3
 ## rowData names(4): refseq_prot_id hgnc_id entrez_gene_id ensembl_gene_id
@@ -1815,7 +1821,7 @@ phospho_row_tbl %&gt;% head()</code></pre>
         protein_annotation_tbl,
         by = &#39;refseq_prot_id&#39;
     ) %&gt;%
-    annotate_uniprot_mapping(&quot;phosphosites&quot;, uniprot2020_03_coord_mapping_tbl)
+    annotate_uniprot_mapping(&quot;phosphosites&quot;, uniprot_coord_mapping_tbl)
 
 phospho_row_full_tbl %&gt;% head()</code></pre>
 <div data-pagedtable="false">
@@ -1832,14 +1838,11 @@ rownames(phospho_se) = phospho_row_full_tbl$unique_site_id
 rowData(phospho_se) = phospho_row_full_tbl %&gt;% column_to_rownames(&#39;unique_site_id&#39;)
 colData(phospho_se) = colData(protein_se)
 
-metadata(phospho_se) = list(
-    cohort = &#39;CPTAC3 GBM discovery cohort&#39;,
-    pipeline = &#39;PNNL&#39;
-)</code></pre>
+metadata(phospho_se) = se_metadata</code></pre>
 <pre class="r"><code>phospho_se</code></pre>
 <pre><code>## class: SummarizedExperiment 
 ## dim: 101266 109 
-## metadata(2): cohort pipeline
+## metadata(3): cohort pipeline mapped_uniprot_release
 ## assays(1): clean
 ## rownames(101266): A2M:NP_000005.2:S273 AAAS:NP_056480.1:S495 ...
 ##   ZZZ3:NP_056349.1:Y399 ZZZ3:NP_056349.1:Y399;S426
@@ -1910,7 +1913,7 @@ acetyl_row_tbl %&gt;% head()</code></pre>
         protein_annotation_tbl,
         by = &#39;refseq_prot_id&#39;
     ) %&gt;%
-    annotate_uniprot_mapping(&quot;acetylsites&quot;, uniprot2020_03_coord_mapping_tbl)
+    annotate_uniprot_mapping(&quot;acetylsites&quot;, uniprot_coord_mapping_tbl)
 
 acetyl_row_full_tbl %&gt;% head()</code></pre>
 <div data-pagedtable="false">
@@ -1927,14 +1930,11 @@ rownames(acetyl_se) = acetyl_row_full_tbl$unique_site_id
 rowData(acetyl_se) = acetyl_row_full_tbl %&gt;% column_to_rownames(&#39;unique_site_id&#39;)
 colData(acetyl_se) = colData(protein_se)
 
-metadata(acetyl_se) = list(
-    cohort = &#39;CPTAC3 GBM discovery cohort&#39;,
-    pipeline = &#39;PNNL&#39;
-)</code></pre>
+metadata(acetyl_se) = se_metadata</code></pre>
 <pre class="r"><code>acetyl_se</code></pre>
 <pre><code>## class: SummarizedExperiment 
 ## dim: 18767 109 
-## metadata(2): cohort pipeline
+## metadata(3): cohort pipeline mapped_uniprot_release
 ## assays(1): clean
 ## rownames(18767): A1BG:NP_570602.2:K134 A2M:NP_000005.2:K1147 ...
 ##   ZZEF1:NP_055928.3:K2306 ZZZ3:NP_056349.1:K138

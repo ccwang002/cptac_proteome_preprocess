@@ -1651,7 +1651,8 @@ phospho_loc_pth = fs::path(DATA_ROOT, &#39;CPTAC2/TCGA_OV_retrospective/mmc3_pho
 
 se_metadata = list(
     cohort = &#39;TCGA OV retrospective cohort&#39;,
-    pipeline = &#39;PNNL&#39;
+    pipeline = &#39;PNNL&#39;,
+    mapped_uniprot_release = &#39;2020_04&#39;
 )</code></pre>
 <div id="annotation" class="section level2">
 <h2>Annotation</h2>
@@ -1687,8 +1688,11 @@ all_refseq_ids %&gt;% write_lines(here(&#39;annotation/intermediates/refseq_2011
 ##  [7] &quot;uniparc_crc64_checksum&quot;        &quot;uniparc_xref_refseq_prot_ids&quot; 
 ##  [9] &quot;uniparc_xref_ensembl_prot_ids&quot; &quot;uniparc_xref_uniprot_ids&quot;     
 ## [11] &quot;original_prot_id&quot;</code></pre>
-<p>Read UniProt 2020_03 coord_mapping</p>
-<pre class="r"><code>uniprot2020_03_coord_mapping_tbl = read_refseq20111201_to_uniprot2020_03_coord_mapping()</code></pre>
+<p>Read UniProt coord_mapping</p>
+<pre class="r"><code>uniprot_coord_mapping_tbl = read_refseq_to_uniprot_coord_mapping(
+    refseq_ver = &quot;20111201&quot;, 
+    uniprot_ver = se_metadata$mapped_uniprot_release
+)</code></pre>
 <p>Make a mapping to obtain the RefSeq full version</p>
 <pre class="r"><code>refseq_prot_no_ver_tbl = protein_annotation_tbl %&gt;%
     select(refseq_prot_no_ver_id = original_prot_id, refseq_prot_id, hgnc_symbol)
@@ -1830,7 +1834,7 @@ selected_protein_mat[1:5, 1:5]</code></pre>
 protein_se</code></pre>
 <pre><code>## class: SummarizedExperiment 
 ## dim: 3354 169 
-## metadata(2): cohort pipeline
+## metadata(3): cohort pipeline mapped_uniprot_release
 ## assays(1): normalized
 ## rownames(3354): A1BG A2M ... ZYX ZZEF1
 ## rowData names(6): refseq_prot_id original_prot_id ... entrez_gene_id
@@ -1981,7 +1985,7 @@ raw_phospho_annotate_row_tbl %&gt;% head()</code></pre>
     ) %&gt;%
     select(-na_percent, -original_prot_id) %&gt;%
     select(refseq_prot_id, symbol, phosphosites, peptide, everything()) %&gt;%
-    annotate_uniprot_mapping(&quot;phosphosites&quot;, uniprot2020_03_coord_mapping_tbl)
+    annotate_uniprot_mapping(&quot;phosphosites&quot;, uniprot_coord_mapping_tbl)
 
 phospho_row_full_tbl %&gt;% head()</code></pre>
 <div data-pagedtable="false">
@@ -2021,7 +2025,7 @@ phospho_se = SummarizedExperiment(
 phospho_se</code></pre>
 <pre><code>## class: SummarizedExperiment 
 ## dim: 6598 69 
-## metadata(2): cohort pipeline
+## metadata(3): cohort pipeline mapped_uniprot_release
 ## assays(1): normalized
 ## rownames(6598): AAAS:NP_056480.1:S495 AAMDC:NP_078960.1:S46 ...
 ##   ZSWIM8:NP_001229416.1:S567 ZW10:NP_004715.1:S88

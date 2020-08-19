@@ -30,11 +30,20 @@ phospho_pth = fs::path(DATA_ROOT, 'CPTAC3/UCEC_discovery/PNNL_with_refseq/ucec_p
 phospho_loc_pth = fs::path(DATA_ROOT, 'CPTAC3/UCEC_discovery/PNNL_with_refseq/ucec_phospho_d6_refseq_B12345_with_sites.txt.peptide_location.tsv.gz')
 acetyl_pth = fs::path(DATA_ROOT, 'CPTAC3/UCEC_discovery/PNNL_with_refseq/ucec_acetyl_d6_refseq_B12345_with_sites.txt.gz')
 acetyl_loc_pth = fs::path(DATA_ROOT, 'CPTAC3/UCEC_discovery/PNNL_with_refseq/ucec_acetyl_d6_refseq_B12345_with_sites.txt.peptide_location.tsv.gz')
+
+se_metadata = list(
+    cohort = 'CPTAC3 UCEC discovery cohort',
+    pipeline = 'PNNL',
+    mapped_uniprot_release = '2020_04'
+)
 ```
 
-Read UniProt 2020_03 coord_mapping
+Read UniProt coord_mapping
 ```{r}
-uniprot2020_03_coord_mapping_tbl = read_refseq20180629_to_uniprot2020_03_coord_mapping()
+uniprot_coord_mapping_tbl = read_refseq_to_uniprot_coord_mapping(
+    refseq_ver = "20180629", 
+    uniprot_ver = se_metadata$mapped_uniprot_release
+)
 ```
 
 
@@ -142,10 +151,7 @@ protein_se = SummarizedExperiment(
     assays = list('normalized' = protein_mat),
     rowData = protein_row_tbl %>% column_to_rownames('symbol'),
     colData = protein_sample_tbl %>% column_to_rownames('preferred_sample_name'),
-    metadata = list(
-        cohort = 'CPTAC3 UCEC discovery cohort',
-        pipeline = 'PNNL'
-    )
+    metadata = se_metadata
 )
 
 protein_se
@@ -258,7 +264,7 @@ phospho_row_full_tbl = phospho_row_tbl %>%
         protein_annotation_tbl,
         by = 'refseq_prot_id'
     )  %>%
-    annotate_uniprot_mapping("phosphosites", uniprot2020_03_coord_mapping_tbl)
+    annotate_uniprot_mapping("phosphosites", uniprot_coord_mapping_tbl)
 
 phospho_row_full_tbl %>% head()
 ```
@@ -272,10 +278,7 @@ phospho_se = SummarizedExperiment(
     assays = list('normalized' = phospho_mat.selected),
     rowData = phospho_row_full_tbl %>% column_to_rownames('unique_site_id'),
     colData = protein_sample_tbl %>% column_to_rownames('preferred_sample_name'),
-    metadata = list(
-        cohort = 'CPTAC3 UCEC discovery cohort',
-        pipeline = 'PNNL'
-    )
+    metadata = se_metadata
 )
 
 phospho_se
@@ -368,7 +371,7 @@ acetyl_row_full_tbl = acetyl_row_tbl %>%
         protein_annotation_tbl,
         by = 'refseq_prot_id'
     )  %>%
-    annotate_uniprot_mapping("acetylsites", uniprot2020_03_coord_mapping_tbl)
+    annotate_uniprot_mapping("acetylsites", uniprot_coord_mapping_tbl)
 
 acetyl_row_full_tbl %>% head()
 ```
@@ -385,10 +388,7 @@ acteyl_se = SummarizedExperiment(
     assays = list('normalized' = acetyl_mat.selected),
     rowData = acetyl_row_full_tbl %>% column_to_rownames('unique_site_id'),
     colData = protein_sample_tbl %>% column_to_rownames('preferred_sample_name'),
-    metadata = list(
-        cohort = 'CPTAC3 UCEC discovery cohort',
-        pipeline = 'PNNL'
-    )
+    metadata = se_metadata
 )
 
 acteyl_se

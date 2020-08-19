@@ -1,8 +1,8 @@
 ---
 title: "R Notebook"
 output:
-  html_document:
-    df_print: paged
+    html_document:
+        df_print: paged
 ---
 
 ```{r, message=FALSE}
@@ -26,11 +26,20 @@ tmt_pth = fs::path(DATA_ROOT, 'CPTAC3/HNSCC_discovery/S054_CPTAC_HNSCC_TMT11_Lab
 protein_pth = fs::path(DATA_ROOT, 'CPTAC3/HNSCC_discovery/UMich-global-proteomics-abundance-MD.tsv.gz')
 phospho_pth = fs::path(DATA_ROOT, 'CPTAC3/HNSCC_discovery/Site-level-abundance-MD.tsv.gz')
 phospho_loc_pth = fs::path(DATA_ROOT, 'CPTAC3/HNSCC_discovery/Site-level-abundance-MD.peptide_location.tsv.gz')
+
+se_metadata = list(
+    cohort = 'CPTAC3 HNSCC discovery cohort',
+    pipeline = 'UMich MD',
+    mapped_uniprot_release = '2020_04'
+)
 ```
 
-Read UniProt 2020_03 coord_mapping
+Read UniProt coord_mapping
 ```{r}
-uniprot2020_03_coord_mapping_tbl = read_refseq20180629_to_uniprot2020_03_coord_mapping()
+uniprot_coord_mapping_tbl = read_refseq_to_uniprot_coord_mapping(
+    refseq_ver = "20180629", 
+    uniprot_ver = se_metadata$mapped_uniprot_release
+)
 ```
 
 ## TMT map
@@ -137,10 +146,7 @@ protein_se = SummarizedExperiment(
     assays = list('normalized' = protein_mat),
     rowData = protein_row_tbl %>% column_to_rownames('symbol'),
     colData = protein_sample_tbl %>% column_to_rownames('preferred_sample_names'),
-    metadata = list(
-        cohort = 'CPTAC3 HNSCC discovery cohort',
-        pipeline = 'UMich MD'
-    )
+    metadata = se_metadata
 )
 
 protein_se
@@ -274,7 +280,7 @@ phospho_row_full_tbl = phospho_row_tbl %>%
         protein_annotation_tbl,
         by = 'refseq_prot_id'
     ) %>%
-    annotate_uniprot_mapping("phosphosites", uniprot2020_03_coord_mapping_tbl)
+    annotate_uniprot_mapping("phosphosites", uniprot_coord_mapping_tbl)
 
 phospho_row_full_tbl %>% head()
 ```
@@ -288,10 +294,7 @@ phospho_se = SummarizedExperiment(
     assays = list('normalized' = phospho_mat.selected),
     rowData = phospho_row_full_tbl %>% column_to_rownames('unique_site_id'),
     colData = protein_sample_tbl %>% column_to_rownames('preferred_sample_names'),
-    metadata = list(
-        cohort = 'CPTAC3 HNSCC discovery cohort',
-        pipeline = 'UMich MD'
-    )
+    metadata = se_metadata
 )
 
 phospho_se

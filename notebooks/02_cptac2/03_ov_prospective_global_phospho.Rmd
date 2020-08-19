@@ -31,7 +31,8 @@ phospho_loc_pth = fs::path(DATA_ROOT, 'CPTAC2/OV_prospective/mmc3_phospho_peptid
 
 se_metadata = list(
     cohort = 'CPTAC2 OV prospective cohort',
-    pipeline = 'PNNL'
+    pipeline = 'PNNL',
+    mapped_uniprot_release = '2020_04'
 )
 ```
 
@@ -96,9 +97,12 @@ protein_annotation_gr = read_rds(here(
 names(mcols(protein_annotation_gr))
 ```
 
-Read UniProt 2020_03 coord_mapping
+Read UniProt coord_mapping
 ```{r}
-uniprot2020_03_coord_mapping_tbl = read_refseq20160914_to_uniprot2020_03_coord_mapping()
+uniprot_coord_mapping_tbl = read_refseq_to_uniprot_coord_mapping(
+    refseq_ver = "20160914", 
+    uniprot_ver = se_metadata$mapped_uniprot_release
+)
 ```
 
 ```{r}
@@ -389,7 +393,7 @@ phospho_row_full_tbl = phospho_row_tbl %>%
         protein_annotation_tbl,
         by = 'refseq_prot_id'
     ) %>%
-    annotate_uniprot_mapping("phosphosites", uniprot2020_03_coord_mapping_tbl)
+    annotate_uniprot_mapping("phosphosites", uniprot_coord_mapping_tbl)
 
 phospho_row_full_tbl %>% head()
 ```

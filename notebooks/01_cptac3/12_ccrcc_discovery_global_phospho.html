@@ -1647,9 +1647,18 @@ library(tidyverse)</code></pre>
 
 protein_pth = fs::path(DATA_ROOT, &#39;CPTAC3/CCRCC_discovery/6_CPTAC3_CCRCC_Whole_abundance_gene_protNorm=2_CB.tsv.gz&#39;)
 phospho_pth = fs::path(DATA_ROOT, &#39;CPTAC3/CCRCC_discovery/6_CPTAC3_CCRCC_Phospho_abundance_phosphosite_protNorm=2_CB.tsv.gz&#39;)
-phospho_loc_pth = fs::path(DATA_ROOT, &#39;CPTAC3/CCRCC_discovery/6_CPTAC3_CCRCC_Phospho_abundance_phosphosite_protNorm=2_CB.tsv.peptide_location.tsv.gz&#39;)</code></pre>
-<p>Read UniProt 2020_03 coord_mapping</p>
-<pre class="r"><code>uniprot2020_03_coord_mapping_tbl = read_refseq20180629_to_uniprot2020_03_coord_mapping()</code></pre>
+phospho_loc_pth = fs::path(DATA_ROOT, &#39;CPTAC3/CCRCC_discovery/6_CPTAC3_CCRCC_Phospho_abundance_phosphosite_protNorm=2_CB.tsv.peptide_location.tsv.gz&#39;)
+
+se_metadata = list(
+    cohort = &#39;CPTAC3 CCRCC discovery cohort&#39;,
+    pipeline = &#39;UMich&#39;,
+    mapped_uniprot_release = &#39;2020_04&#39;
+)</code></pre>
+<p>Read UniProt coord_mapping</p>
+<pre class="r"><code>uniprot_coord_mapping_tbl = read_refseq_to_uniprot_coord_mapping(
+    refseq_ver = &quot;20180629&quot;, 
+    uniprot_ver = se_metadata$mapped_uniprot_release
+)</code></pre>
 <div id="tmt-map" class="section level2">
 <h2>TMT map</h2>
 <pre class="r"><code>tmt_map_tbl = read_csv(tmt_pth, col_types = cols(Data.Set = col_integer())) %&gt;%
@@ -1766,16 +1775,13 @@ protein_row_tbl %&gt;% head()</code></pre>
     assays = list(&#39;normalized&#39; = protein_mat),
     rowData = protein_row_tbl %&gt;% column_to_rownames(&#39;symbol&#39;),
     colData = protein_sample_tbl %&gt;% column_to_rownames(&#39;preferred_sample_name&#39;),
-    metadata = list(
-        cohort = &#39;CPTAC3 CCRCC discovery cohort&#39;,
-        pipeline = &#39;UMich&#39;
-    )
+    metadata = se_metadata
 )
 
 protein_se</code></pre>
 <pre><code>## class: SummarizedExperiment 
 ## dim: 11355 194 
-## metadata(2): cohort pipeline
+## metadata(3): cohort pipeline mapped_uniprot_release
 ## assays(1): normalized
 ## rownames(11355): A1BG A1CF ... ZZEF1 ZZZ3
 ## rowData names(5): num_psm refseq_prot_ids hgnc_id entrez_gene_id
@@ -1910,7 +1916,7 @@ phospho_row_tbl %&gt;% head()</code></pre>
         protein_annotation_tbl,
         by = &#39;refseq_prot_id&#39;
     ) %&gt;%
-    annotate_uniprot_mapping(&quot;phosphosites&quot;, uniprot2020_03_coord_mapping_tbl)
+    annotate_uniprot_mapping(&quot;phosphosites&quot;, uniprot_coord_mapping_tbl)
 
 phospho_row_full_tbl %&gt;% head()</code></pre>
 <div data-pagedtable="false">
@@ -1926,16 +1932,13 @@ phospho_se = SummarizedExperiment(
     assays = list(&#39;normalized&#39; = phospho_mat.selected),
     rowData = phospho_row_full_tbl %&gt;% column_to_rownames(&#39;unique_site_id&#39;),
     colData = protein_sample_tbl %&gt;% column_to_rownames(&#39;preferred_sample_name&#39;),
-    metadata = list(
-        cohort = &#39;CPTAC3 CCRCC discovery cohort&#39;,
-        pipeline = &#39;UMich&#39;
-    )
+    metadata = se_metadata
 )
 
 phospho_se</code></pre>
 <pre><code>## class: SummarizedExperiment 
 ## dim: 81780 194 
-## metadata(2): cohort pipeline
+## metadata(3): cohort pipeline mapped_uniprot_release
 ## assays(1): normalized
 ## rownames(81780): A1BG:NP_570602.2:S302 A1BG:NP_570602.2:T171 ...
 ##   ZZZ3:NP_056349.1:Y399 ZZZ3:NP_056349.1:Y399;T428

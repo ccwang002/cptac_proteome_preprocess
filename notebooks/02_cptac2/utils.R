@@ -1,6 +1,8 @@
-read_refseq20111201_to_uniprot2020_03_coord_mapping = function() {
+read_refseq_to_uniprot_coord_mapping = function(refseq_ver, uniprot_ver) {
     read_tsv(
-        here('annotation/mapping_uniprot_2020_03/tracked_results/mappings/refseq_20111201_to_uniprot_2020_03_mappable.coord_mapping.tsv.gz'),
+        here(glue::glue(
+            'annotation/mapping_uniprot_{uniprot_ver}/tracked_results/mappings/refseq_{refseq_ver}_to_uniprot_{uniprot_ver}_mappable.coord_mapping.tsv.gz'
+        )),
         col_types = cols(
             .default = col_character(),
             source_segment_start = col_integer(),
@@ -12,52 +14,6 @@ read_refseq20111201_to_uniprot2020_03_coord_mapping = function() {
         select(refseq_prot_id, uniprot_acc, target_uniparc_id, mapping_approach,
                source_segment_start:target_to_source_distance)
 }
-
-read_refseq20130727_to_uniprot2020_03_coord_mapping = function() {
-    read_tsv(
-        here('annotation/mapping_uniprot_2020_03/tracked_results/mappings/refseq_20130727_to_uniprot_2020_03_mappable.coord_mapping.tsv.gz'),
-        col_types = cols(
-            .default = col_character(),
-            source_segment_start = col_integer(),
-            source_segment_end = col_integer(),
-            target_segment_start = col_integer(),
-            target_segment_end = col_integer(),
-            target_to_source_distance = col_integer()
-        )) %>%
-        select(refseq_prot_id, uniprot_acc, target_uniparc_id, mapping_approach,
-               source_segment_start:target_to_source_distance)
-}
-
-read_refseq20160914_to_uniprot2020_03_coord_mapping = function() {
-    read_tsv(
-        here('annotation/mapping_uniprot_2020_03/tracked_results/mappings/refseq_20160914_to_uniprot_2020_03_mappable.coord_mapping.tsv.gz'),
-        col_types = cols(
-            .default = col_character(),
-            source_segment_start = col_integer(),
-            source_segment_end = col_integer(),
-            target_segment_start = col_integer(),
-            target_segment_end = col_integer(),
-            target_to_source_distance = col_integer()
-        )) %>%
-        select(refseq_prot_id, uniprot_acc, target_uniparc_id, mapping_approach,
-               source_segment_start:target_to_source_distance)
-}
-
-read_refseq20180629_to_uniprot2020_03_coord_mapping = function() {
-    read_tsv(
-        here('annotation/mapping_uniprot_2020_03/tracked_results/mappings/refseq_20180629_to_uniprot_2020_03_mappable.coord_mapping.tsv.gz'),
-        col_types = cols(
-            .default = col_character(),
-            source_segment_start = col_integer(),
-            source_segment_end = col_integer(),
-            target_segment_start = col_integer(),
-            target_segment_end = col_integer(),
-            target_to_source_distance = col_integer()
-        )) %>%
-        select(refseq_prot_id, uniprot_acc, target_uniparc_id, mapping_approach,
-               source_segment_start:target_to_source_distance)
-}
-
 
 annotate_uniprot_mapping = function(site_row_tbl, site_col, coord_mapping_tbl) {
     mapped_to_uniprot_tbl = site_row_tbl %>%

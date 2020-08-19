@@ -1651,9 +1651,18 @@ protein_pth = fs::path(DATA_ROOT, &#39;CPTAC3/UCEC_discovery/PNNL_with_refseq/uc
 phospho_pth = fs::path(DATA_ROOT, &#39;CPTAC3/UCEC_discovery/PNNL_with_refseq/ucec_phospho_d6_refseq_B12345_with_sites.txt.gz&#39;)
 phospho_loc_pth = fs::path(DATA_ROOT, &#39;CPTAC3/UCEC_discovery/PNNL_with_refseq/ucec_phospho_d6_refseq_B12345_with_sites.txt.peptide_location.tsv.gz&#39;)
 acetyl_pth = fs::path(DATA_ROOT, &#39;CPTAC3/UCEC_discovery/PNNL_with_refseq/ucec_acetyl_d6_refseq_B12345_with_sites.txt.gz&#39;)
-acetyl_loc_pth = fs::path(DATA_ROOT, &#39;CPTAC3/UCEC_discovery/PNNL_with_refseq/ucec_acetyl_d6_refseq_B12345_with_sites.txt.peptide_location.tsv.gz&#39;)</code></pre>
-<p>Read UniProt 2020_03 coord_mapping</p>
-<pre class="r"><code>uniprot2020_03_coord_mapping_tbl = read_refseq20180629_to_uniprot2020_03_coord_mapping()</code></pre>
+acetyl_loc_pth = fs::path(DATA_ROOT, &#39;CPTAC3/UCEC_discovery/PNNL_with_refseq/ucec_acetyl_d6_refseq_B12345_with_sites.txt.peptide_location.tsv.gz&#39;)
+
+se_metadata = list(
+    cohort = &#39;CPTAC3 UCEC discovery cohort&#39;,
+    pipeline = &#39;PNNL&#39;,
+    mapped_uniprot_release = &#39;2020_04&#39;
+)</code></pre>
+<p>Read UniProt coord_mapping</p>
+<pre class="r"><code>uniprot_coord_mapping_tbl = read_refseq_to_uniprot_coord_mapping(
+    refseq_ver = &quot;20180629&quot;, 
+    uniprot_ver = se_metadata$mapped_uniprot_release
+)</code></pre>
 <div id="tmt-map" class="section level2">
 <h2>TMT map</h2>
 <pre class="r"><code>tmt_map_tbl = read_tsv(tmt_pth) %&gt;%
@@ -1797,16 +1806,13 @@ protein_row_tbl %&gt;% head()</code></pre>
     assays = list(&#39;normalized&#39; = protein_mat),
     rowData = protein_row_tbl %&gt;% column_to_rownames(&#39;symbol&#39;),
     colData = protein_sample_tbl %&gt;% column_to_rownames(&#39;preferred_sample_name&#39;),
-    metadata = list(
-        cohort = &#39;CPTAC3 UCEC discovery cohort&#39;,
-        pipeline = &#39;PNNL&#39;
-    )
+    metadata = se_metadata
 )
 
 protein_se</code></pre>
 <pre><code>## class: SummarizedExperiment 
 ## dim: 10999 144 
-## metadata(2): cohort pipeline
+## metadata(3): cohort pipeline mapped_uniprot_release
 ## assays(1): normalized
 ## rownames(10999): A1BG A2M ... ZZEF1 ZZZ3
 ## rowData names(3): hgnc_id entrez_gene_id ensembl_gene_id
@@ -1933,7 +1939,7 @@ phospho_row_tbl %&gt;% head()</code></pre>
         protein_annotation_tbl,
         by = &#39;refseq_prot_id&#39;
     )  %&gt;%
-    annotate_uniprot_mapping(&quot;phosphosites&quot;, uniprot2020_03_coord_mapping_tbl)
+    annotate_uniprot_mapping(&quot;phosphosites&quot;, uniprot_coord_mapping_tbl)
 
 phospho_row_full_tbl %&gt;% head()</code></pre>
 <div data-pagedtable="false">
@@ -1949,16 +1955,13 @@ phospho_se = SummarizedExperiment(
     assays = list(&#39;normalized&#39; = phospho_mat.selected),
     rowData = phospho_row_full_tbl %&gt;% column_to_rownames(&#39;unique_site_id&#39;),
     colData = protein_sample_tbl %&gt;% column_to_rownames(&#39;preferred_sample_name&#39;),
-    metadata = list(
-        cohort = &#39;CPTAC3 UCEC discovery cohort&#39;,
-        pipeline = &#39;PNNL&#39;
-    )
+    metadata = se_metadata
 )
 
 phospho_se</code></pre>
 <pre><code>## class: SummarizedExperiment 
 ## dim: 105878 144 
-## metadata(2): cohort pipeline
+## metadata(3): cohort pipeline mapped_uniprot_release
 ## assays(1): normalized
 ## rownames(105878): AAAS:NP_056480.1:S495 AAAS:NP_056480.1:S495.1 ...
 ##   ZZZ3:NP_056349.1:Y399;S426 ZZZ3:NP_056349.1:Y399;T418
@@ -2065,7 +2068,7 @@ acetyl_row_tbl %&gt;% head()</code></pre>
         protein_annotation_tbl,
         by = &#39;refseq_prot_id&#39;
     )  %&gt;%
-    annotate_uniprot_mapping(&quot;acetylsites&quot;, uniprot2020_03_coord_mapping_tbl)
+    annotate_uniprot_mapping(&quot;acetylsites&quot;, uniprot_coord_mapping_tbl)
 
 acetyl_row_full_tbl %&gt;% head()</code></pre>
 <div data-pagedtable="false">
@@ -2083,16 +2086,13 @@ acteyl_se = SummarizedExperiment(
     assays = list(&#39;normalized&#39; = acetyl_mat.selected),
     rowData = acetyl_row_full_tbl %&gt;% column_to_rownames(&#39;unique_site_id&#39;),
     colData = protein_sample_tbl %&gt;% column_to_rownames(&#39;preferred_sample_name&#39;),
-    metadata = list(
-        cohort = &#39;CPTAC3 UCEC discovery cohort&#39;,
-        pipeline = &#39;PNNL&#39;
-    )
+    metadata = se_metadata
 )
 
 acteyl_se</code></pre>
 <pre><code>## class: SummarizedExperiment 
 ## dim: 14184 144 
-## metadata(2): cohort pipeline
+## metadata(3): cohort pipeline mapped_uniprot_release
 ## assays(1): normalized
 ## rownames(14184): A2M:NP_000005.2:K1168 A2M:NP_000005.2:K1176 ...
 ##   ZYX:NP_001010972.1:K533 ZZZ3:NP_056349.1:K117
