@@ -1,5 +1,5 @@
 library(future.apply)
-plan(multicore(workers = 6L))  # parallel cores
+plan(multicore(workers = 8L))  # parallel cores
 
 library(SummarizedExperiment)
 library(cmapR)
