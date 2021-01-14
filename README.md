@@ -70,6 +70,70 @@ parallel -j4 --bar \
 ```
 
 
+### Processed data format
+Column (sample) metadata:
+- (column names): preferred sample names that matches the corresponding flagship paper. (eg C3L-00104)
+- `case_id`, `aliquot_id`: CPTAC IDs. (eg C3L-00104, CPT0092440003)
+- `tmt_experiment`, `tmt_channel`: TMT experiment run and channel (eg 11, 129C)
+- `sample_type`: Sample type (tumor or normal). (eg Primary Tumor)
+
+Row (feature; protein) metadata:
+- (row names): gene symbol for protein (eg EGFR)
+- `refseq_prot_id`: RefSeq Protein ID and version (eg NP_005219.2)
+- `hgnc_id`: HGNC gene ID (eg HGNC:3236)
+- `entrez_gene_id`: Entrez gene ID (eg 1956)
+- `ensembl_gene_id`: Ensembl gene ID (eg ENSG00000146648)
+
+Row (feature; PTM) metadata:
+- (row names): a unique standardized naming of the PTM sites.
+  It follows the format `<symbol>:<refseq_prot_id>:<sites>[.duplication]`
+  (eg EGFR:NP_005219.2:S1064 and EGFR:NP_005219.2:S1064.1)
+- `original_id`: the original site ID that matches the corresponding flagship paper.
+  (eg NGLQSCPIKEDS*FLQR)
+- `refseq_prot_id`: (same as protein metadata above) (eg NP_005219.2)
+- `symbol`: gene symbol (eg EGFR)
+- `phosphosites`, `acetylsites`, or `ubiquitylsites`: the PTM sites.
+   (eg S1064 or S618;T620;S624)
+- `peptide`: the underlying peptide sequence. PTM sites are in letter case.
+   (eg EDsFLQR)
+- `peptide_start`, `peptide_end`: the start and end amino acid position of the peptide on the protein.
+   (eg 1062, 1068)
+- `refseq_tx_id`: Corresponding RefSeq transcript ID of the protein.
+   (eg NM_005228)
+- `uniparc_id`: UniParc ID of the protein.
+    This ID is the best way to check if the underlying protein sequence is identical to other IDs from a different annotation systems.
+    (eg UPI000003E750)
+- `hgnc_id`, `entrez_gene_id`, `ensembl_gene_id`: (same as protein metadata above)
+   (eg HGNC:3236, 1956, ENSG00000146648)
+- `multi_genomic_loci`: whether the protein can be mapped to multiple genomic locations.
+   (eg FALSE)
+- `num_exons`, `aa_len`, `tx_len`, `cds_len`: Details about the transcript and protein.
+
+- `uniparc_crc64_checksum`: UniParc sequence CRC64 checksum. (eg D8A2A50B4EFB6ED2)
+- `uniparc_xref_refseq_prot_ids`: All RefSeq protein IDs with the identical protein sequence cross-referenced using UniParc.
+   (eg NP_005219.2)
+- `uniparc_xref_ensembl_prot_ids`: All Ensembl protein IDs with the identical protein sequence cross-referenced using UniParc.
+   (eg ENSP00000275493.1)
+- `uniparc_xref_uniprot_ids`: All UniProt IDs with the identical protein sequence cross-referenced using UniParc.
+   (eg P00533-1.1;P00533.2)
+
+- `mapped_to_multi_entries`: Whether the peptide sequence can be mapped to multiple UniProt entries.
+   (eg FALSE)
+- `mapped_sites`: The mapped PTM sites to UniProt. It has the format `<uniprot_id>:<new_site_locs>`.
+   If `mapped_to_multi_entries` is TRUE, corresponding results are concatenated by `|`.
+   (eg P00533:S1064 or E9PAV3:T2037|Q13765:T174)
+- `mapping_approach`: How the peptide sequence is mapped from RefSeq to UniProt.
+   Possible options:
+
+   - `identical_sequence`: Two sequences are identical
+   - `global_seq_align`: Two sequences are globally aligned
+
+- `mapped_uniparc_id`: The UniParc IDs of the mapped UniProt entry.
+   (eg UPI000003E750)
+- `mapping_coord_change`: Whether the PTM site coordinates are changed.
+   (eg FALSE)
+
+
 ### Ding lab internal
 The project is mirrored on katmai:
 - This repo: `/diskmnt/Projects/PTMcosmos/cptac_proteome_preprocess`
