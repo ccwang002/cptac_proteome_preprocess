@@ -13,7 +13,7 @@ library(tidyverse)
 ```
 
 ```{r}
-DATA_ROOT = '~/Box/MyCPTAC/CPTAC_proteome_v2.0'
+DATA_ROOT = '~/Box/MyCPTAC/CPTAC_proteome_v2.1'
 ```
 
 Load extra functions for mapping
@@ -30,14 +30,14 @@ phospho_loc_pth = fs::path(DATA_ROOT, 'CPTAC3/HNSCC_discovery/Site-level-abundan
 se_metadata = list(
     cohort = 'CPTAC3 HNSCC discovery cohort',
     pipeline = 'UMich MD',
-    mapped_uniprot_release = '2020_04'
+    mapped_uniprot_release = '2021_02'
 )
 ```
 
 Read UniProt coord_mapping
 ```{r}
 uniprot_coord_mapping_tbl = read_refseq_to_uniprot_coord_mapping(
-    refseq_ver = "20180629", 
+    refseq_ver = "20180629",
     uniprot_ver = se_metadata$mapped_uniprot_release
 )
 ```
@@ -102,7 +102,7 @@ length(preferred_sample_names) == length(tmt_map_clean_tbl$`Participant ID`)
 ```
 
 ```{r}
-protein_mat = protein_tbl %>% 
+protein_mat = protein_tbl %>%
     select(-Index, -ReferenceIntensity) %>%
     as.matrix()
 
@@ -118,7 +118,7 @@ protein_sample_tbl = bind_cols(
         preferred_sample_names = preferred_sample_names
     ),
     tmt_map_clean_tbl %>% select(
-        case_id = `Participant ID`, aliquot_id = `Specimen Label`, 
+        case_id = `Participant ID`, aliquot_id = `Specimen Label`,
         tmt_experiment, tmt_channel
     )
 ) %>%
@@ -168,14 +168,14 @@ Read peptide location
 phospho_loc_tbl = read_tsv(
     phospho_loc_pth,
     col_types = cols(
-        peptide_start = col_integer(), 
+        peptide_start = col_integer(),
         peptide_end = col_integer()
     ))
 phospho_loc_tbl %>% head()
 ```
 
 ```{r}
-phospho_loc_tbl %>% 
+phospho_loc_tbl %>%
     count(peptide_loc_valid)
 ```
 
@@ -211,9 +211,9 @@ Note the peptide start end are not really the start end
 phospho_row_tbl = phospho_tbl %>%
     select(Index, Gene, Peptide, MaxPepProb) %>%
     separate(
-        Index, 
-        into = c("refseq_prot_type", "refseq_prot_num", 
-                 "peptide_num1", "peptide_num2", 
+        Index,
+        into = c("refseq_prot_type", "refseq_prot_num",
+                 "peptide_num1", "peptide_num2",
                  "peptide_num3", "peptide_num4", "phosphosites"),
         sep = "_",
         fill = "right",
@@ -231,7 +231,7 @@ phospho_row_tbl = phospho_tbl %>%
     bind_cols(tibble(na_percent = phospho_na_percent)) %>%
     # Only keep the phosphosites
     filter(
-        !is.na(phosphosites), 
+        !is.na(phosphosites),
         # na_percent <= 0.8,
         peptide_loc_valid
     ) %>%
@@ -243,7 +243,7 @@ phospho_row_tbl = phospho_tbl %>%
     arrange(symbol, phosphosites, na_percent) %>%
     mutate(
         unique_site_id = base::make.unique(
-            str_c(symbol, refseq_prot_id, phosphosites, sep = ':'), 
+            str_c(symbol, refseq_prot_id, phosphosites, sep = ':'),
             sep='.'
         )
     )
@@ -251,8 +251,8 @@ phospho_row_tbl %>% head()
 ```
 Some sites have duplication
 ```{r}
-phospho_row_tbl %>% 
-    count(symbol, phosphosites, sort = TRUE) %>% 
+phospho_row_tbl %>%
+    count(symbol, phosphosites, sort = TRUE) %>%
     filter(n > 1)
 ```
 
@@ -273,8 +273,8 @@ protein_annotation_tbl = protein_annotation_gr %>%
 ```
 
 ```{r}
-phospho_row_full_tbl = phospho_row_tbl %>% 
-    select(unique_site_id, original_id, refseq_prot_id, symbol, phosphosites, 
+phospho_row_full_tbl = phospho_row_tbl %>%
+    select(unique_site_id, original_id, refseq_prot_id, symbol, phosphosites,
            peptide, peptide_start, peptide_end) %>%
     left_join(
         protein_annotation_tbl,

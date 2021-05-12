@@ -13,7 +13,7 @@ library(tidyverse)
 ```
 
 ```{r}
-DATA_ROOT = '~/Box/MyCPTAC/CPTAC_proteome_v2.0'
+DATA_ROOT = '~/Box/MyCPTAC/CPTAC_proteome_v2.1'
 ```
 
 Load extra functions for mapping
@@ -33,7 +33,7 @@ phospho_loc_pth = fs::path(DATA_ROOT, 'CPTAC2/CRC_prospective/CPTAC2_Colon_Prosp
 se_metadata = list(
     cohort = 'CPTAC2 CRC prospective cohort',
     pipeline = 'CDAP',
-    mapped_uniprot_release = '2020_04'
+    mapped_uniprot_release = '2021_02'
 )
 ```
 
@@ -47,7 +47,7 @@ tmt_map_tbl = read_excel(tmt_pth) %>%
     pivot_wider(names_from = 'id_type', values_from = 'value') %>%
     filter(!`Participant ID` %in% c('ColonRef')) %>%
     mutate(tmt_experiment = as.integer(str_match(folder, '^(\\d+)CPTAC_')[, 2]))
-    
+
 tmt_map_tbl %>% head()
 ```
 
@@ -57,8 +57,8 @@ sample_type_tbl %>% head()
 ```
 ```{r}
 tmt_map_clean_tbl = tmt_map_tbl %>%
-    left_join(sample_type_tbl, 
-              by = c("Participant ID"="case_submitter_id", 
+    left_join(sample_type_tbl,
+              by = c("Participant ID"="case_submitter_id",
                      "Specimen Label"="aliquot_submitter_id")) %>%
     select(case_id = `Participant ID`, aliquot_id = `Specimen Label`,
            tmt_experiment, tmt_channel, sample_type) %>%
@@ -80,7 +80,7 @@ names(mcols(protein_annotation_gr))
 Read UniProt coord_mapping
 ```{r}
 uniprot_coord_mapping_tbl = read_refseq_to_uniprot_coord_mapping(
-    refseq_ver = "20180629", 
+    refseq_ver = "20180629",
     uniprot_ver = se_metadata$mapped_uniprot_release
 )
 ```
@@ -100,7 +100,7 @@ protein_tbl %>% head()
 
 
 ```{r}
-protein_mat = protein_tbl %>% 
+protein_mat = protein_tbl %>%
     select(ends_with('Unshared Log Ratio')) %>%
     filter(row_number() > 3) %>%
     rename_all(~ str_sub(.x, end = -str_length('Unshared Log Ratio') - 2)) %>%
@@ -143,9 +143,9 @@ protein_row_tbl %>%
 
 Only select the genes that are in the database
 ```{r}
-selected_protein_row_tbl = protein_row_tbl %>% 
+selected_protein_row_tbl = protein_row_tbl %>%
     filter(!is.na(symbol)) %>%
-    select(symbol, hgnc_id, entrez_gene_id, ensembl_gene_id, 
+    select(symbol, hgnc_id, entrez_gene_id, ensembl_gene_id,
            incompat_symbol_in_manuscript)
 
 selected_protein_row_tbl %>% head()
@@ -166,7 +166,7 @@ selected_protein_mat[1:5, 1:5]
 ```
 
 ```{r}
-protein_sample_tbl = tmt_map_clean_tbl %>% 
+protein_sample_tbl = tmt_map_clean_tbl %>%
     select(
         preferred_sample_name, case_id, sample_type,
         aliquot_id, tmt_experiment, tmt_channel
@@ -194,7 +194,7 @@ raw_phospho_tbl = read_tsv(phospho_pth) %>%
     mutate(original_id = str_c(Peptide, Phosphosite, sep = ':'))
 ```
 ```{r}
-raw_phospho_tbl %>% count(Peptide) %>% filter(n > 1) 
+raw_phospho_tbl %>% count(Peptide) %>% filter(n > 1)
 ```
 
 Read peptide location
@@ -202,7 +202,7 @@ Read peptide location
 phospho_loc_tbl = read_tsv(
     phospho_loc_pth,
     col_types = cols(
-        peptide_start = col_integer(), 
+        peptide_start = col_integer(),
         peptide_end = col_integer()
     ))
 phospho_loc_tbl %>% head()
@@ -224,7 +224,7 @@ raw_phospho_row_tbl = raw_phospho_tbl %>%
 
 Create the phospho matrix
 ```{r}
-phospho_mat = raw_phospho_tbl %>% 
+phospho_mat = raw_phospho_tbl %>%
     select(ends_with('Log Ratio')) %>%
     rename_all(~ str_sub(.x, end = -str_length('Log Ratio') - 2)) %>%
     as.matrix()
@@ -278,7 +278,7 @@ phospho_row_full_tbl = raw_phospho_annotate_row_tbl %>%
     arrange(symbol, phosphosites, na_percent) %>%
     mutate(
         unique_site_id = base::make.unique(
-            str_c(symbol, refseq_prot_id, phosphosites, sep = ':'), 
+            str_c(symbol, refseq_prot_id, phosphosites, sep = ':'),
             sep='.'
         )
     ) %>%

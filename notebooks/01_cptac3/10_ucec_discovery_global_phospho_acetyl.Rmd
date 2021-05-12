@@ -13,7 +13,7 @@ library(tidyverse)
 ```
 
 ```{r}
-DATA_ROOT = '~/Box/MyCPTAC/CPTAC_proteome_v2.0'
+DATA_ROOT = '~/Box/MyCPTAC/CPTAC_proteome_v2.1'
 ```
 
 Load extra functions for mapping
@@ -34,14 +34,14 @@ acetyl_loc_pth = fs::path(DATA_ROOT, 'CPTAC3/UCEC_discovery/PNNL_with_refseq/uce
 se_metadata = list(
     cohort = 'CPTAC3 UCEC discovery cohort',
     pipeline = 'PNNL',
-    mapped_uniprot_release = '2020_04'
+    mapped_uniprot_release = '2021_02'
 )
 ```
 
 Read UniProt coord_mapping
 ```{r}
 uniprot_coord_mapping_tbl = read_refseq_to_uniprot_coord_mapping(
-    refseq_ver = "20180629", 
+    refseq_ver = "20180629",
     uniprot_ver = se_metadata$mapped_uniprot_release
 )
 ```
@@ -50,13 +50,13 @@ uniprot_coord_mapping_tbl = read_refseq_to_uniprot_coord_mapping(
 ## TMT map
 ```{r}
 tmt_map_tbl = read_tsv(tmt_pth) %>%
-    select(preferred_sample_name = idx, 
-           case_id = Proteomics_Participant_ID, 
+    select(preferred_sample_name = idx,
+           case_id = Proteomics_Participant_ID,
            aliquot_ids = Proteomics_Aliquot_ID,
-           sample_type = Proteomics_Tumor_Normal, 
+           sample_type = Proteomics_Tumor_Normal,
            OCT = Proteomics_OCT,
-           Case_excluded, 
-           tmt_experiment = Proteomics_TMT_plex, 
+           Case_excluded,
+           tmt_experiment = Proteomics_TMT_plex,
            tmt_channel = Proteomics_TMT_channel) %>%
     mutate(
         tmt_experiment = as.integer(tmt_experiment),
@@ -116,7 +116,7 @@ setdiff(tmt_map_clean_tbl$first_aliquot_id, data_sample_names)
 ```
 
 ```{r}
-protein_mat = protein_tbl %>% 
+protein_mat = protein_tbl %>%
     select(-Gene, -RefSeq) %>%
     as.matrix()
 
@@ -129,7 +129,7 @@ protein_mat[1:5, 1:5]
 ```
 
 ```{r}
-protein_sample_tbl = tmt_map_clean_tbl %>% 
+protein_sample_tbl = tmt_map_clean_tbl %>%
   select(
         preferred_sample_name, case_id, sample_type,
         aliquot_ids, tmt_experiment, tmt_channel, OCT
@@ -170,7 +170,7 @@ Read peptide location
 phospho_loc_tbl = read_tsv(
     phospho_loc_pth,
     col_types = cols(
-        peptide_start = col_integer(), 
+        peptide_start = col_integer(),
         peptide_end = col_integer()
     ))
 phospho_loc_tbl %>% head()
@@ -193,7 +193,7 @@ phospho_mat[1:5, 1:5]
 Construct the phospho rowData table
 ```{r}
 raw_phospho_row_tbl = phospho_tbl %>%
-    select(original_id = peptide, symbol = Gene, refseq_prot_id = RefSeq) %>% 
+    select(original_id = peptide, symbol = Gene, refseq_prot_id = RefSeq) %>%
     inner_join(phospho_loc_tbl, by = 'original_id')
 
 raw_phospho_row_tbl %>% head()
@@ -213,7 +213,7 @@ phospho_row_tbl = raw_phospho_row_tbl %>%
         # na_percent <= 0.8
     ) %>%
     select(
-        original_id, 
+        original_id,
         refseq_prot_id,
         phosphosites,
         symbol,
@@ -225,7 +225,7 @@ phospho_row_tbl = raw_phospho_row_tbl %>%
     arrange(symbol, phosphosites, na_percent) %>%
     mutate(
         unique_site_id = base::make.unique(
-            str_c(symbol, refseq_prot_id, phosphosites, sep = ':'), 
+            str_c(symbol, refseq_prot_id, phosphosites, sep = ':'),
             sep='.'
         )
     )
@@ -235,8 +235,8 @@ phospho_row_tbl %>% head()
 
 Some sites have duplication
 ```{r}
-phospho_row_tbl %>% 
-    count(symbol, phosphosites, sort = TRUE) %>% 
+phospho_row_tbl %>%
+    count(symbol, phosphosites, sort = TRUE) %>%
     filter(n > 1)
 ```
 
@@ -257,8 +257,8 @@ protein_annotation_tbl = protein_annotation_gr %>%
 ```
 
 ```{r}
-phospho_row_full_tbl = phospho_row_tbl %>% 
-    select(unique_site_id, original_id, refseq_prot_id, symbol, phosphosites, 
+phospho_row_full_tbl = phospho_row_tbl %>%
+    select(unique_site_id, original_id, refseq_prot_id, symbol, phosphosites,
            peptide, peptide_start, peptide_end) %>%
     left_join(
         protein_annotation_tbl,
@@ -293,7 +293,7 @@ acetyl_tbl = read_tsv(acetyl_pth) %>%
 acetyl_loc_tbl = read_tsv(
     acetyl_loc_pth,
     col_types = cols(
-        peptide_start = col_integer(), 
+        peptide_start = col_integer(),
         peptide_end = col_integer()
     ))
 ```
@@ -315,7 +315,7 @@ acetyl_mat[1:5, 1:5]
 Construct the phospho rowData table
 ```{r}
 raw_acetyl_row_tbl = acetyl_tbl %>%
-    select(original_id = peptide, symbol = Gene, refseq_prot_id = RefSeq) %>% 
+    select(original_id = peptide, symbol = Gene, refseq_prot_id = RefSeq) %>%
     inner_join(acetyl_loc_tbl, by = 'original_id')
 
 raw_acetyl_row_tbl %>% head()
@@ -334,7 +334,7 @@ acetyl_row_tbl = raw_acetyl_row_tbl %>%
         # na_percent <= 0.8
     ) %>%
     select(
-        original_id, 
+        original_id,
         refseq_prot_id,
         acetylsites,
         symbol,
@@ -346,7 +346,7 @@ acetyl_row_tbl = raw_acetyl_row_tbl %>%
     arrange(symbol, acetylsites, na_percent) %>%
     mutate(
         unique_site_id = base::make.unique(
-            str_c(symbol, refseq_prot_id, acetylsites, sep = ':'), 
+            str_c(symbol, refseq_prot_id, acetylsites, sep = ':'),
             sep='.'
         )
     )
@@ -356,16 +356,16 @@ acetyl_row_tbl %>% head()
 
 Some sites have duplication
 ```{r}
-acetyl_row_tbl %>% 
-    count(symbol, acetylsites, sort = TRUE) %>% 
+acetyl_row_tbl %>%
+    count(symbol, acetylsites, sort = TRUE) %>%
     filter(n > 1)
 ```
 
 
 Combine the RefSeq annotation
 ```{r}
-acetyl_row_full_tbl = acetyl_row_tbl %>% 
-    select(unique_site_id, original_id, refseq_prot_id, symbol, acetylsites, 
+acetyl_row_full_tbl = acetyl_row_tbl %>%
+    select(unique_site_id, original_id, refseq_prot_id, symbol, acetylsites,
            peptide, peptide_start, peptide_end) %>%
     left_join(
         protein_annotation_tbl,

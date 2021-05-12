@@ -12,7 +12,7 @@ library(tidyverse)
 ```
 
 ```{r}
-DATA_ROOT = '~/Box/MyCPTAC/CPTAC_proteome_v2.0'
+DATA_ROOT = '~/Box/MyCPTAC/CPTAC_proteome_v2.1'
 ```
 
 Load extra functions for mapping
@@ -30,14 +30,14 @@ phospho_loc_pth = fs::path(DATA_ROOT, 'CPTAC3/CCRCC_discovery/6_CPTAC3_CCRCC_Pho
 se_metadata = list(
     cohort = 'CPTAC3 CCRCC discovery cohort',
     pipeline = 'UMich',
-    mapped_uniprot_release = '2020_04'
+    mapped_uniprot_release = '2021_02'
 )
 ```
 
 Read UniProt coord_mapping
 ```{r}
 uniprot_coord_mapping_tbl = read_refseq_to_uniprot_coord_mapping(
-    refseq_ver = "20180629", 
+    refseq_ver = "20180629",
     uniprot_ver = se_metadata$mapped_uniprot_release
 )
 ```
@@ -50,7 +50,7 @@ tmt_map_tbl = read_csv(tmt_pth, col_types = cols(Data.Set = col_integer())) %>%
     select(
         case_id = Case.ID,
         aliquot_id = Specimen.Label,
-        sample_type = Type, 
+        sample_type = Type,
         tmt_experiment = Data.Set,
         tmt_channel = TMT.Channel
     ) %>%
@@ -106,7 +106,7 @@ setdiff(protein_tbl$Index, gene_annotation_tbl$symbol)
 ```
 
 ```{r}
-protein_mat = protein_tbl %>% 
+protein_mat = protein_tbl %>%
     select(-Index, -NumberPSM, -Proteins) %>%
     as.matrix()
 
@@ -119,7 +119,7 @@ protein_mat[1:5, 1:5]
 ```
 
 ```{r}
-protein_sample_tbl = tmt_map_clean_tbl %>% 
+protein_sample_tbl = tmt_map_clean_tbl %>%
   select(
         preferred_sample_name, case_id, sample_type,
         aliquot_id, tmt_experiment, tmt_channel
@@ -153,7 +153,7 @@ protein_se
 ### Phospho
 ```{r}
 phospho_tbl = read_tsv(
-    phospho_pth, 
+    phospho_pth,
     col_types = cols(
         .default = col_double(),
         Index = col_character(),
@@ -168,7 +168,7 @@ Read peptide location
 phospho_loc_tbl = read_tsv(
     phospho_loc_pth,
     col_types = cols(
-        peptide_start = col_integer(), 
+        peptide_start = col_integer(),
         peptide_end = col_integer()
     ))
 phospho_loc_tbl %>% head()
@@ -191,7 +191,7 @@ phospho_mat[1:5, 1:5]
 Construct the phospho rowData table
 ```{r}
 raw_phospho_row_tbl = phospho_tbl %>%
-    select(original_id = Index, symbol = Gene) %>% 
+    select(original_id = Index, symbol = Gene) %>%
     left_join(phospho_loc_tbl, by = 'original_id')
 
 raw_phospho_row_tbl %>% head()
@@ -216,7 +216,7 @@ phospho_row_tbl = raw_phospho_row_tbl %>%
         # na_percent <= 0.8
     ) %>%
     select(
-        original_id, 
+        original_id,
         refseq_prot_id,
         phosphosites,
         symbol,
@@ -228,7 +228,7 @@ phospho_row_tbl = raw_phospho_row_tbl %>%
     arrange(symbol, phosphosites, na_percent) %>%
     mutate(
         unique_site_id = base::make.unique(
-            str_c(symbol, refseq_prot_id, phosphosites, sep = ':'), 
+            str_c(symbol, refseq_prot_id, phosphosites, sep = ':'),
             sep='.'
         )
     )
@@ -238,8 +238,8 @@ phospho_row_tbl %>% head()
 
 Some sites have duplication
 ```{r}
-phospho_row_tbl %>% 
-    count(symbol, phosphosites, sort = TRUE) %>% 
+phospho_row_tbl %>%
+    count(symbol, phosphosites, sort = TRUE) %>%
     filter(n > 1)
 ```
 
@@ -260,8 +260,8 @@ protein_annotation_tbl = protein_annotation_gr %>%
 ```
 
 ```{r}
-phospho_row_full_tbl = phospho_row_tbl %>% 
-    select(unique_site_id, original_id, refseq_prot_id, symbol, phosphosites, 
+phospho_row_full_tbl = phospho_row_tbl %>%
+    select(unique_site_id, original_id, refseq_prot_id, symbol, phosphosites,
            peptide, peptide_start, peptide_end) %>%
     left_join(
         protein_annotation_tbl,

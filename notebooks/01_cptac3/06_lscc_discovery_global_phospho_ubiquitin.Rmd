@@ -13,7 +13,7 @@ library(tidyverse)
 ```
 
 ```{r}
-DATA_ROOT = '~/Box/MyCPTAC/CPTAC_proteome_v2.0'
+DATA_ROOT = '~/Box/MyCPTAC/CPTAC_proteome_v2.1'
 ```
 
 Load extra functions for mapping
@@ -36,7 +36,7 @@ ubiquitin_loc_pth = fs::path(DATA_ROOT, 'CPTAC3/LSCC_discovery/lscc-v3.2-ubiquit
 se_metadata = list(
     cohort = 'CPTAC3 LSCC discovery cohort',
     pipeline = 'Broad',
-    mapped_uniprot_release = '2020_04'
+    mapped_uniprot_release = '2021_02'
 )
 ```
 
@@ -50,7 +50,7 @@ names(mcols(protein_annotation_gr))
 Read UniProt coord_mapping
 ```{r}
 uniprot_coord_mapping_tbl = read_refseq_to_uniprot_coord_mapping(
-    refseq_ver = "20180629", 
+    refseq_ver = "20180629",
     uniprot_ver = se_metadata$mapped_uniprot_release
 )
 ```
@@ -64,7 +64,7 @@ raw_protein_se = as(protein_gct, "SummarizedExperiment")
 
 Make sure the gene symbols are the same as the protein annotation
 ```{r}
-rowData(raw_protein_se) %>% 
+rowData(raw_protein_se) %>%
     as_tibble() %>%
     select(accession_number, geneSymbol) %>%
     inner_join(protein_annotation_gr %>% mcols() %>% as_tibble(),
@@ -85,14 +85,14 @@ rowData(raw_protein_se)[prot_ids_not_in_refseq, ] %>%
 
 ```{r}
 protein_row_tbl = rowData(raw_protein_se) %>%
-    as_tibble() %>% 
+    as_tibble() %>%
     # Keep only RefSeq proteins
     filter(accession_number %in% protein_annotation_gr$refseq_prot_id) %>%
     mutate(subgroupNum = as.character(subgroupNum)) %>%
     extract(
-        subgroupNum, 
+        subgroupNum,
         c('protein_grp', 'protein_subgrp'),
-        "^(\\d+)\\.(\\d+)", 
+        "^(\\d+)\\.(\\d+)",
         convert = TRUE, remove = FALSE
     )
 ```
@@ -121,12 +121,12 @@ gene_annotation_tbl = protein_annotation_gr %>%
 
 sgt_protein_full_row_tbl = sgt_protein_row_tbl %>%
     select(
-        symbol = geneSymbol, 
+        symbol = geneSymbol,
         refseq_prot_id = accession_number,
         numColumnsProteinObserved, numSpectraProteinObserved,
         protein_mw, percentCoverage,
         numPepsUnique, scoreUnique, subgroupNum
-    ) %>% 
+    ) %>%
     left_join(gene_annotation_tbl, by = "symbol")
 
 sgt_protein_full_row_tbl %>% head()
@@ -159,7 +159,7 @@ rownames(protein_se) = sgt_protein_full_row_tbl$symbol
 rowData(protein_se) = sgt_protein_full_row_tbl %>% column_to_rownames('symbol')
 colData(protein_se) = protein_col_tbl %>% column_to_rownames('preferred_sample_name') %>% as('DataFrame')
 assayNames(protein_se) = 'normalized'
-  
+
 metadata(protein_se) = se_metadata
 ```
 
@@ -177,13 +177,13 @@ raw_phospho_se = as(phospho_gct, "SummarizedExperiment")
 phospho_loc_tbl = read_tsv(
     phospho_loc_pth,
     col_types = cols(
-        peptide_start = col_integer(), 
+        peptide_start = col_integer(),
         peptide_end = col_integer()
     ))
 ```
 
 ```{r}
-raw_phospho_row_tbl = rowData(raw_phospho_se) %>% 
+raw_phospho_row_tbl = rowData(raw_phospho_se) %>%
     as_tibble(rownames = 'original_id') %>%
     inner_join(phospho_loc_tbl, by = c('original_id' = 'rid'))
 
@@ -204,7 +204,7 @@ phospho_row_tbl = raw_phospho_row_tbl %>%
         # na_percent <= 0.8
     ) %>%
     select(
-        original_id, 
+        original_id,
         refseq_prot_id = accession_number,
         phosphosites,
         symbol = geneSymbol,
@@ -216,7 +216,7 @@ phospho_row_tbl = raw_phospho_row_tbl %>%
     arrange(symbol, phosphosites, na_percent) %>%
     mutate(
         unique_site_id = base::make.unique(
-            str_c(symbol, refseq_prot_id, phosphosites, sep = ':'), 
+            str_c(symbol, refseq_prot_id, phosphosites, sep = ':'),
             sep='.'
         )
     )
@@ -225,8 +225,8 @@ phospho_row_tbl %>% head()
 ```
 Some sites have duplication
 ```{r}
-phospho_row_tbl %>% 
-    count(symbol, phosphosites, sort = TRUE) %>% 
+phospho_row_tbl %>%
+    count(symbol, phosphosites, sort = TRUE) %>%
     filter(n > 1)
 ```
 
@@ -239,8 +239,8 @@ protein_annotation_tbl = protein_annotation_gr %>%
 ```
 
 ```{r}
-phospho_row_full_tbl = phospho_row_tbl %>% 
-    select(unique_site_id, original_id, refseq_prot_id, symbol, phosphosites, 
+phospho_row_full_tbl = phospho_row_tbl %>%
+    select(unique_site_id, original_id, refseq_prot_id, symbol, phosphosites,
            peptide, peptide_start, peptide_end) %>%
     left_join(
         protein_annotation_tbl,
@@ -374,13 +374,13 @@ raw_ubiquitin_se = as(ubiquitin_gct, "SummarizedExperiment")
 ubiquitin_loc_tbl = read_tsv(
     ubiquitin_loc_pth,
     col_types = cols(
-        peptide_start = col_integer(), 
+        peptide_start = col_integer(),
         peptide_end = col_integer()
     ))
 ```
 
 ```{r}
-raw_ubiquitin_row_tbl = rowData(raw_ubiquitin_se) %>% 
+raw_ubiquitin_row_tbl = rowData(raw_ubiquitin_se) %>%
     as_tibble(rownames = 'original_id') %>%
     inner_join(ubiquitin_loc_tbl, by = c('original_id' = 'rid'))
 
@@ -399,7 +399,7 @@ ubiquitin_row_tbl = raw_ubiquitin_row_tbl %>%
         # na_percent <= 0.8
     ) %>%
     select(
-        original_id, 
+        original_id,
         refseq_prot_id = accession_number,
         ubiquitinsites,
         symbol = geneSymbol,
@@ -411,7 +411,7 @@ ubiquitin_row_tbl = raw_ubiquitin_row_tbl %>%
     arrange(symbol, ubiquitinsites, na_percent) %>%
     mutate(
         unique_site_id = base::make.unique(
-            str_c(symbol, refseq_prot_id, ubiquitinsites, sep = ':'), 
+            str_c(symbol, refseq_prot_id, ubiquitinsites, sep = ':'),
             sep='.'
         )
     )
@@ -421,15 +421,15 @@ ubiquitin_row_tbl %>% head()
 
 Some sites have duplication
 ```{r}
-ubiquitin_row_tbl %>% 
-    count(symbol, ubiquitinsites, sort = TRUE) %>% 
+ubiquitin_row_tbl %>%
+    count(symbol, ubiquitinsites, sort = TRUE) %>%
     filter(n > 1)
 ```
 
 Combine the RefSeq annotation
 ```{r}
-ubiquitin_row_full_tbl = ubiquitin_row_tbl %>% 
-    select(unique_site_id, original_id, refseq_prot_id, symbol, ubiquitinsites, 
+ubiquitin_row_full_tbl = ubiquitin_row_tbl %>%
+    select(unique_site_id, original_id, refseq_prot_id, symbol, ubiquitinsites,
            peptide, peptide_start, peptide_end) %>%
     left_join(
         protein_annotation_tbl,

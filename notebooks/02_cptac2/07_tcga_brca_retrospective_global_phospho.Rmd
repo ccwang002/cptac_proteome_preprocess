@@ -14,7 +14,7 @@ library(tidyverse)
 ```
 
 ```{r}
-DATA_ROOT = '~/Box/MyCPTAC/CPTAC_proteome_v2.0'
+DATA_ROOT = '~/Box/MyCPTAC/CPTAC_proteome_v2.1'
 ```
 
 Load extra functions for mapping
@@ -34,7 +34,7 @@ phospho_loc_pth = fs::path(DATA_ROOT, 'CPTAC2/TCGA_BRCA_retrospective/phosphopro
 se_metadata = list(
     cohort = 'TCGA BRCA retrospective cohort',
     pipeline = 'Broad',
-    mapped_uniprot_release = '2020_04'
+    mapped_uniprot_release = '2021_02'
 )
 ```
 
@@ -50,7 +50,7 @@ colnames(protein_annotation_tbl)
 Read UniProt coord_mapping
 ```{r}
 uniprot_coord_mapping_tbl = read_refseq_to_uniprot_coord_mapping(
-    refseq_ver = "20130727", 
+    refseq_ver = "20130727",
     uniprot_ver = se_metadata$mapped_uniprot_release
 )
 ```
@@ -98,7 +98,7 @@ setdiff(protein_tbl$accession_number, refseq_prot_no_ver_tbl$refseq_prot_no_ver_
 ```
 
 ```{r}
-protein_mat = protein_tbl %>% 
+protein_mat = protein_tbl %>%
     select(-accession_number:-Name) %>%
     as.matrix()
 
@@ -116,9 +116,9 @@ protein_row_tbl = protein_tbl %>%
         numPepsUnique, scoreUnique
     ) %>%
     left_join(
-        protein_annotation_tbl %>% 
+        protein_annotation_tbl %>%
             select(
-                original_prot_id, 
+                original_prot_id,
                 refseq_prot_id,
                 symbol, hgnc_id, entrez_gene_id, ensembl_gene_id
             ),
@@ -180,7 +180,7 @@ sgt_protein_full_row_tbl %>% head()
 Process the proteome sample names
 ```{r}
 protein_sample_tbl = tibble(
-    preferred_sample_name = colnames(protein_mat) 
+    preferred_sample_name = colnames(protein_mat)
 ) %>%
     mutate(case_id = map_chr(str_split(preferred_sample_name, '\\.'), ~ .x[[1]])) %>%
     left_join(sample_detail_tbl, by = c("case_id" = "Sample ID")) %>%
@@ -225,7 +225,7 @@ phospho_meta_tbl %>% head()
 
 CDAP is not useful because we don't have the annotation of their search database
 ```
-cdap_phospho_tbl = read_tsv('~/Box/MyCPTAC/CPTAC_proteome_v1/CPTAC2/TCGA_BRCA_retrospective/CDAP/TCGA_Breast_BI_Phosphoproteome.phosphosite.itraq.tsv')
+cdap_phospho_tbl = read_tsv('~/Box/MyCPTAC/CPTAC_proteome_v2.1/CPTAC2/TCGA_BRCA_retrospective/CDAP/TCGA_Breast_BI_Phosphoproteome.phosphosite.itraq.tsv')
 
 cdap_phospho_row_tbl = cdap_phospho_tbl %>%
     select(Phosphosite) %>%
@@ -262,8 +262,8 @@ raw_phospho_row_tbl %>% head()
 
 Export the phosphosite peptide information to find location
 ```
-raw_phospho_row_tbl %>% 
-    write_tsv('~/Box/MyCPTAC/CPTAC_proteome_v1/CPTAC2/TCGA_BRCA_retrospective/phosphoproteome_P3_peptide_annotation.tsv.gz')
+raw_phospho_row_tbl %>%
+    write_tsv('~/Box/MyCPTAC/CPTAC_proteome_v2.1/CPTAC2/TCGA_BRCA_retrospective/phosphoproteome_P3_peptide_annotation.tsv.gz')
 ```
 
 
@@ -272,7 +272,7 @@ Read peptide location
 phospho_loc_tbl = read_tsv(
     phospho_loc_pth,
     col_types = cols(
-        peptide_start = col_integer(), 
+        peptide_start = col_integer(),
         peptide_end = col_integer()
     ))
 phospho_loc_tbl %>% head()
@@ -320,7 +320,7 @@ phospho_row_full_tbl = raw_phospho_annotate_row_tbl %>%
     arrange(symbol, phosphosites, na_percent) %>%
     mutate(
         unique_site_id = base::make.unique(
-            str_c(symbol, refseq_prot_id, phosphosites, sep = ':'), 
+            str_c(symbol, refseq_prot_id, phosphosites, sep = ':'),
             sep='.'
         )
     ) %>%

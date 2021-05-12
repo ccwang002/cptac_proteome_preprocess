@@ -13,7 +13,7 @@ library(tidyverse)
 ```
 
 ```{r}
-DATA_ROOT = '~/Box/MyCPTAC/CPTAC_proteome_v2.0'
+DATA_ROOT = '~/Box/MyCPTAC/CPTAC_proteome_v2.1'
 ```
 
 Load extra functions for mapping
@@ -33,7 +33,7 @@ acetyl_loc_pth = fs::path(DATA_ROOT, 'CPTAC3/LUAD_discovery/luad-v3.1-acetylome-
 se_metadata = list(
     cohort = 'CPTAC3 LUAD discovery cohort',
     pipeline = 'Broad',
-    mapped_uniprot_release = '2020_04'
+    mapped_uniprot_release = '2021_02'
 )
 ```
 
@@ -47,7 +47,7 @@ names(mcols(protein_annotation_gr))
 Read UniProt coord_mapping
 ```{r}
 uniprot_coord_mapping_tbl = read_refseq_to_uniprot_coord_mapping(
-    refseq_ver = "20180629", 
+    refseq_ver = "20180629",
     uniprot_ver = se_metadata$mapped_uniprot_release
 )
 ```

@@ -13,7 +13,7 @@ library(tidyverse)
 ```
 
 ```{r}
-DATA_ROOT = '~/Box/MyCPTAC/CPTAC_proteome_v2.0'
+DATA_ROOT = '~/Box/MyCPTAC/CPTAC_proteome_v2.1'
 ```
 
 Load extra functions for mapping
@@ -32,7 +32,7 @@ phospho_loc_pth = fs::path(DATA_ROOT, 'CPTAC2/OV_prospective/mmc3_phospho_peptid
 se_metadata = list(
     cohort = 'CPTAC2 OV prospective cohort',
     pipeline = 'PNNL',
-    mapped_uniprot_release = '2020_04'
+    mapped_uniprot_release = '2021_02'
 )
 ```
 
@@ -46,7 +46,7 @@ tmt_map_tbl = read_excel(tmt_pth) %>%
     pivot_wider(names_from = 'id_type', values_from = 'value') %>%
     filter(!`Participant ID` %in% c('JHU QC', 'PNNL-JHU Ref')) %>%
     mutate(tmt_experiment = as.integer(str_match(folder, '^(\\d+)CPTAC_')[, 2]))
-    
+
 tmt_map_tbl %>% head()
 ```
 
@@ -56,11 +56,11 @@ sample_type_tbl %>% head()
 ```
 ```{r}
 tmt_map_clean_tbl = tmt_map_tbl %>%
-    left_join(sample_type_tbl, 
-              by = c("Participant ID"="Participant_ID", 
+    left_join(sample_type_tbl,
+              by = c("Participant ID"="Participant_ID",
                      "Specimen Label"="Specimen_Lable")) %>%
     select(case_id = `Participant ID`, aliquot_id = `Specimen Label`,
-           tmt_experiment, tmt_channel, sample_type = `Tumor/Normal`, 
+           tmt_experiment, tmt_channel, sample_type = `Tumor/Normal`,
            PCC) %>%
     # Fix 02OV001	9a7a86d3-bbf2-4d36-941d-c75c03_D1_D5 is normal like
     mutate(
@@ -100,14 +100,14 @@ names(mcols(protein_annotation_gr))
 Read UniProt coord_mapping
 ```{r}
 uniprot_coord_mapping_tbl = read_refseq_to_uniprot_coord_mapping(
-    refseq_ver = "20160914", 
+    refseq_ver = "20160914",
     uniprot_ver = se_metadata$mapped_uniprot_release
 )
 ```
 
 ```{r}
-refseq_no_ver_tbl = protein_annotation_gr %>% 
-    mcols() %>% 
+refseq_no_ver_tbl = protein_annotation_gr %>%
+    mcols() %>%
     as_tibble() %>%
     select(refseq_prot_id, symbol, hgnc_id, entrez_gene_id, ensembl_gene_id) %>%
     mutate(refseq_prot_id_no_ver = str_replace(refseq_prot_id, '\\.\\d+$', ''))
@@ -121,7 +121,7 @@ protein_tbl = read_excel(data_pth, 'Global proteome')
 protein_tbl %>% head()
 ```
 ```{r}
-protein_mat = protein_tbl %>% 
+protein_mat = protein_tbl %>%
     select(-refseq_peptide, -hgnc_symbol) %>%
     as.matrix()
 
@@ -138,8 +138,8 @@ protein_row_tbl = protein_tbl %>%
     select(refseq_peptide, hgnc_symbol) %>%
     bind_cols(tibble(na_percent = protein_na_percent)) %>%
     left_join(
-        protein_annotation_gr %>% 
-            mcols() %>% 
+        protein_annotation_gr %>%
+            mcols() %>%
             as_tibble() %>%
             select(refseq_prot_id, symbol, hgnc_id, entrez_gene_id, ensembl_gene_id) %>%
             mutate(refseq_prot_id_no_ver = str_replace(refseq_prot_id, '\\.\\d+$', '')),
@@ -184,7 +184,7 @@ selected_protein_mat[1:5, 1:5]
 ```
 
 ```{r}
-protein_sample_tbl = tmt_map_clean_tbl %>% 
+protein_sample_tbl = tmt_map_clean_tbl %>%
   select(
         preferred_sample_name, case_id, sample_type,
         aliquot_id, tmt_experiment, tmt_channel, PCC
@@ -194,8 +194,8 @@ protein_sample_tbl %>% head()
 ```
 ```{r}
 selected_protein_row_tbl = unique_protein_row_tbl %>%
-    select(symbol, refseq_prot_id, 
-           hgnc_id, entrez_gene_id, ensembl_gene_id, 
+    select(symbol, refseq_prot_id,
+           hgnc_id, entrez_gene_id, ensembl_gene_id,
            incompat_symbol_in_manuscript=hgnc_symbol)
 ```
 
@@ -226,9 +226,9 @@ raw_phospho_tbl$refseq_peptide %>% setdiff(refseq_no_ver_tbl$refseq_prot_id_no_v
 Annotate the table with the correct peptide database annotation
 ```{r}
 raw_phospho_row_tbl = raw_phospho_tbl %>%
-    select(refseq_prot_id_no_ver=refseq_peptide, site, Peptide, 
+    select(refseq_prot_id_no_ver=refseq_peptide, site, Peptide,
            incompat_symbol_in_manuscript=hgnc_symbol) %>%
-    left_join(refseq_no_ver_tbl %>% select(refseq_prot_id, symbol, refseq_prot_id_no_ver), 
+    left_join(refseq_no_ver_tbl %>% select(refseq_prot_id, symbol, refseq_prot_id_no_ver),
               by = "refseq_prot_id_no_ver") %>%
     mutate(id = str_c(refseq_prot_id, Peptide, sep = '_')) %>%
     select(id, refseq_prot_id, symbol, site, Peptide,
@@ -244,9 +244,9 @@ raw_phospho_row_tbl %>% head()
 
 Peptides are duplicated.
 ```{r}
-raw_phospho_row_tbl %>% 
+raw_phospho_row_tbl %>%
     count(Peptide, sort = TRUE) %>%
-    filter(n > 1) %>% 
+    filter(n > 1) %>%
     head(100)
 ```
 
@@ -278,7 +278,7 @@ Read peptide location
 phospho_loc_tbl = read_tsv(
     phospho_loc_pth,
     col_types = cols(
-        peptide_start = col_integer(), 
+        peptide_start = col_integer(),
         peptide_end = col_integer()
     ))
 phospho_loc_tbl %>% head()
@@ -286,7 +286,7 @@ phospho_loc_tbl %>% head()
 
 Many peptides have invalid location
 ```{r}
-phospho_loc_tbl %>% 
+phospho_loc_tbl %>%
     count(peptide_loc_valid, peptide_loc_invalid_reason)
 ```
 
@@ -329,11 +329,11 @@ raw_phospho_annotate_row_tbl %>%
     count(peptide, sort = TRUE)
 ```
 
-Make the peptide unique, then reorder the phosphosite by NA% 
+Make the peptide unique, then reorder the phosphosite by NA%
 ```{r}
 phospho_row_tbl = raw_phospho_annotate_row_tbl %>%
     select(
-        id, 
+        id,
         refseq_prot_id,
         phosphosites,
         symbol,
@@ -353,7 +353,7 @@ phospho_row_tbl = raw_phospho_annotate_row_tbl %>%
     arrange(symbol, phosphosites, na_percent) %>%
     mutate(
         unique_site_id = base::make.unique(
-            str_c(symbol, refseq_prot_id, phosphosites, sep = ':'), 
+            str_c(symbol, refseq_prot_id, phosphosites, sep = ':'),
             sep='.'
         )
     )
@@ -362,8 +362,8 @@ phospho_row_tbl %>% head()
 ```
 Some sites have duplication
 ```{r}
-phospho_row_tbl %>% 
-    count(symbol, phosphosites, sort = TRUE) %>% 
+phospho_row_tbl %>%
+    count(symbol, phosphosites, sort = TRUE) %>%
     filter(n > 1)
 ```
 
@@ -384,10 +384,10 @@ protein_annotation_tbl = protein_annotation_gr %>%
 ```
 
 ```{r}
-phospho_row_full_tbl = phospho_row_tbl %>% 
-    select(unique_site_id, refseq_prot_id, symbol, phosphosites, 
+phospho_row_full_tbl = phospho_row_tbl %>%
+    select(unique_site_id, refseq_prot_id, symbol, phosphosites,
            peptide, peptide_start, peptide_end,
-           all_valid_refseq_prot_ids, 
+           all_valid_refseq_prot_ids,
            original_id=id, incompat_symbol_in_manuscript) %>%
     left_join(
         protein_annotation_tbl,
