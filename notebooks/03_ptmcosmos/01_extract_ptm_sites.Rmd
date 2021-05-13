@@ -1,0 +1,189 @@
+---
+title: "Untitled"
+output: 
+    html_document:
+        df_print: paged
+---
+
+```{r, message=FALSE}
+library(here)
+library(arrow)
+library(SummarizedExperiment)
+library(furrr)
+library(tidyverse)
+```
+
+Load utility functions
+```{r, message=FALSE}
+source('data_freeze_utils.R')
+source('sample_type_rename.R')
+```
+
+Read in all CPTAC proteome data
+```{r}
+cptac_proteome_tbl = locate_all_proteome_rds()
+cptac_proteome_tbl
+```
+
+```{r}
+all_proteome = read_all_cptac_proteome(cptac_proteome_tbl)
+all_proteome = rename_all_proteome(all_proteome)
+```
+
+```{r}
+colnames(rowData(all_proteome$ubiquityl$CPTAC3_LSCC_discovery))
+```
+
+
+
+
+```{r}
+PTM_COLNAME = list(
+    "phospho" = "phosphosites",
+    "acetyl" = "acetylsites",
+    "ubiquityl" = "ubiquitinsites"
+)
+
+extract_ptm_site_metadata = function(se, ptm_type) {
+    row_meta = rowData(se) %>%
+        as_tibble(rownames = "ptm_site_id") %>%
+        select(
+            ptm_site_id, ptm_sites = .data[[PTM_COLNAME[[ptm_type]]]],
+            mapped_to_multi_entries, mapped_sites, mapping_approach,
+            peptide, peptide_start, peptide_end,
+            refseq_prot_id, hgnc_id, symbol
+        )
+    
+    normal_se = se %>% subset(TRUE, simplified_sample_type == 'normal') 
+    tumor_se = se %>% subset(TRUE, simplified_sample_type == 'tumor')
+    detect_rate_tbl = tibble(
+        num_detected_tumor_samples = rowSums(!is.na(assay(tumor_se))),
+        num_total_tumor_samples = ncol(tumor_se),
+        num_detected_normal_samples = rowSums(!is.na(assay(normal_se))),
+        num_total_normal_samples = ncol(normal_se)
+    )
+    
+    bind_cols(row_meta, detect_rate_tbl)
+}
+
+all_ptm_meta_tbl = all_proteome[names(PTM_COLNAME)] %>%
+    imap_dfr(
+        function(all_cohorts, ptm_type) {
+            map_dfr(
+                all_cohorts,
+                extract_ptm_site_metadata, 
+                ptm_type = ptm_type,
+                .id = "cohort"
+            )
+        }, 
+        .id = "ptm_type"
+    )
+nrow(all_ptm_meta_tbl)
+```
+
+```{r}
+all_ptm_meta_tbl %>%
+    count(ptm_type)
+```
+
+
+## Spot check what are the unmappable sites
+```{r}
+unmappable_protein_entry_tbl = read_tsv(here('annotation/mapping_uniprot_2021_02/tracked_results/mappings/refseq_20180629_to_uniprot_2021_02_not_mappable.tsv.gz'))
+```
+
+```{r}
+unmappable_ptm_sites = all_ptm_meta_tbl %>%
+    filter(is.na(mapped_sites)) %>%
+    count(refseq_prot_id, symbol, hgnc_id, sort = TRUE)
+
+unmappable_ptm_sites %>% head()
+```
+
+```{r}
+unmappable_ptm_sites %>%
+    filter(
+        refseq_prot_id %in% unmappable_protein_entry_tbl$refseq_prot_id | 
+            hgnc_id %in% unmappable_protein_entry_tbl$hgnc_id        
+    )
+```
+
+
+## Break down to single PTM site per row
+```{r}
+ptm_type_detailed = list(
+    "phospho" = c("S" = "Phosphoserine", "T" = "Phosphothreonine", "Y" = "Phosphotyrosine"),
+    "acetyl" = c("K" = "N6-acetyllysine"),
+    "ubiquityl" = c("K" = "Ubiquitination-Lys-Gly")
+)
+```
+
+```{r}
+all_mappable_ptm_meta_tbl = all_ptm_meta_tbl %>%
+    filter(!is.na(mapped_sites)) %>%
+    select(
+        ptm_type, cohort, ptm_site_id,
+        mapped_sites, mapping_approach, mapped_to_multi_entries, 
+        peptide, refseq_prot_id, starts_with("num_")
+    )
+```
+
+```{r}
+all_mappable_ptm_meta_tbl = all_mappable_ptm_meta_tbl %>%
+    # Break down the peptides mapped to multiple UniProt entries
+    mutate(across(
+        c(mapped_sites, mapping_approach),
+        str_split,
+        pattern = fixed("|")
+    )) %>%
+    unnest(cols = c(mapped_sites, mapping_approach)) %>%
+    mutate(
+        cohort = factor(cohort, ORDERED_COHORTS),
+        mapping_approach = factor(mapping_approach, c("identical_sequence", "global_seq_align"))
+    ) %>%
+    # Break down the peptides with multiple PTM sites
+    separate(mapped_sites, c("uniprot_entry", "mapped_ptm_sites"), sep = fixed(":")) %>%
+    mutate(
+        mapped_ptm_sites = str_split(mapped_ptm_sites, fixed(';')),
+        peptide_has_multi_ptm_sites = map_lgl(mapped_ptm_sites, ~ length(.x) > 1)
+    ) %>%
+    unnest(cols = c(mapped_ptm_sites)) %>%
+    extract(mapped_ptm_sites, c("residue", "p_coord"), "(\\w)(\\d+)", convert = TRUE) %>%
+    select(
+        cohort, uniprot_entry, 
+        residue, p_coord, ptm_type,
+        ptm_site_id, refseq_prot_id, 
+        peptide, 
+        uniprot_mapping_approach = mapping_approach,
+        peptide_mapped_to_multi_uniprot_entries = mapped_to_multi_entries,
+        peptide_has_multi_ptm_sites,
+        everything()
+    )
+
+all_mappable_ptm_meta_tbl %>% head()
+```
+
+```{r}
+all_mappable_ptm_meta_tbl %>%
+    count(peptide_mapped_to_multi_uniprot_entries, peptide_has_multi_ptm_sites)
+```
+
+```{r}
+all_mappable_ptm_meta_tbl %>% count(cohort)
+```
+
+```{r}
+fs::dir_create(here('final_output/ptmcosmos'))
+
+all_mappable_ptm_meta_tbl %>%
+    arrange(uniprot_entry, p_coord, residue, ptm_type) %>%
+    write_parquet(
+        here('final_output/ptmcosmos/all_cptac_mappable_ptm_sites.parquet'),
+        compression = 'zstd',
+        compression_level = 6
+    )
+```
+
+
+
+
