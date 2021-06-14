@@ -1,0 +1,70 @@
+---
+title: ''
+output:
+    html_document:
+        df_print: paged
+---
+
+```{r, message=FALSE}
+library(here)
+library(arrow)
+library(Biostrings)
+library(tidyverse)
+```
+
+```{r}
+gencode_proteins = readAAStringSet('../../../annotation/intermediates/gencode_34/gencode.v34.pc_translations.fa.gz')
+
+length(gencode_proteins)
+```
+
+```{r}
+gencode_prot_tbl = tibble(fasta_header = names(gencode_proteins), seq = as.character(gencode_proteins)) %>%
+    separate(
+        fasta_header,
+        c("ensembl_prot_id", "ensembl_tx_id", "ensembl_gene_id",
+          "havana_gene_id", "havana_tx_id", "ensembl_tx_name",
+          "gene_symbol", "aa_len"),
+        sep = '\\|',
+        remove = FALSE
+    )
+
+gencode_prot_tbl %>% head(20)
+```
+
+```{r}
+proteins_of_same_seq_tbl = gencode_prot_tbl %>%
+    arrange(ensembl_prot_id) %>%
+    select(ensembl_prot_id, seq) %>%
+    group_by(seq) %>%
+    summarize(
+        ensembl_prot_ids = str_c(ensembl_prot_id, collapse = '|'),
+        .groups = 'drop'
+    ) %>%
+    mutate(entry_no = row_number()) %>%
+    select(entry_no, ensembl_prot_ids, seq)
+
+proteins_of_same_seq_tbl %>%
+    head()
+```
+
+
+```{r}
+unique_protein_seqs = AAStringSet(proteins_of_same_seq_tbl$seq)
+names(unique_protein_seqs) = proteins_of_same_seq_tbl %>% glue::glue_data("{entry_no} {ensembl_prot_ids}")
+unique_protein_seqs %>% head()
+```
+
+
+```{r}
+proteins_of_same_seq_tbl %>%
+    write_parquet('../../../annotation/intermediates/gencode_34/gencode_34_unique_protein_entries.parquet')
+
+proteins_of_same_seq_tbl$entry_no %>%
+    write_lines('../../../annotation/intermediates/gencode_34/gencode_34_unique_protein_entries.list')
+
+unique_protein_seqs %>%
+    rtracklayer::export('../tracked_results/gencode_34_unique_protein_seq.fasta')
+```
+
+
