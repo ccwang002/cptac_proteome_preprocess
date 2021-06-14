@@ -46,7 +46,11 @@ def main(
     records = []
     for i, prot_id in enumerate(prot_ids, 1):
         xml_pth = Path(xml_root, f'{prot_id}.xml')
-        data, errors = xs.to_dict(str(xml_pth), validation='lax')
+        try:
+            data, errors = xs.to_dict(str(xml_pth), validation='lax')
+        except Exception as e:
+            logger.exception(f"... cannot parse the XML of {prot_id}")
+            raise e
         if len(data['entry']) > 1:
             ids = [x['accession'] for x in data['entry']]
             logger.warning(f'{prot_id} got multiple uniparc entries: {" ".join(ids)}')

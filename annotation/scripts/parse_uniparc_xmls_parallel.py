@@ -9,6 +9,7 @@ import sys
 
 import pandas as pd
 import xmlschema
+from xmlschema.etree import ParseError
 
 # This will be initialized in worker processes
 xs = None
@@ -45,7 +46,21 @@ def parse_dbref(entry):
 
 
 def process_one_entry(prot_id, xml_pth):
-    data, errors = xs.to_dict(str(xml_pth), validation='lax')
+    try:
+        data, errors = xs.to_dict(str(xml_pth), validation='lax')
+    except ParseError as e:
+        logger.error(f"Cannot parse the XML of protein {prot_id}. Likely no record on UniParc")
+        # Return an empty record
+        record = {
+            "original_prot_id": prot_id,
+            "uniparc_id": None,
+            "uniparc_checksum": None,
+            "ensembl_prot_ids": None,
+            "uniprot_ids": None,
+            "refseq_prot_ids": None,
+        }
+        return record
+
     if len(data['entry']) > 1:
         ids = [x['accession'] for x in data['entry']]
         logger.warning(f'{prot_id} got multiple uniparc entries: {" ".join(ids)}')
