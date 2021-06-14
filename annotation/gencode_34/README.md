@@ -47,3 +47,12 @@ python scripts/parse_uniparc_xmls_parallel.py \
     -j 8
 ```
 
+Compress the XMLs:
+
+```bash
+cd xmls
+fd '.xml' | parallel --bar -j8 'zstd -9 {}'  # zstd -T8 -9 *.xml
+fd '.xml$' --exec rm '{}' # rm -rf *.xml
+cd ..
+zip -r -0 uniparc_xmls.zip xmls/
+```
