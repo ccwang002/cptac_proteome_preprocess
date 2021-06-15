@@ -48,7 +48,7 @@ conda create -n cptac \
     notebook=6.0 pandas=1.1 \
     zstd zstandard=0.14 \
     xsv xmlschema orjson loguru \
-    biopython=1.77
+    biopython=1.79
 
     pysam=0.16 # not in bioconda yet
     crc64iso
