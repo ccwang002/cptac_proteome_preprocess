@@ -12,6 +12,7 @@ library(Biostrings)
 library(tidyverse)
 ```
 
+Note the proteins in PAR Y region will be duplicated
 ```{r}
 gencode_proteins = readAAStringSet('../../../annotation/intermediates/gencode_34/gencode.v34.pc_translations.fa.gz')
 

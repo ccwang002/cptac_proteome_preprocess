@@ -1,0 +1,204 @@
+---
+title: "Create UniProt entry mapping between GENCODE 34 and UniProt 2021_02"
+output:
+    html_document:
+        df_print: paged
+---
+
+```{r, message=FALSE}
+library(here)
+library(tidyverse)
+```
+
+Source here is GENCODE 34 and Target is UniProt 2021_02
+```{r}
+source_annotation_tbl = read_tsv(
+    here('annotation/gencode_34/tracked_results/gencode_34_annotation.tsv.gz'),
+    col_types = cols(
+        .default = col_character(),
+        uniq_protein_seq_entry_no = col_integer()
+    )
+)
+target_tbl = read_tsv(here('annotation/mapping_uniprot_2021_02/tracked_results/uniprot_reviewed_human_proteome_hgnc_only.v2021_02.tsv.gz'))
+```
+
+```{r}
+colnames(source_annotation_tbl)
+colnames(target_tbl)
+```
+
+
+```{r}
+source_annotation_tbl.remaining = source_annotation_tbl
+```
+
+Find the matching records that has identical protein sequence in the target set
+```{r}
+mapping_tbl.identical = source_annotation_tbl.remaining %>%
+    select(ensembl_prot_id, uniq_protein_seq_entry_no, symbol, hgnc_id, source_uniparc_id = uniparc_id) %>%
+    inner_join(target_tbl %>% distinct(uniprot_acc, target_uniparc_id = uniparc_id), 
+               by = c('source_uniparc_id' = 'target_uniparc_id')) %>%
+    mutate(
+        target_uniparc_id = source_uniparc_id,
+        mapping_approach = 'identical_sequence'
+    )
+
+mapping_tbl.identical %>% head()
+```
+
+```{r}
+source_annotation_tbl.remaining = source_annotation_tbl.remaining %>%
+    filter(!ensembl_prot_id %in% mapping_tbl.identical$ensembl_prot_id)
+
+source_annotation_tbl.remaining %>% nrow()
+```
+
+```{r}
+mapping_tbl.align = source_annotation_tbl.remaining %>%
+    select(ensembl_prot_id, symbol, hgnc_id, source_uniparc_id = uniparc_id) %>%
+    inner_join(
+        target_tbl %>% 
+            select(uniprot_acc, hgnc_id = hgnc_gene_id, target_uniparc_id = uniparc_id),
+        by = "hgnc_id"
+    ) %>%
+    mutate(mapping_approach = 'global_seq_align')
+
+mapping_tbl.align %>% head()
+```
+
+Some source entries are mapped to multiple targets:
+```{r}
+mapping_tbl.align %>%
+    add_count(ensembl_prot_id) %>%
+    filter(n > 1) %>%
+    arrange(hgnc_id, ensembl_prot_id)
+```
+
+```{r}
+source_annotation_tbl.remaining = source_annotation_tbl.remaining %>%
+    filter(!ensembl_prot_id %in% mapping_tbl.align$ensembl_prot_id)
+
+source_annotation_tbl.remaining %>%
+    count(!is.na(hgnc_id))
+```
+
+```{r}
+mapping_tbl.align_by_symbol = source_annotation_tbl.remaining %>%
+    select(ensembl_prot_id, hgnc_id, symbol, source_uniparc_id = uniparc_id) %>%
+    inner_join(
+        target_tbl %>% 
+            select(uniprot_acc, symbol = hgnc_gene_name, target_uniparc_id = uniparc_id),
+        by = "symbol"
+    ) %>%
+    mutate(mapping_approach = 'global_seq_align')
+
+mapping_tbl.align_by_symbol %>% head()
+```
+
+```{r}
+mapping_tbl.align_by_symbol %>%
+    add_count(ensembl_prot_id) %>%
+    filter(n > 1) %>%
+    arrange(hgnc_id, ensembl_prot_id)
+```
+
+```{r}
+source_annotation_tbl.remaining = source_annotation_tbl.remaining %>%
+    filter(!ensembl_prot_id %in% mapping_tbl.align_by_symbol$ensembl_prot_id)
+
+nrow(source_annotation_tbl.remaining)
+```
+
+These source proteins will not be mapped due to the lack of HGNC ID
+```{r}
+failed_mapping_tbl.no_hgnc_id = source_annotation_tbl.remaining %>%
+    filter(is.na(hgnc_id)) %>%
+    select(ensembl_prot_id, uniq_protein_seq_entry_no, symbol, hgnc_id, source_uniparc_id = uniparc_id) %>%
+    mutate(
+        failed_reason = 'no_hgnc_id'
+    )
+
+nrow(failed_mapping_tbl.no_hgnc_id)
+```
+
+```{r}
+source_annotation_tbl.remaining = source_annotation_tbl.remaining %>%
+    filter(!ensembl_prot_id %in% failed_mapping_tbl.no_hgnc_id$ensembl_prot_id)
+```
+
+The remaining failed mapping has unknown reason (likely fusion genes etc but didn't investigate further)
+```{r}
+failed_mapping_tbl.unknown = source_annotation_tbl.remaining %>%
+    select(ensembl_prot_id, uniq_protein_seq_entry_no, symbol, hgnc_id, source_uniparc_id = uniparc_id) %>%
+    mutate(
+        failed_reason = 'unknown'
+    )
+failed_mapping_tbl.unknown %>% nrow()
+```
+
+```{r}
+failed_mapping_tbl.unknown %>% head()
+```
+
+
+Make the mapping table
+```{r}
+mapping_tbl = bind_rows(
+    mapping_tbl.identical,
+    mapping_tbl.align,
+    mapping_tbl.align_by_symbol
+) %>%
+    arrange(ensembl_prot_id)
+
+mapping_tbl %>% head()
+```
+
+```{r}
+failed_mapping_tbl = bind_rows(
+    failed_mapping_tbl.no_hgnc_id,
+    failed_mapping_tbl.unknown
+) %>%
+    arrange(ensembl_prot_id)
+
+failed_mapping_tbl %>% head()
+```
+
+Some source proteins can be mapped to multiple targets:
+```{r}
+num_source_ids_with_dup_mapping = mapping_tbl %>%
+    count(ensembl_prot_id, sort = TRUE) %>%
+    filter(n > 1)
+
+num_source_ids_with_dup_mapping %>% head()
+```
+
+Showing some statistics
+```{r, echo=FALSE, collapse=TRUE}
+cat("Total source entries:", nrow(source_annotation_tbl), "\n")
+cat("Total target entries:", nrow(target_tbl), "\n")
+
+cat("Source entries without any mapping:", nrow(failed_mapping_tbl), "\n")
+cat("Mapping table (unique source ID) entry pairs:", n_distinct(mapping_tbl$ensembl_prot_id), "\n")
+cat("Mapping type breakdown (unique source ID):\n")
+mapping_tbl %>%
+    distinct(ensembl_prot_id, .keep_all = TRUE) %>%
+    count(mapping_approach) %>%
+    format() %>%
+    cat(sep = "\n")
+
+cat("Mapping table (with duplication) entry pairs:", nrow(mapping_tbl), "\n")
+cat("    ... source entries with duplicated mapping:", nrow(num_source_ids_with_dup_mapping), "\n")
+mapping_tbl %>%
+    count(mapping_approach) %>%
+    format() %>%
+    cat(sep = "\n")
+```
+
+```{r}
+mapping_tbl %>% 
+    write_tsv('../tracked_results/mappings/gencode_34_to_uniprot_2021_02_mappable.tsv.gz')
+
+failed_mapping_tbl %>%
+    write_tsv('../tracked_results/mappings/gencode_34_to_uniprot_2021_02_not_mappable.tsv.gz')
+```
+

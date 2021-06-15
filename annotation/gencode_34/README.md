@@ -56,3 +56,5 @@ fd '.xml$' --exec rm '{}' # rm -rf *.xml
 cd ..
 zip -r -0 uniparc_xmls.zip xmls/
 ```
+
+Run `notebooks/03_combine_gencode_annotation.Rmd`.
