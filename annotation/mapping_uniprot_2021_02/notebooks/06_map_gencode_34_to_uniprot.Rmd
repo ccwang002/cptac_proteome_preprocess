@@ -35,7 +35,9 @@ source_annotation_tbl.remaining = source_annotation_tbl
 Find the matching records that has identical protein sequence in the target set
 ```{r}
 mapping_tbl.identical = source_annotation_tbl.remaining %>%
-    select(ensembl_prot_id, uniq_protein_seq_entry_no, symbol, hgnc_id, source_uniparc_id = uniparc_id) %>%
+    select(ensembl_prot_id, uniq_protein_seq_entry_no, 
+           symbol, hgnc_id, 
+           source_uniparc_id = uniparc_id) %>%
     inner_join(target_tbl %>% distinct(uniprot_acc, target_uniparc_id = uniparc_id), 
                by = c('source_uniparc_id' = 'target_uniparc_id')) %>%
     mutate(
@@ -55,7 +57,9 @@ source_annotation_tbl.remaining %>% nrow()
 
 ```{r}
 mapping_tbl.align = source_annotation_tbl.remaining %>%
-    select(ensembl_prot_id, symbol, hgnc_id, source_uniparc_id = uniparc_id) %>%
+    select(ensembl_prot_id, uniq_protein_seq_entry_no, 
+           symbol, hgnc_id, 
+           source_uniparc_id = uniparc_id) %>%
     inner_join(
         target_tbl %>% 
             select(uniprot_acc, hgnc_id = hgnc_gene_id, target_uniparc_id = uniparc_id),
@@ -84,7 +88,9 @@ source_annotation_tbl.remaining %>%
 
 ```{r}
 mapping_tbl.align_by_symbol = source_annotation_tbl.remaining %>%
-    select(ensembl_prot_id, hgnc_id, symbol, source_uniparc_id = uniparc_id) %>%
+    select(ensembl_prot_id, uniq_protein_seq_entry_no, 
+           symbol, hgnc_id, 
+           source_uniparc_id = uniparc_id) %>%
     inner_join(
         target_tbl %>% 
             select(uniprot_acc, symbol = hgnc_gene_name, target_uniparc_id = uniparc_id),
@@ -113,7 +119,9 @@ These source proteins will not be mapped due to the lack of HGNC ID
 ```{r}
 failed_mapping_tbl.no_hgnc_id = source_annotation_tbl.remaining %>%
     filter(is.na(hgnc_id)) %>%
-    select(ensembl_prot_id, uniq_protein_seq_entry_no, symbol, hgnc_id, source_uniparc_id = uniparc_id) %>%
+    select(ensembl_prot_id, uniq_protein_seq_entry_no, 
+           symbol, hgnc_id, 
+           source_uniparc_id = uniparc_id) %>%
     mutate(
         failed_reason = 'no_hgnc_id'
     )
@@ -129,7 +137,9 @@ source_annotation_tbl.remaining = source_annotation_tbl.remaining %>%
 The remaining failed mapping has unknown reason (likely fusion genes etc but didn't investigate further)
 ```{r}
 failed_mapping_tbl.unknown = source_annotation_tbl.remaining %>%
-    select(ensembl_prot_id, uniq_protein_seq_entry_no, symbol, hgnc_id, source_uniparc_id = uniparc_id) %>%
+    select(ensembl_prot_id, uniq_protein_seq_entry_no, 
+           symbol, hgnc_id, 
+           source_uniparc_id = uniparc_id) %>%
     mutate(
         failed_reason = 'unknown'
     )
