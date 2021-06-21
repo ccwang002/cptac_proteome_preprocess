@@ -8,4 +8,5 @@
         "--show-column-numbers"
     ],
     "python.dataScience.allowUnauthorizedRemoteConnection": true,
+    "python.pythonPath": "/Users/liang/miniconda3/envs/cptac/bin/python",
 }
