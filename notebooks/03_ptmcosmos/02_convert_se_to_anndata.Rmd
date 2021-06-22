@@ -1,0 +1,241 @@
+---
+title: "Convert SummarizedExperiment to AnnData"
+output: 
+    html_document:
+        df_print: paged
+---
+
+```{r setup, message=FALSE, include=FALSE}
+library(here)
+library(arrow)
+library(reticulate)
+library(SummarizedExperiment)
+library(tidyverse)
+```
+
+Set up AnnData package via reticulate
+```{r}
+use_python("~/miniconda3/envs/cptac/bin/python", required = TRUE)
+anndata = import("anndata")
+```
+
+Load utility functions
+```{r, message=FALSE}
+source('data_freeze_utils.R')
+source('sample_type_rename.R')
+```
+
+Read in all CPTAC proteome data
+```{r}
+cptac_proteome_tbl = locate_all_proteome_rds()
+cptac_proteome_tbl
+```
+
+```{r}
+all_proteome = read_all_cptac_proteome(cptac_proteome_tbl)
+all_proteome = rename_all_proteome(all_proteome)
+all_proteome %>% map_int(length)
+```
+
+
+## Convert SummarizedExperiment to AnnData
+Based on the source code of [theislab/zellkonverter](https://github.com/theislab/zellkonverter/blob/8a4f8557790f41605b70e974b36fe6f26fbff9bc/R/konverter.R#L291-L303)
+```{r}
+makeNumpyFriendly = function(x, transpose = TRUE) {
+    if (transpose) {
+        x = t(x)
+    }
+    # Code from Charlotte Soneson in kevinrue/velociraptor.
+    if (DelayedArray:::is_sparse(x)) {
+        as(x, "dgCMatrix")
+    } else {
+        as.matrix(x)
+    }
+}
+
+addListNames = function(x) {
+    if (length(x) == 0) {
+        return(x)
+    }
+
+    if (is.null(names(x))) {
+        names(x) = paste0("item", seq_along(x))
+        return(x)
+    }
+
+    list_names = names(x)
+    is_empty = list_names == ""
+    list_names[is_empty] = paste0("item", seq_along(x)[is_empty])
+    list_names = make.names(list_names, unique = TRUE)
+
+    names(x) = list_names
+
+    return(x)
+}
+
+makeAnnDataObsFromColData = function(se) {
+    col_data = colData(se)
+    is_atomic = vapply(col_data, is.atomic, NA)
+    if (any(!is_atomic)) {
+        non_atomic_cols = colnames(col_data)[!is_atomic]
+        warning(
+            "The following colData columns are not atomic and will be stored ",
+            "in metadata(se)$.colData before conversion: ",
+            paste(non_atomic_cols, collapse = ", ")
+        )
+        
+        if (".colData" %in% names(metadata(se))) {
+            meta_list = metadata(se)$.colData
+        } else {
+            meta_list = list()
+        }
+        
+        for (col in non_atomic_cols) {
+            store_name = make.names(c(col, names(meta_list)), unique = TRUE)[1]
+            meta_list[[store_name]] = col_data[[col]]
+        }
+        
+        col_data[non_atomic_cols] = NULL
+        metadata(se)$.colData = meta_list
+    }
+    
+    if (ncol(col_data) > 0) {
+        # Manually construct the data.frame to avoid mangling column names
+        obs = do.call(
+            data.frame,
+            c(
+                as.list(col_data),
+                check.names      = FALSE,
+                stringsAsFactors = FALSE
+            )
+        )
+        # obs = r_to_py(Table$create(col_data %>% as_tibble()))$to_pandas()
+        obs
+    } else {
+        NULL
+    }
+}
+
+makeAnnDataVarFromRowData = function(se) {
+    row_data = rowData(se)
+    is_atomic = vapply(row_data, is.atomic, NA)
+    if (any(!is_atomic)) {
+        non_atomic_cols = colnames(row_data)[!is_atomic]
+        warning(
+            "The following rowData columns are not atomic and will be stored ",
+            "in metadata(se)$.rowData before conversion: ",
+            paste(non_atomic_cols, collapse = ", ")
+        )
+        
+        if (".rowData" %in% names(metadata(se))) {
+            meta_list = metadata(se)$.rowData
+        } else {
+            meta_list = list()
+        }
+        
+        for (col in non_atomic_cols) {
+            store_name = make.names(c(col, names(meta_list)), unique = TRUE)[1]
+            meta_list[[store_name]] = row_data[[col]]
+        }
+        
+        row_data[non_atomic_cols] = NULL
+        metadata(se)$.rowData = meta_list
+    }
+    
+    if (ncol(row_data) > 0) {
+        # Manually construct the data.frame to avoid mangling column names
+        var = do.call(
+            data.frame,
+            c(
+                as.list(row_data),
+                check.names      = FALSE,
+                stringsAsFactors = FALSE
+            )
+        )
+        # Use arrow to convert the data frame (NA aware)
+        # var = r_to_py(Table$create(row_data %>% as_tibble()))$to_pandas()
+        var
+    } else {
+        NULL
+    }
+}
+
+makeAnnDataUnsFromMetadata = function(se) {
+    meta_list = metadata(se)
+    meta_list = addListNames(meta_list)
+    uns_list = list()
+    for (item_name in names(meta_list)) {
+        item = meta_list[[item_name]]
+        tryCatch(
+            {
+                # Try to convert the item using reticulate, skip if it fails
+                # Capture the object output printed by reticulate
+                capture.output(r_to_py(item))
+                uns_list[[item_name]] = item
+            },
+            error = function(err) {
+                warning(
+                    "the '", item_name, "' item in 'metadata' cannot be ",
+                    "converted to a Python type and has been skipped"
+                )
+            }
+        )
+    }
+    
+    # Set the X_name to `data` regardless
+    uns_list[["X_name"]] = "data"
+    
+    reticulate::dict(uns_list)
+}
+
+SummarizedExperimentToAnnData = function(se) {
+    # Only select the first assay for now
+    mat = assay(se)
+    mat = makeNumpyFriendly(mat)
+
+    # Create the AnnData object
+    adata = anndata$AnnData(X = mat)
+    
+    # Prepare column metadata to `obsm`. Note the null values are converted to "NA"s
+    adata$obs = makeAnnDataObsFromColData(se)
+
+    # Prepare row metadata to `varm`. Note the null values are converted to "NA"s
+    adata$var = makeAnnDataVarFromRowData(se)
+
+    # Prepare metadata to `uns
+    adata$uns =  makeAnnDataUnsFromMetadata(se)
+    
+    # Prepare dimension names
+    if (!is.null(colnames(se))) {
+        adata$obs_names = colnames(se)
+    }
+    if (!is.null(rownames(se))) {
+        adata$var_names = rownames(se)
+    }
+    
+    adata
+}
+```
+
+Test conversion
+```{r}
+se = all_proteome$phospho$CPTAC3_GBM_discovery
+se
+adata = SummarizedExperimentToAnnData(se)
+adata
+```
+
+Export all the SummarizedExperiment objects
+```{r}
+fs::dir_create(here('final_output/ptmcosmos/ptm_data'))
+all_proteome %>% 
+    iwalk(function(se_list, data_type) {
+        se_list %>% 
+            iwalk(function(se, cohort) {
+                message(glue::glue("Converting {data_type}: {cohort}"))
+                adata = SummarizedExperimentToAnnData(se)
+                h5ad_pth = here('final_output/ptmcosmos/ptm_data', glue::glue("{cohort}__{data_type}.h5ad"))
+                adata$write_h5ad(h5ad_pth)
+            })
+    })
+```
