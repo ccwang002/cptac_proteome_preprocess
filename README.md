@@ -48,10 +48,8 @@ conda create -n cptac \
     notebook=6.0 pandas=1.1 \
     zstd zstandard=0.14 \
     xsv xmlschema orjson loguru \
-    biopython=1.79
-
-    pysam=0.16 # not in bioconda yet
-    crc64iso
+    biopython=1.79 pysam=0.16 crc64iso=0.0.2 \
+    "'anndata>=0.7,<0.8'" "'h5py=*=nompi*'" "'hdf5>=1.10=nompi*'"
 ```
 
 Additionally it needs R 4.0 and Bioconductor 3.11.
