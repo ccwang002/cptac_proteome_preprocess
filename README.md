@@ -11,10 +11,11 @@ Currently it covers (`-` = not available):
 |                    | CRC    | v      | v       | -      | -         | RefSeq 20171003         |
 |                    | OV     | v      | v       | -      | -         | RefSeq 20160914         |
 | CPTAC3 discovery   | CCRCC  | v      | v       | -      | -         | RefSeq 20180629         |
+|                    | GBM    | v      | v       | v      | -         | RefSeq 20180629         |
 |                    | HNSCC  | v      | v       | -      | -         | RefSeq 20180629         |
 |                    | LUAD   | v      | v       | v      | -         | RefSeq 20180629*        |
 |                    | LSCC   | v      | v       | v      | v         | RefSeq 20180629*        |
-|                    | GBM    | v      | v       | v      | -         | RefSeq 20180629         |
+|                    | PDAC   | v      | v       | -      | -         | RefSeq 20180629         |
 |                    | UCEC   | v      | v       | v      | -         | RefSeq 20180629         |
 
 Notes for the peptide databases (bold ones are recommended):
