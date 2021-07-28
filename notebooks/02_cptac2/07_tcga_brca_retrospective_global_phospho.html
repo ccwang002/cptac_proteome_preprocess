@@ -1641,7 +1641,7 @@ library(here)
 library(readxl)
 library(cmapR)
 library(tidyverse)</code></pre>
-<pre class="r"><code>DATA_ROOT = &#39;~/Box/MyCPTAC/CPTAC_proteome_v2.1&#39;</code></pre>
+<pre class="r"><code>DATA_ROOT = &#39;~/Box/MyCPTAC/CPTAC_proteome_v3.0&#39;</code></pre>
 <p>Load extra functions for mapping</p>
 <pre class="r"><code>source(&#39;utils.R&#39;)</code></pre>
 <pre class="r"><code>sample_detail_pth = fs::path(DATA_ROOT, &#39;CPTAC2/TCGA_BRCA_retrospective/CPTAC_BC_SupplementaryTable01.xlsx&#39;)
@@ -1662,7 +1662,7 @@ se_metadata = list(
 <pre class="r"><code>protein_annotation_tbl = read_tsv(here(
     &#39;annotation/refseq_20130727/tracked_results/refseq_20130727_human_only.tsv.gz&#39;
 ))</code></pre>
-<pre><code>## 
+<pre><code>##
 ## ── Column specification ────────────────────────────────────────────────────────
 ## cols(
 ##   symbol = col_character(),
@@ -1678,11 +1678,11 @@ se_metadata = list(
 ##   original_prot_id = col_character()
 ## )</code></pre>
 <pre class="r"><code>colnames(protein_annotation_tbl)</code></pre>
-<pre><code>##  [1] &quot;symbol&quot;                        &quot;refseq_prot_id&quot;               
-##  [3] &quot;uniparc_id&quot;                    &quot;hgnc_id&quot;                      
-##  [5] &quot;entrez_gene_id&quot;                &quot;ensembl_gene_id&quot;              
-##  [7] &quot;uniparc_crc64_checksum&quot;        &quot;uniparc_xref_refseq_prot_ids&quot; 
-##  [9] &quot;uniparc_xref_ensembl_prot_ids&quot; &quot;uniparc_xref_uniprot_ids&quot;     
+<pre><code>##  [1] &quot;symbol&quot;                        &quot;refseq_prot_id&quot;
+##  [3] &quot;uniparc_id&quot;                    &quot;hgnc_id&quot;
+##  [5] &quot;entrez_gene_id&quot;                &quot;ensembl_gene_id&quot;
+##  [7] &quot;uniparc_crc64_checksum&quot;        &quot;uniparc_xref_refseq_prot_ids&quot;
+##  [9] &quot;uniparc_xref_ensembl_prot_ids&quot; &quot;uniparc_xref_uniprot_ids&quot;
 ## [11] &quot;original_prot_id&quot;</code></pre>
 <p>Read UniProt coord_mapping</p>
 <pre class="r"><code>uniprot_coord_mapping_tbl = read_refseq_to_uniprot_coord_mapping(
@@ -1716,7 +1716,7 @@ sample_detail_tbl %&gt;% head()</code></pre>
 <div id="protein" class="section level2">
 <h2>Protein</h2>
 <pre class="r"><code>excel_sheets(protein_pth)</code></pre>
-<pre><code>## [1] &quot;Global-Proteome-G1&quot; &quot;Global-Proteome-G3&quot; &quot;description_G1&quot;    
+<pre><code>## [1] &quot;Global-Proteome-G1&quot; &quot;Global-Proteome-G3&quot; &quot;description_G1&quot;
 ## [4] &quot;description_G3&quot;</code></pre>
 <p>We use the Proteome-G3 which filtered low quality samples</p>
 <pre class="r"><code>protein_tbl = read_excel(protein_pth, &quot;Global-Proteome-G3&quot;)
@@ -1866,8 +1866,8 @@ selected_protein_mat[1:5, 1:5]</code></pre>
 )
 
 protein_se</code></pre>
-<pre><code>## class: SummarizedExperiment 
-## dim: 11365 83 
+<pre><code>## class: SummarizedExperiment
+## dim: 11365 83
 ## metadata(3): cohort pipeline mapped_uniprot_release
 ## assays(1): normalized
 ## rownames(11365): A1BG A1CF ... ZZEF1 ZZZ3
@@ -1890,7 +1890,7 @@ phospho_meta_tbl %&gt;% head()</code></pre>
   </script>
 </div>
 <p>CDAP is not useful because we don’t have the annotation of their search database</p>
-<pre><code>cdap_phospho_tbl = read_tsv(&#39;~/Box/MyCPTAC/CPTAC_proteome_v2.1/CPTAC2/TCGA_BRCA_retrospective/CDAP/TCGA_Breast_BI_Phosphoproteome.phosphosite.itraq.tsv&#39;)
+<pre><code>cdap_phospho_tbl = read_tsv(&#39;~/Box/MyCPTAC/CPTAC_proteome_v3.0/CPTAC2/TCGA_BRCA_retrospective/CDAP/TCGA_Breast_BI_Phosphoproteome.phosphosite.itraq.tsv&#39;)
 
 cdap_phospho_row_tbl = cdap_phospho_tbl %&gt;%
     select(Phosphosite) %&gt;%
@@ -1904,10 +1904,10 @@ intersect(protein_tbl$accession_number, refseq_prot_no_ver_tbl$refseq_prot_no_ve
 setdiff(protein_tbl$accession_number, refseq_prot_no_ver_tbl$refseq_prot_no_ver_id) %&gt;% length</code></pre>
 <pre class="r"><code>raw_phospho_se = as(parse_gctx(phospho_pth), &quot;SummarizedExperiment&quot;)</code></pre>
 <pre><code>## parsing as GCT v1.2</code></pre>
-<pre><code>## ~/Box/MyCPTAC/CPTAC_proteome_v2.1/CPTAC2/TCGA_BRCA_retrospective/phosphoproteome-P3.gct 33239 rows, 111 cols, 0 row descriptors, 0 col descriptors</code></pre>
+<pre><code>## ~/Box/MyCPTAC/CPTAC_proteome_v3.0/CPTAC2/TCGA_BRCA_retrospective/phosphoproteome-P3.gct 33239 rows, 111 cols, 0 row descriptors, 0 col descriptors</code></pre>
 <pre class="r"><code>raw_phospho_se</code></pre>
-<pre><code>## class: SummarizedExperiment 
-## dim: 33239 111 
+<pre><code>## class: SummarizedExperiment
+## dim: 33239 111
 ## metadata(0):
 ## assays(1): exprs
 ## rownames(33239): NP_055955_S15s _1_0_15_16 NP_680780_T31t _1_0_31_32
@@ -1931,7 +1931,7 @@ raw_phospho_row_tbl %&gt;% head()</code></pre>
 </div>
 <p>Export the phosphosite peptide information to find location</p>
 <pre><code>raw_phospho_row_tbl %&gt;%
-    write_tsv(&#39;~/Box/MyCPTAC/CPTAC_proteome_v2.1/CPTAC2/TCGA_BRCA_retrospective/phosphoproteome_P3_peptide_annotation.tsv.gz&#39;)</code></pre>
+    write_tsv(&#39;~/Box/MyCPTAC/CPTAC_proteome_v3.0/CPTAC2/TCGA_BRCA_retrospective/phosphoproteome_P3_peptide_annotation.tsv.gz&#39;)</code></pre>
 <p>Read peptide location</p>
 <pre class="r"><code>phospho_loc_tbl = read_tsv(
     phospho_loc_pth,
@@ -2043,8 +2043,8 @@ phospho_se = SummarizedExperiment(
 )
 
 phospho_se</code></pre>
-<pre><code>## class: SummarizedExperiment 
-## dim: 33239 83 
+<pre><code>## class: SummarizedExperiment
+## dim: 33239 83
 ## metadata(3): cohort pipeline mapped_uniprot_release
 ## assays(1): normalized
 ## rownames(33239): AAAS:NP_056480.1:S495 AAAS:NP_056480.1:S522 ...

@@ -1640,7 +1640,7 @@ pre code {
 library(here)
 library(readxl)
 library(tidyverse)</code></pre>
-<pre class="r"><code>DATA_ROOT = &#39;~/Box/MyCPTAC/CPTAC_proteome_v2.1&#39;</code></pre>
+<pre class="r"><code>DATA_ROOT = &#39;~/Box/MyCPTAC/CPTAC_proteome_v3.0&#39;</code></pre>
 <p>Load extra functions for mapping</p>
 <pre class="r"><code>source(&#39;utils.R&#39;)</code></pre>
 <pre class="r"><code>tmt_pth = fs::path(DATA_ROOT, &#39;CPTAC2/CRC_prospective/TMT10_Label_to_Sample_Mapping_File_COprospective_Protoeme_PNNL_S037.xlsx&#39;)
@@ -1673,7 +1673,7 @@ tmt_map_tbl %&gt;% head()</code></pre>
   </script>
 </div>
 <pre class="r"><code>sample_type_tbl = read_tsv(sample_type_pth)</code></pre>
-<pre><code>## 
+<pre><code>##
 ## ── Column specification ────────────────────────────────────────────────────────
 ## cols(
 ##   aliquot_id = col_character(),
@@ -1720,13 +1720,13 @@ tmt_map_clean_tbl %&gt;% head()</code></pre>
     &#39;annotation/refseq_20180629/tracked_results/refseq_20180629_human_only_unique_loci_GRanges.rds&#39;
 ))
 names(mcols(protein_annotation_gr))</code></pre>
-<pre><code>##  [1] &quot;symbol&quot;                        &quot;refseq_tx_id&quot;                 
-##  [3] &quot;refseq_prot_id&quot;                &quot;uniparc_id&quot;                   
-##  [5] &quot;hgnc_id&quot;                       &quot;entrez_gene_id&quot;               
-##  [7] &quot;ensembl_gene_id&quot;               &quot;multi_genomic_loci&quot;           
-##  [9] &quot;num_exons&quot;                     &quot;aa_len&quot;                       
-## [11] &quot;tx_len&quot;                        &quot;cds_len&quot;                      
-## [13] &quot;uniparc_crc64_checksum&quot;        &quot;uniparc_xref_refseq_prot_ids&quot; 
+<pre><code>##  [1] &quot;symbol&quot;                        &quot;refseq_tx_id&quot;
+##  [3] &quot;refseq_prot_id&quot;                &quot;uniparc_id&quot;
+##  [5] &quot;hgnc_id&quot;                       &quot;entrez_gene_id&quot;
+##  [7] &quot;ensembl_gene_id&quot;               &quot;multi_genomic_loci&quot;
+##  [9] &quot;num_exons&quot;                     &quot;aa_len&quot;
+## [11] &quot;tx_len&quot;                        &quot;cds_len&quot;
+## [13] &quot;uniparc_crc64_checksum&quot;        &quot;uniparc_xref_refseq_prot_ids&quot;
 ## [15] &quot;uniparc_xref_ensembl_prot_ids&quot; &quot;uniparc_xref_uniprot_ids&quot;</code></pre>
 <p>Read UniProt coord_mapping</p>
 <pre class="r"><code>uniprot_coord_mapping_tbl = read_refseq_to_uniprot_coord_mapping(
@@ -1740,7 +1740,7 @@ names(mcols(protein_annotation_gr))</code></pre>
 <div id="protein" class="section level2">
 <h2>Protein</h2>
 <pre class="r"><code>protein_tbl = read_tsv(protein_pth)</code></pre>
-<pre><code>## 
+<pre><code>##
 ## ── Column specification ────────────────────────────────────────────────────────
 ## cols(
 ##   .default = col_double(),
@@ -1865,8 +1865,8 @@ protein_sample_tbl %&gt;% head()</code></pre>
 )
 
 protein_se</code></pre>
-<pre><code>## class: SummarizedExperiment 
-## dim: 7402 197 
+<pre><code>## class: SummarizedExperiment
+## dim: 7402 197
 ## metadata(3): cohort pipeline mapped_uniprot_release
 ## assays(1): normalized
 ## rownames(7402): A1BG A1CF ... ZYX ZZEF1
@@ -1879,7 +1879,7 @@ protein_se</code></pre>
 <h3>Phospho</h3>
 <pre class="r"><code>raw_phospho_tbl = read_tsv(phospho_pth) %&gt;%
     mutate(original_id = str_c(Peptide, Phosphosite, sep = &#39;:&#39;))</code></pre>
-<pre><code>## 
+<pre><code>##
 ## ── Column specification ────────────────────────────────────────────────────────
 ## cols(
 ##   .default = col_double(),
@@ -2024,8 +2024,8 @@ phospho_se = SummarizedExperiment(
 )
 
 phospho_se</code></pre>
-<pre><code>## class: SummarizedExperiment 
-## dim: 41891 197 
+<pre><code>## class: SummarizedExperiment
+## dim: 41891 197
 ## metadata(3): cohort pipeline mapped_uniprot_release
 ## assays(1): normalized
 ## rownames(41891): AAAS:NP_001166937.1:S462 AAAS:NP_001166937.1:S508 ...

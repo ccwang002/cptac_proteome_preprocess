@@ -1640,7 +1640,7 @@ pre code {
 library(here)
 library(readxl)
 library(tidyverse)</code></pre>
-<pre class="r"><code>DATA_ROOT = &#39;~/Box/MyCPTAC/CPTAC_proteome_v2.1&#39;</code></pre>
+<pre class="r"><code>DATA_ROOT = &#39;~/Box/MyCPTAC/CPTAC_proteome_v3.0&#39;</code></pre>
 <p>Load extra functions for mapping</p>
 <pre class="r"><code>source(&#39;utils.R&#39;)</code></pre>
 <pre class="r"><code>protein_pth = fs::path(DATA_ROOT, &#39;CPTAC2/TCGA_OV_retrospective/mmc3.xlsx&#39;)
@@ -1666,7 +1666,7 @@ all_refseq_ids %&gt;% write_lines(here(&#39;annotation/intermediates/refseq_2011
 <pre class="r"><code>protein_annotation_tbl = read_tsv(here(
     &#39;annotation/refseq_20111201/tracked_results/refseq_20111201_human_only.tsv.gz&#39;
 ))</code></pre>
-<pre><code>## 
+<pre><code>##
 ## ── Column specification ────────────────────────────────────────────────────────
 ## cols(
 ##   hgnc_symbol = col_character(),
@@ -1682,11 +1682,11 @@ all_refseq_ids %&gt;% write_lines(here(&#39;annotation/intermediates/refseq_2011
 ##   original_prot_id = col_character()
 ## )</code></pre>
 <pre class="r"><code>colnames(protein_annotation_tbl)</code></pre>
-<pre><code>##  [1] &quot;hgnc_symbol&quot;                   &quot;refseq_prot_id&quot;               
-##  [3] &quot;uniparc_id&quot;                    &quot;hgnc_id&quot;                      
-##  [5] &quot;entrez_gene_id&quot;                &quot;ensembl_gene_id&quot;              
-##  [7] &quot;uniparc_crc64_checksum&quot;        &quot;uniparc_xref_refseq_prot_ids&quot; 
-##  [9] &quot;uniparc_xref_ensembl_prot_ids&quot; &quot;uniparc_xref_uniprot_ids&quot;     
+<pre><code>##  [1] &quot;hgnc_symbol&quot;                   &quot;refseq_prot_id&quot;
+##  [3] &quot;uniparc_id&quot;                    &quot;hgnc_id&quot;
+##  [5] &quot;entrez_gene_id&quot;                &quot;ensembl_gene_id&quot;
+##  [7] &quot;uniparc_crc64_checksum&quot;        &quot;uniparc_xref_refseq_prot_ids&quot;
+##  [9] &quot;uniparc_xref_ensembl_prot_ids&quot; &quot;uniparc_xref_uniprot_ids&quot;
 ## [11] &quot;original_prot_id&quot;</code></pre>
 <p>Read UniProt coord_mapping</p>
 <pre class="r"><code>uniprot_coord_mapping_tbl = read_refseq_to_uniprot_coord_mapping(
@@ -1710,7 +1710,7 @@ refseq_prot_no_ver_tbl %&gt;% head()</code></pre>
 <div id="protein" class="section level2">
 <h2>Protein</h2>
 <pre class="r"><code>excel_sheets(protein_pth)</code></pre>
-<pre><code>## [1] &quot;FullOvarianProteomeData&quot;        &quot;VariableOvarianProteomeData&quot;   
+<pre><code>## [1] &quot;FullOvarianProteomeData&quot;        &quot;VariableOvarianProteomeData&quot;
 ## [3] &quot;OvarianProteogenomicEvents&quot;     &quot;FullOvarianPhosphoproteomeData&quot;
 ## [5] &quot;OvarianPhosphoNetDifferences&quot;   &quot;OVPhosNetDiff_IschemiaFiltered&quot;
 ## [7] &quot;RPPA vs MS phosphopeptides&quot;</code></pre>
@@ -1832,8 +1832,8 @@ selected_protein_mat[1:5, 1:5]</code></pre>
 )
 
 protein_se</code></pre>
-<pre><code>## class: SummarizedExperiment 
-## dim: 3354 169 
+<pre><code>## class: SummarizedExperiment
+## dim: 3354 169
 ## metadata(3): cohort pipeline mapped_uniprot_release
 ## assays(1): normalized
 ## rownames(3354): A1BG A2M ... ZYX ZZEF1
@@ -1844,7 +1844,7 @@ protein_se</code></pre>
 <div id="phospho" class="section level3">
 <h3>Phospho</h3>
 <pre class="r"><code>excel_sheets(phospho_pth)</code></pre>
-<pre><code>## [1] &quot;FullOvarianProteomeData&quot;        &quot;VariableOvarianProteomeData&quot;   
+<pre><code>## [1] &quot;FullOvarianProteomeData&quot;        &quot;VariableOvarianProteomeData&quot;
 ## [3] &quot;OvarianProteogenomicEvents&quot;     &quot;FullOvarianPhosphoproteomeData&quot;
 ## [5] &quot;OvarianPhosphoNetDifferences&quot;   &quot;OVPhosNetDiff_IschemiaFiltered&quot;
 ## [7] &quot;RPPA vs MS phosphopeptides&quot;</code></pre>
@@ -1888,7 +1888,7 @@ raw_phospho_row_tbl %&gt;% head()</code></pre>
 <pre><code>raw_phospho_row_tbl %&gt;%
     filter(!is.na(Site)) %&gt;%
     select(refseq_prot_id, Peptide, Site) %&gt;%
-    write_tsv(&#39;~/Box/MyCPTAC/CPTAC_proteome_v2.1/CPTAC2/TCGA_OV_retrospective/mmc3_phosphoproteome_ischemia_filtered_peptide_annotation.tsv.gz&#39;)</code></pre>
+    write_tsv(&#39;~/Box/MyCPTAC/CPTAC_proteome_v3.0/CPTAC2/TCGA_OV_retrospective/mmc3_phosphoproteome_ischemia_filtered_peptide_annotation.tsv.gz&#39;)</code></pre>
 <p>Read peptide location</p>
 <pre class="r"><code>phospho_loc_tbl = read_tsv(
     phospho_loc_pth,
@@ -2023,8 +2023,8 @@ phospho_se = SummarizedExperiment(
 )
 
 phospho_se</code></pre>
-<pre><code>## class: SummarizedExperiment 
-## dim: 6598 69 
+<pre><code>## class: SummarizedExperiment
+## dim: 6598 69
 ## metadata(3): cohort pipeline mapped_uniprot_release
 ## assays(1): normalized
 ## rownames(6598): AAAS:NP_056480.1:S495 AAMDC:NP_078960.1:S46 ...
