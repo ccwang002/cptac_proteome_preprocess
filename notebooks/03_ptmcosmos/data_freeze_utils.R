@@ -17,8 +17,11 @@ ORDERED_COHORTS = c(
     "CPTAC3_CCRCC_discovery",
     "CPTAC3_GBM_discovery",
     "CPTAC3_HNSCC_discovery",
+    "CPTAC3_HOPEAYA_discovery",
     "CPTAC3_LSCC_discovery",
     "CPTAC3_LUAD_discovery",
+    "CPTAC3_PBTA_discovery",
+    "CPTAC3_PDAC_discovery",
     "CPTAC3_UCEC_discovery"
 )
 
