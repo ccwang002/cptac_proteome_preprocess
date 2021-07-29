@@ -54,7 +54,9 @@ clinical_tbl = read_excel(clinical_pth) %>%
     select(case_id = research_id, aliquot_id = Clinical.Event.Id, kids_first_id = Kids.First.ID, diagnosis_type) %>%
     mutate(sample_type = case_when(
         diagnosis_type == 'Initial CNS Tumor' ~ 'Primary Tumor',
-        diagnosis_type == 'Progressive' ~ 'Progressive Tumor'
+        diagnosis_type == 'Progressive' ~ 'Progressive Tumor',
+        diagnosis_type == 'Recurrence' ~ 'Recurrent Tumor',
+        diagnosis_type == 'Second Malignancy' ~ 'Second Malignancy Tumor'
     )) %>%
     select(-diagnosis_type)
 
@@ -375,6 +377,6 @@ protein_se.shared_samples
 ```{r}
 fs::dir_create(here('final_output/CPTAC3_PBTA_discovery'))
 
-protein_se.shared_samples %>% saveRDS(here('final_output/CPTAC3_PBTA_discovery/CPTAC3_PBTA_discovery_umich_proteome.v3.0.rds'))
-phospho_se %>% saveRDS(here('final_output/CPTAC3_PBTA_discovery/CPTAC3_PBTA_discovery_umich_phosphoproteome.v3.0.rds'))
+protein_se.shared_samples %>% saveRDS(here('final_output/CPTAC3_PBTA_discovery/CPTAC3_PBTA_discovery_hms_proteome.v3.0.rds'))
+phospho_se %>% saveRDS(here('final_output/CPTAC3_PBTA_discovery/CPTAC3_PBTA_discovery_hms_phosphoproteome.v3.0.rds'))
 ```

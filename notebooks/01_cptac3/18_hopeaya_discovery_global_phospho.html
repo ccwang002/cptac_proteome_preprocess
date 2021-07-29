@@ -246,23 +246,36 @@ protein_full_row_tbl %&gt;% head()</code></pre>
   </script>
 </div>
 <p>Organize colData</p>
+<pre class="r"><code>colData(raw_protein_se) %&gt;%
+    as_tibble(rownames = &#39;preferred_sample_name&#39;) %&gt;%
+    count(diagnosis_type)</code></pre>
+<div data-pagedtable="false">
+<script data-pagedtable-source type="application/json">
+{"columns":[{"label":["diagnosis_type"],"name":[1],"type":["chr"],"align":["left"]},{"label":["n"],"name":[2],"type":["int"],"align":["right"]}],"data":[{"1":"Initial CNS Tumor","2":"49"},{"1":"Progressive","2":"28"},{"1":"Recurrence","2":"10"},{"1":"Second Malignancy","2":"3"},{"1":"NA","2":"10"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
+  </script>
+</div>
 <pre class="r"><code>protein_col_tbl = colData(raw_protein_se) %&gt;%
     as_tibble(rownames = &#39;preferred_sample_name&#39;) %&gt;%
+    mutate(sample_type = case_when(
+        diagnosis_type == &#39;Initial CNS Tumor&#39; ~ &#39;Primary Tumor&#39;,
+        diagnosis_type == &#39;Progressive&#39; ~ &#39;Progressive Tumor&#39;,
+        diagnosis_type == &#39;Recurrence&#39; ~ &#39;Recurrent Tumor&#39;,
+        diagnosis_type == &#39;Second Malignancy&#39; ~ &#39;Second Malignancy Tumor&#39;,
+        TRUE ~ &#39;Unknown Tumor&#39;
+    )) %&gt;%
     select(
         preferred_sample_name,
         case_id = research_id,
         aliquot_id = sample_id,
         tmt_experiment = plex, 
-        tmt_channel
-    ) %&gt;%
-    mutate(
-        sample_type = &#39;tumor&#39;
+        tmt_channel,
+        sample_type
     )
 
 protein_col_tbl %&gt;% head()</code></pre>
 <div data-pagedtable="false">
 <script data-pagedtable-source type="application/json">
-{"columns":[{"label":["preferred_sample_name"],"name":[1],"type":["chr"],"align":["left"]},{"label":["case_id"],"name":[2],"type":["chr"],"align":["left"]},{"label":["aliquot_id"],"name":[3],"type":["chr"],"align":["left"]},{"label":["tmt_experiment"],"name":[4],"type":["dbl"],"align":["right"]},{"label":["tmt_channel"],"name":[5],"type":["chr"],"align":["left"]},{"label":["sample_type"],"name":[6],"type":["chr"],"align":["left"]}],"data":[{"1":"7316-288-TISS [894482]","2":"C54735","3":"7316-288","4":"1","5":"127N","6":"tumor"},{"1":"7316-2660-TISS [894444]...2","2":"C271092","3":"7316-2660","4":"1","5":"127C","6":"tumor"},{"1":"7316-89-TISS [894435]","2":"C25461","3":"7316-89","4":"1","5":"128N","6":"tumor"},{"1":"7316-2536-TISS [894447]","2":"C614262","3":"7316-2536","4":"1","5":"128C","6":"tumor"},{"1":"7316-2176-TISS [894450]","2":"C624225","3":"7316-2176","4":"1","5":"129N","6":"tumor"},{"1":"7316UP-904-TISS [900638]","2":"C326688","3":"7316UP-904","4":"1","5":"129C","6":"tumor"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
+{"columns":[{"label":["preferred_sample_name"],"name":[1],"type":["chr"],"align":["left"]},{"label":["case_id"],"name":[2],"type":["chr"],"align":["left"]},{"label":["aliquot_id"],"name":[3],"type":["chr"],"align":["left"]},{"label":["tmt_experiment"],"name":[4],"type":["dbl"],"align":["right"]},{"label":["tmt_channel"],"name":[5],"type":["chr"],"align":["left"]},{"label":["sample_type"],"name":[6],"type":["chr"],"align":["left"]}],"data":[{"1":"7316-288-TISS [894482]","2":"C54735","3":"7316-288","4":"1","5":"127N","6":"Primary Tumor"},{"1":"7316-2660-TISS [894444]...2","2":"C271092","3":"7316-2660","4":"1","5":"127C","6":"Recurrent Tumor"},{"1":"7316-89-TISS [894435]","2":"C25461","3":"7316-89","4":"1","5":"128N","6":"Progressive Tumor"},{"1":"7316-2536-TISS [894447]","2":"C614262","3":"7316-2536","4":"1","5":"128C","6":"Progressive Tumor"},{"1":"7316-2176-TISS [894450]","2":"C624225","3":"7316-2176","4":"1","5":"129N","6":"Primary Tumor"},{"1":"7316UP-904-TISS [900638]","2":"C326688","3":"7316UP-904","4":"1","5":"129C","6":"Unknown Tumor"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
   </script>
 </div>
 <pre class="r"><code>protein_se = raw_protein_se[protein_full_row_tbl$symbol, ]

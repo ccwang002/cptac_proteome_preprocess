@@ -88,19 +88,32 @@ protein_full_row_tbl = protein_row_tbl %>%
 
 protein_full_row_tbl %>% head()
 ```
+
 Organize colData
+```{r}
+colData(raw_protein_se) %>%
+    as_tibble(rownames = 'preferred_sample_name') %>%
+    count(diagnosis_type)
+```
+
+
 ```{r}
 protein_col_tbl = colData(raw_protein_se) %>%
     as_tibble(rownames = 'preferred_sample_name') %>%
+    mutate(sample_type = case_when(
+        diagnosis_type == 'Initial CNS Tumor' ~ 'Primary Tumor',
+        diagnosis_type == 'Progressive' ~ 'Progressive Tumor',
+        diagnosis_type == 'Recurrence' ~ 'Recurrent Tumor',
+        diagnosis_type == 'Second Malignancy' ~ 'Second Malignancy Tumor',
+        TRUE ~ 'Unknown Tumor'
+    )) %>%
     select(
         preferred_sample_name,
         case_id = research_id,
         aliquot_id = sample_id,
         tmt_experiment = plex, 
-        tmt_channel
-    ) %>%
-    mutate(
-        sample_type = 'tumor'
+        tmt_channel,
+        sample_type
     )
 
 protein_col_tbl %>% head()

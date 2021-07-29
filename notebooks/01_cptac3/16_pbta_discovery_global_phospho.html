@@ -202,7 +202,9 @@ se_metadata = list(
     select(case_id = research_id, aliquot_id = Clinical.Event.Id, kids_first_id = Kids.First.ID, diagnosis_type) %&gt;%
     mutate(sample_type = case_when(
         diagnosis_type == &#39;Initial CNS Tumor&#39; ~ &#39;Primary Tumor&#39;,
-        diagnosis_type == &#39;Progressive&#39; ~ &#39;Progressive Tumor&#39;
+        diagnosis_type == &#39;Progressive&#39; ~ &#39;Progressive Tumor&#39;,
+        diagnosis_type == &#39;Recurrence&#39; ~ &#39;Recurrent Tumor&#39;,
+        diagnosis_type == &#39;Second Malignancy&#39; ~ &#39;Second Malignancy Tumor&#39;
     )) %&gt;%
     select(-diagnosis_type)
 
@@ -560,8 +562,8 @@ protein_se.shared_samples</code></pre>
 <h2>Export</h2>
 <pre class="r"><code>fs::dir_create(here(&#39;final_output/CPTAC3_PBTA_discovery&#39;))
 
-protein_se.shared_samples %&gt;% saveRDS(here(&#39;final_output/CPTAC3_PBTA_discovery/CPTAC3_PBTA_discovery_umich_proteome.v3.0.rds&#39;))
-phospho_se %&gt;% saveRDS(here(&#39;final_output/CPTAC3_PBTA_discovery/CPTAC3_PBTA_discovery_umich_phosphoproteome.v3.0.rds&#39;))</code></pre>
+protein_se.shared_samples %&gt;% saveRDS(here(&#39;final_output/CPTAC3_PBTA_discovery/CPTAC3_PBTA_discovery_hms_proteome.v3.0.rds&#39;))
+phospho_se %&gt;% saveRDS(here(&#39;final_output/CPTAC3_PBTA_discovery/CPTAC3_PBTA_discovery_hms_phosphoproteome.v3.0.rds&#39;))</code></pre>
 </div>
 
 
