@@ -15,6 +15,7 @@ Currently it covers (`-` = not available):
 |                    | HNSCC  | v      | v       | -      | -         | RefSeq 20180629         |
 |                    | LUAD   | v      | v       | v      | -         | RefSeq 20180629*        |
 |                    | LSCC   | v      | v       | v      | v         | RefSeq 20180629*        |
+|                    | PBTA   | v      | v       | -      | -         | RefSeq 20180629         |
 |                    | PDAC   | v      | v       | -      | -         | RefSeq 20180629         |
 |                    | UCEC   | v      | v       | v      | -         | RefSeq 20180629         |
 
