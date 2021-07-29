@@ -1,0 +1,225 @@
+---
+title: "R Notebook"
+output:
+    html_document:
+        df_print: paged
+---
+
+```{r, message=FALSE}
+library(SummarizedExperiment)
+library(here)
+library(tidyverse)
+```
+
+```{r}
+DATA_ROOT = '~/Box/MyCPTAC/CPTAC_proteome_v3.0'
+```
+
+Load extra functions for mapping
+```{r}
+source('utils.R')
+```
+
+```{r}
+protein_pth = fs::path(DATA_ROOT, 'CPTAC3/HOPEAYA_discovery/cptac_hope_aya_mssm_protein_d6_clean.rds')
+
+phospho_pth = fs::path(DATA_ROOT, 'CPTAC3/HOPEAYA_discovery/cptac_hope_aya_mssm_phospho_d6_clean.rds')
+phospho_loc_pth = fs::path(DATA_ROOT, 'CPTAC3/HOPEAYA_discovery/cptac_hope_aya_mssm_phospho_d6_clean.tsv.peptide_location.tsv.gz')
+
+se_metadata = list(
+    cohort = 'CPTAC3 Hope AYA discovery cohort',
+    pipeline = 'PNNL',
+    mapped_uniprot_release = '2021_02'
+)
+```
+
+
+```{r}
+protein_annotation_gr = read_rds(here(
+    'annotation/refseq_20180629/tracked_results/refseq_20180629_human_only_unique_loci_GRanges.rds'
+))
+names(mcols(protein_annotation_gr))
+```
+
+Read UniProt coord_mapping
+```{r}
+uniprot_coord_mapping_tbl = read_refseq_to_uniprot_coord_mapping(
+    refseq_ver = "20180629",
+    uniprot_ver = se_metadata$mapped_uniprot_release
+)
+```
+
+
+## Protein
+```{r}
+raw_protein_se = readRDS(protein_pth)
+```
+
+
+Check if all the proteins are RefSeq
+```{r}
+prot_ids_not_in_refseq = setdiff(
+    rowData(raw_protein_se)$refseq_id,
+    protein_annotation_gr$refseq_prot_id
+)
+
+rowData(raw_protein_se)[prot_ids_not_in_refseq, ] %>%
+    as_tibble()
+```
+
+```{r}
+protein_row_tbl = rowData(raw_protein_se) %>%
+    as_tibble()
+
+# Check if the gene symbols are unique
+protein_row_tbl %>% count(symbol, sort = TRUE) %>%
+    filter(n > 1)
+```
+
+Add gene level annotation
+```{r}
+gene_annotation_tbl = protein_annotation_gr %>%
+    as_tibble() %>%
+    distinct(symbol, hgnc_id, entrez_gene_id, ensembl_gene_id)
+
+protein_full_row_tbl = protein_row_tbl %>%
+    select(symbol, refseq_prot_id) %>%
+    left_join(gene_annotation_tbl, by = "symbol")
+
+protein_full_row_tbl %>% head()
+```
+Organize colData
+```{r}
+protein_col_tbl = colData(raw_protein_se) %>%
+    as_tibble(rownames = 'preferred_sample_name') %>%
+    select(
+        preferred_sample_name,
+        case_id = research_id,
+        aliquot_id = sample_id,
+        tmt_experiment = plex, 
+        tmt_channel
+    ) %>%
+    mutate(
+        sample_type = 'tumor'
+    )
+
+protein_col_tbl %>% head()
+```
+```{r}
+protein_se = raw_protein_se[protein_full_row_tbl$symbol, ]
+rownames(protein_se) = protein_full_row_tbl$symbol
+rowData(protein_se) = protein_full_row_tbl %>% column_to_rownames('symbol')
+colData(protein_se) = protein_col_tbl %>% column_to_rownames('preferred_sample_name') %>% as('DataFrame')
+
+assayNames(protein_se) = "normalized"
+
+metadata(protein_se) = se_metadata
+```
+
+```{r}
+protein_se
+```
+
+
+
+## Phospho
+```{r}
+raw_phospho_se = readRDS(phospho_pth)
+
+phospho_loc_tbl = read_tsv(
+    phospho_loc_pth,
+    col_types = cols(
+        peptide_start = col_integer(),
+        peptide_end = col_integer()
+    ))
+```
+
+```{r}
+raw_phospho_row_tbl = rowData(raw_phospho_se) %>%
+    as_tibble(rownames = 'original_id') %>%
+    select(original_id, symbol = gene, refseq_prot_id = refseq_id) %>%
+    inner_join(phospho_loc_tbl, by = 'original_id')
+
+raw_phospho_row_tbl %>% head()
+```
+
+```{r}
+phospho_na_percent = rowSums(is.na(assay(raw_phospho_se[raw_phospho_row_tbl$original_id, ]))) / ncol(raw_phospho_se)
+hist(phospho_na_percent)
+```
+
+```{r}
+phospho_row_tbl = raw_phospho_row_tbl %>%
+    bind_cols(tibble(na_percent = phospho_na_percent)) %>%
+    filter(
+        peptide_loc_valid,
+        # na_percent <= 0.8
+    ) %>%
+    arrange(symbol, phosphosites, na_percent) %>%
+    mutate(
+        unique_site_id = base::make.unique(
+            str_c(symbol, refseq_prot_id, phosphosites, sep = ':'),
+            sep='.'
+        )
+    )
+
+phospho_row_tbl %>% head()
+```
+
+Some sites have duplication
+```{r}
+phospho_row_tbl %>%
+    count(symbol, phosphosites, sort = TRUE) %>%
+    filter(n > 1) %>%
+    head(100)
+```
+
+Combine the RefSeq annotation
+```{r}
+protein_annotation_tbl = protein_annotation_gr %>%
+    mcols() %>%
+    as_tibble() %>%
+    select(-symbol)
+```
+
+```{r}
+phospho_row_full_tbl = phospho_row_tbl %>%
+    select(unique_site_id, original_id, refseq_prot_id, symbol, phosphosites,
+           peptide, peptide_start, peptide_end) %>%
+    left_join(
+        protein_annotation_tbl,
+        by = 'refseq_prot_id'
+    ) %>%
+    annotate_uniprot_mapping("phosphosites", uniprot_coord_mapping_tbl)
+
+phospho_row_full_tbl %>% head()
+```
+
+Make sure the sample name order is the same
+```{r}
+identical(rownames(colData(raw_phospho_se)), protein_col_tbl$preferred_sample_name)
+```
+
+```{r}
+phospho_se = raw_phospho_se[phospho_row_full_tbl$original_id, ]
+
+rownames(phospho_se) = phospho_row_full_tbl$unique_site_id
+rowData(phospho_se) = phospho_row_full_tbl %>% column_to_rownames('unique_site_id')
+colData(phospho_se) = colData(protein_se)
+
+assayNames(phospho_se) = "normalized"
+
+metadata(phospho_se) = se_metadata
+```
+
+```{r}
+phospho_se
+```
+
+
+## Export
+```{r}
+fs::dir_create(here('final_output/CPTAC3_HOPEAYA_discovery'))
+protein_se %>% saveRDS(here('final_output/CPTAC3_HOPEAYA_discovery/CPTAC3_HOPEAYA_discovery_pnnl_proteome.v3.0.rds'))
+phospho_se %>% saveRDS(here('final_output/CPTAC3_HOPEAYA_discovery/CPTAC3_HOPEAYA_discovery_pnnl_phosphoproteome.v3.0.rds'))
+```

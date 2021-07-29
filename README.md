@@ -3,21 +3,22 @@ Preprocessing the CPTAC proteome data (global/phospho/acetyl/ubiquityl). The fin
 
 Currently it covers (`-` = not available):
 
-|    CPTAC stage     | Cohort | Global | Phospho | Acetyl | Ubiquityl | Peptide search database |
-| :----------------- | ------ | ------ | ------- | ------ | --------- | ----------------------- |
-| CPTAC2/TCGA        | BRCA   | v      | v       | -      | -         | RefSeq 20130727         |
-|                    | OV     | v      | v       | -      | -         | RefSeq 20111201         |
-| CPTAC2 prospective | BRCA   | v      | v       | v      | -         | RefSeq 20160914         |
-|                    | CRC    | v      | v       | -      | -         | RefSeq 20171003         |
-|                    | OV     | v      | v       | -      | -         | RefSeq 20160914         |
-| CPTAC3 discovery   | CCRCC  | v      | v       | -      | -         | RefSeq 20180629         |
-|                    | GBM    | v      | v       | v      | -         | RefSeq 20180629         |
-|                    | HNSCC  | v      | v       | -      | -         | RefSeq 20180629         |
-|                    | LUAD   | v      | v       | v      | -         | RefSeq 20180629*        |
-|                    | LSCC   | v      | v       | v      | v         | RefSeq 20180629*        |
-|                    | PBTA   | v      | v       | -      | -         | RefSeq 20180629         |
-|                    | PDAC   | v      | v       | -      | -         | RefSeq 20180629         |
-|                    | UCEC   | v      | v       | v      | -         | RefSeq 20180629         |
+|    CPTAC stage     | Cohort  | Global | Phospho | Acetyl | Ubiquityl | Peptide search database |
+| :----------------- | ------- | ------ | ------- | ------ | --------- | ----------------------- |
+| CPTAC2/TCGA        | BRCA    | v      | v       | -      | -         | RefSeq 20130727         |
+|                    | OV      | v      | v       | -      | -         | RefSeq 20111201         |
+| CPTAC2 prospective | BRCA    | v      | v       | v      | -         | RefSeq 20160914         |
+|                    | CRC     | v      | v       | -      | -         | RefSeq 20171003         |
+|                    | OV      | v      | v       | -      | -         | RefSeq 20160914         |
+| CPTAC3 discovery   | CCRCC   | v      | v       | -      | -         | RefSeq 20180629         |
+|                    | GBM     | v      | v       | v      | -         | RefSeq 20180629         |
+|                    | HNSCC   | v      | v       | -      | -         | RefSeq 20180629         |
+|                    | HOPEAYA | v      | v       | -      | -         | RefSeq 20180629         |
+|                    | LUAD    | v      | v       | v      | -         | RefSeq 20180629*        |
+|                    | LSCC    | v      | v       | v      | v         | RefSeq 20180629*        |
+|                    | PBTA    | v      | v       | -      | -         | RefSeq 20180629         |
+|                    | PDAC    | v      | v       | -      | -         | RefSeq 20180629         |
+|                    | UCEC    | v      | v       | v      | -         | RefSeq 20180629         |
 
 Notes for the peptide databases (bold ones are recommended):
 - RefSeq 20111201: CDAP (RefSeq release 37); Incomplete annotation; hg19
