@@ -39,7 +39,7 @@ final_output    Final output files
 
 
 ### Upstream data sources
-Upstream data sources were collected in `~/Box/MyCPTAC/CPTAC_proteome_v3.0`, which is compressed at `~/Box/Ding_Lab/Projects_Current/PTMcosmos/Data_freeze/ptmcosmos_data_freeze_v3.0/Bobo_CPTAC_proteome_v3.0.zip`.
+Upstream data sources were collected in `~/Box/MyCPTAC/CPTAC_proteome_v3.0`, which is backed up to katmai at `/diskmnt/Projects/PTMcosmos/Bobo_CPTAC_data_collection/`.
 
 
 ### Setup
