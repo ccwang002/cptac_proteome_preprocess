@@ -35,8 +35,6 @@ colnames(rowData(all_proteome$ubiquityl$CPTAC3_LSCC_discovery))
 ```
 
 
-
-
 ```{r}
 PTM_COLNAME = list(
     "phospho" = "phosphosites",
