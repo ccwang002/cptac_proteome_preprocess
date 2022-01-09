@@ -13,7 +13,7 @@ library(tidyverse)
 ```
 
 ```{r}
-DATA_ROOT = '~/Box/MyCPTAC/CPTAC_proteome_v3.0'
+DATA_ROOT = '~/Box/MyCPTAC/CPTAC_proteome_v3.1'
 ```
 
 Load extra functions for mapping
@@ -92,14 +92,14 @@ tmt_map_clean_tbl %>% head()
 ## Protein
 ```{r}
 protein_tumor_tbl = read_tsv(
-    protein_tumor_pth, 
+    protein_tumor_pth,
     col_types = list(.default = col_double(), ...1 = col_character())
-) %>% 
+) %>%
     rename(symbol = ...1)
 protein_normal_tbl = read_tsv(
     protein_normal_pth,
     col_types = list(.default = col_double(), ...1 = col_character())
-) %>% 
+) %>%
   rename(symbol = ...1)
 ```
 
@@ -110,18 +110,18 @@ stopifnot(identical(protein_tumor_tbl$symbol, protein_normal_tbl$symbol))
 
 Make sure all the cases are in the clean TMT mapping
 ```{r}
-colnames(protein_tumor_tbl)[-1] %>% 
+colnames(protein_tumor_tbl)[-1] %>%
     setdiff(tmt_map_clean_tbl %>% filter(sample_type == 'Primary Tumor') %>% pull(case_id))
-colnames(protein_normal_tbl)[-1] %>% 
+colnames(protein_normal_tbl)[-1] %>%
     setdiff(tmt_map_clean_tbl %>% filter(sample_type != 'Primary Tumor') %>% pull(case_id))
 ```
 
 Combine the tumor and normal data
 ```{r}
 protein_tbl = bind_cols(
-    protein_tumor_tbl %>% 
+    protein_tumor_tbl %>%
       rename_with(~ str_c(.x, '-T'), .cols = - symbol),
-    protein_normal_tbl %>% 
+    protein_normal_tbl %>%
       select(-symbol) %>%
       rename_with(~ str_c(.x, '-N'))
 )
@@ -145,7 +145,7 @@ gene_annotation_tbl = protein_annotation_gr %>%
 
 Make sure all the genes are unique
 ```{r}
-protein_tbl %>% 
+protein_tbl %>%
     count(symbol) %>%
     filter(n > 1)
 ```
@@ -233,9 +233,9 @@ stopifnot(identical(phospho_tumor_tbl$Index, phospho_normal_tbl$Index))
 Combine the tumor and normal data
 ```{r}
 phospho_tbl = bind_cols(
-    phospho_tumor_tbl %>% 
+    phospho_tumor_tbl %>%
       rename_with(~ str_c(.x, '-T'), .cols = c(-Index, -Gene, -Peptide)),
-    phospho_normal_tbl %>% 
+    phospho_normal_tbl %>%
       select(c(-Index, -Gene, -Peptide)) %>%
       rename_with(~ str_c(.x, '-N'))
 )
@@ -290,7 +290,7 @@ raw_phospho_row_tbl %>% count(peptide_loc_valid)
 
 Some rows are not phosphosites
 ```{r}
-raw_phospho_row_tbl %>% 
+raw_phospho_row_tbl %>%
     filter(is.na(peptide_loc_valid)) %>%
     head()
 ```

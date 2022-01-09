@@ -19,6 +19,7 @@ Currently it covers (`-` = not available):
 |                    | PBTA    | v      | v       | -      | -         | RefSeq 20180629         |
 |                    | PDAC    | v      | v       | -      | -         | RefSeq 20180629         |
 |                    | UCEC    | v      | v       | v      | -         | RefSeq 20180629         |
+| CPTAC3 confirmatory| GBM     | v      | v       | v      | -         | RefSeq 20180629         |
 
 Notes for the peptide databases (bold ones are recommended):
 - RefSeq 20111201: CDAP (RefSeq release 37); Incomplete annotation; hg19
@@ -39,7 +40,7 @@ final_output    Final output files
 
 
 ### Upstream data sources
-Upstream data sources were collected in `~/Box/MyCPTAC/CPTAC_proteome_v3.0`, which is backed up to katmai at `/diskmnt/Projects/PTMcosmos/Bobo_CPTAC_data_collection/`.
+Upstream data sources were collected in `~/Box/MyCPTAC/CPTAC_proteome_v3.1`, which is backed up to katmai at `/diskmnt/Projects/PTMcosmos/Bobo_CPTAC_data_collection/`.
 
 
 ### Setup
@@ -138,7 +139,7 @@ Row (feature; PTM) metadata:
 ### Ding lab internal
 The project is mirrored on katmai:
 - This repo: `/diskmnt/Projects/PTMcosmos/cptac_proteome_preprocess`
-- Upstream data sources: `/diskmnt/Projects/PTMcosmos/Bobo_CPTAC_data_collection/CPTAC_proteome_v3.0`
+- Upstream data sources: `/diskmnt/Projects/PTMcosmos/Bobo_CPTAC_data_collection/CPTAC_proteome_v3.1`
 
 Mirror script (from local to katmai):
 ```bash

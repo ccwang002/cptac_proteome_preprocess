@@ -173,7 +173,7 @@ pre code {
 <pre class="r"><code>library(SummarizedExperiment)
 library(here)
 library(tidyverse)</code></pre>
-<pre class="r"><code>DATA_ROOT = &#39;~/Box/MyCPTAC/CPTAC_proteome_v3.0&#39;</code></pre>
+<pre class="r"><code>DATA_ROOT = &#39;~/Box/MyCPTAC/CPTAC_proteome_v3.1&#39;</code></pre>
 <p>Load extra functions for mapping</p>
 <pre class="r"><code>source(&#39;utils.R&#39;)</code></pre>
 <pre class="r"><code>protein_pth = fs::path(DATA_ROOT, &#39;CPTAC3/HOPEAYA_discovery/cptac_hope_aya_mssm_protein_d6_clean.rds&#39;)
@@ -190,13 +190,13 @@ se_metadata = list(
     &#39;annotation/refseq_20180629/tracked_results/refseq_20180629_human_only_unique_loci_GRanges.rds&#39;
 ))
 names(mcols(protein_annotation_gr))</code></pre>
-<pre><code>##  [1] &quot;symbol&quot;                        &quot;refseq_tx_id&quot;                 
-##  [3] &quot;refseq_prot_id&quot;                &quot;uniparc_id&quot;                   
-##  [5] &quot;hgnc_id&quot;                       &quot;entrez_gene_id&quot;               
-##  [7] &quot;ensembl_gene_id&quot;               &quot;multi_genomic_loci&quot;           
-##  [9] &quot;num_exons&quot;                     &quot;aa_len&quot;                       
-## [11] &quot;tx_len&quot;                        &quot;cds_len&quot;                      
-## [13] &quot;uniparc_crc64_checksum&quot;        &quot;uniparc_xref_refseq_prot_ids&quot; 
+<pre><code>##  [1] &quot;symbol&quot;                        &quot;refseq_tx_id&quot;
+##  [3] &quot;refseq_prot_id&quot;                &quot;uniparc_id&quot;
+##  [5] &quot;hgnc_id&quot;                       &quot;entrez_gene_id&quot;
+##  [7] &quot;ensembl_gene_id&quot;               &quot;multi_genomic_loci&quot;
+##  [9] &quot;num_exons&quot;                     &quot;aa_len&quot;
+## [11] &quot;tx_len&quot;                        &quot;cds_len&quot;
+## [13] &quot;uniparc_crc64_checksum&quot;        &quot;uniparc_xref_refseq_prot_ids&quot;
 ## [15] &quot;uniparc_xref_ensembl_prot_ids&quot; &quot;uniparc_xref_uniprot_ids&quot;</code></pre>
 <p>Read UniProt coord_mapping</p>
 <pre class="r"><code>uniprot_coord_mapping_tbl = read_refseq_to_uniprot_coord_mapping(
@@ -267,7 +267,7 @@ protein_full_row_tbl %&gt;% head()</code></pre>
         preferred_sample_name,
         case_id = research_id,
         aliquot_id = sample_id,
-        tmt_experiment = plex, 
+        tmt_experiment = plex,
         tmt_channel,
         sample_type
     )
@@ -287,8 +287,8 @@ assayNames(protein_se) = &quot;normalized&quot;
 
 metadata(protein_se) = se_metadata</code></pre>
 <pre class="r"><code>protein_se</code></pre>
-<pre><code>## class: RangedSummarizedExperiment 
-## dim: 9952 100 
+<pre><code>## class: RangedSummarizedExperiment
+## dim: 9952 100
 ## metadata(3): cohort pipeline mapped_uniprot_release
 ## assays(1): normalized
 ## rownames(9952): NOC2L ISG15 ... LOC391322 GSTT1
@@ -385,8 +385,8 @@ assayNames(phospho_se) = &quot;normalized&quot;
 
 metadata(phospho_se) = se_metadata</code></pre>
 <pre class="r"><code>phospho_se</code></pre>
-<pre><code>## class: SummarizedExperiment 
-## dim: 87968 100 
+<pre><code>## class: SummarizedExperiment
+## dim: 87968 100
 ## metadata(3): cohort pipeline mapped_uniprot_release
 ## assays(1): normalized
 ## rownames(87968): AAAS:NP_056480.1:S495 AAAS:NP_056480.1:S495.1 ...

@@ -1640,7 +1640,7 @@ pre code {
 library(here)
 library(readxl)
 library(tidyverse)</code></pre>
-<pre class="r"><code>DATA_ROOT = &#39;~/Box/MyCPTAC/CPTAC_proteome_v3.0&#39;</code></pre>
+<pre class="r"><code>DATA_ROOT = &#39;~/Box/MyCPTAC/CPTAC_proteome_v3.1&#39;</code></pre>
 <p>Load extra functions for mapping</p>
 <pre class="r"><code>source(&#39;utils.R&#39;)</code></pre>
 <pre class="r"><code>protein_pth = fs::path(DATA_ROOT, &#39;CPTAC2/TCGA_OV_retrospective/mmc3.xlsx&#39;)
@@ -1888,7 +1888,7 @@ raw_phospho_row_tbl %&gt;% head()</code></pre>
 <pre><code>raw_phospho_row_tbl %&gt;%
     filter(!is.na(Site)) %&gt;%
     select(refseq_prot_id, Peptide, Site) %&gt;%
-    write_tsv(&#39;~/Box/MyCPTAC/CPTAC_proteome_v3.0/CPTAC2/TCGA_OV_retrospective/mmc3_phosphoproteome_ischemia_filtered_peptide_annotation.tsv.gz&#39;)</code></pre>
+    write_tsv(&#39;~/Box/MyCPTAC/CPTAC_proteome_v3.1/CPTAC2/TCGA_OV_retrospective/mmc3_phosphoproteome_ischemia_filtered_peptide_annotation.tsv.gz&#39;)</code></pre>
 <p>Read peptide location</p>
 <pre class="r"><code>phospho_loc_tbl = read_tsv(
     phospho_loc_pth,

@@ -174,7 +174,7 @@ pre code {
 library(SummarizedExperiment)
 library(readxl)
 library(tidyverse)</code></pre>
-<pre class="r"><code>DATA_ROOT = &#39;~/Box/MyCPTAC/CPTAC_proteome_v3.0&#39;</code></pre>
+<pre class="r"><code>DATA_ROOT = &#39;~/Box/MyCPTAC/CPTAC_proteome_v3.1&#39;</code></pre>
 <p>Load extra functions for mapping</p>
 <pre class="r"><code>source(&#39;utils.R&#39;)</code></pre>
 <pre class="r"><code>tmt_pth = fs::path(DATA_ROOT, &#39;CPTAC3/PBTA_discovery/SampleIDvsTMT.xlsx&#39;)
@@ -217,7 +217,7 @@ clinical_tbl %&gt;% head()</code></pre>
 <pre class="r"><code>tmt_map_tbl = read_excel(tmt_pth, range = &#39;B2:L25&#39;) %&gt;%
     mutate(tmt_experiment = row_number()) %&gt;%
     pivot_longer(-tmt_experiment, names_to = &#39;tmt_channel&#39;, values_to = &#39;aliquot_id&#39;)
-    
+
 tmt_map_tbl %&gt;% head()</code></pre>
 <div data-pagedtable="false">
 <script data-pagedtable-source type="application/json">
@@ -233,7 +233,7 @@ tmt_map_tbl %&gt;% head()</code></pre>
 </div>
 <p>Some samples are discarded</p>
 <pre class="r"><code>tmt_map_tbl$aliquot_id %&gt;% setdiff(clinical_tbl$aliquot_id)</code></pre>
-<pre><code>## [1] &quot;Bridge&quot;    &quot;7316-4341&quot; &quot;7316-51&quot;   &quot;7316-37&quot;   &quot;7316-3057&quot; &quot;7316-334&quot; 
+<pre><code>## [1] &quot;Bridge&quot;    &quot;7316-4341&quot; &quot;7316-51&quot;   &quot;7316-37&quot;   &quot;7316-3057&quot; &quot;7316-334&quot;
 ## [7] &quot;7316-70&quot;   &quot;7316-952&quot;  &quot;7316-157&quot;</code></pre>
 <pre class="r"><code>tmt_map_tbl %&gt;%
     filter(aliquot_id %in% clinical_tbl$aliquot_id) %&gt;%
@@ -272,7 +272,7 @@ tmt_map_clean_tbl %&gt;% head()</code></pre>
 <pre class="r"><code>protein_tbl = read_tsv(
     protein_pth,
     col_types = list(
-        .default = col_double(), 
+        .default = col_double(),
         gene_Symbol = col_character(),
         Prot_Desc = col_character()
     )
@@ -290,19 +290,19 @@ tmt_map_clean_tbl %&gt;% head()</code></pre>
     &#39;annotation/refseq_20180629/tracked_results/refseq_20180629_human_only_unique_loci_GRanges.rds&#39;
 ))
 names(mcols(protein_annotation_gr))</code></pre>
-<pre><code>##  [1] &quot;symbol&quot;                        &quot;refseq_tx_id&quot;                 
-##  [3] &quot;refseq_prot_id&quot;                &quot;uniparc_id&quot;                   
-##  [5] &quot;hgnc_id&quot;                       &quot;entrez_gene_id&quot;               
-##  [7] &quot;ensembl_gene_id&quot;               &quot;multi_genomic_loci&quot;           
-##  [9] &quot;num_exons&quot;                     &quot;aa_len&quot;                       
-## [11] &quot;tx_len&quot;                        &quot;cds_len&quot;                      
-## [13] &quot;uniparc_crc64_checksum&quot;        &quot;uniparc_xref_refseq_prot_ids&quot; 
+<pre><code>##  [1] &quot;symbol&quot;                        &quot;refseq_tx_id&quot;
+##  [3] &quot;refseq_prot_id&quot;                &quot;uniparc_id&quot;
+##  [5] &quot;hgnc_id&quot;                       &quot;entrez_gene_id&quot;
+##  [7] &quot;ensembl_gene_id&quot;               &quot;multi_genomic_loci&quot;
+##  [9] &quot;num_exons&quot;                     &quot;aa_len&quot;
+## [11] &quot;tx_len&quot;                        &quot;cds_len&quot;
+## [13] &quot;uniparc_crc64_checksum&quot;        &quot;uniparc_xref_refseq_prot_ids&quot;
 ## [15] &quot;uniparc_xref_ensembl_prot_ids&quot; &quot;uniparc_xref_uniprot_ids&quot;</code></pre>
 <pre class="r"><code>gene_annotation_tbl = protein_annotation_gr %&gt;%
     as_tibble() %&gt;%
     distinct(symbol, hgnc_id, entrez_gene_id, ensembl_gene_id)</code></pre>
 <p>Make sure all the genes are unique</p>
-<pre class="r"><code>protein_tbl %&gt;% 
+<pre class="r"><code>protein_tbl %&gt;%
     count(gene_Symbol) %&gt;%
     filter(n &gt; 1)</code></pre>
 <div data-pagedtable="false">
@@ -360,8 +360,8 @@ protein_row_tbl %&gt;% head()</code></pre>
 )
 
 protein_se</code></pre>
-<pre><code>## class: SummarizedExperiment 
-## dim: 6429 218 
+<pre><code>## class: SummarizedExperiment
+## dim: 6429 218
 ## metadata(3): cohort pipeline mapped_uniprot_release
 ## assays(1): normalized
 ## rownames(6429): A1BG A2M ... ZNF219 ZNF687
@@ -441,7 +441,7 @@ raw_phospho_row_tbl %&gt;% head()</code></pre>
   </script>
 </div>
 <p>Some rows are not phosphosites</p>
-<pre class="r"><code>raw_phospho_row_tbl %&gt;% 
+<pre class="r"><code>raw_phospho_row_tbl %&gt;%
     filter(is.na(peptide_loc_valid)) %&gt;%
     head()</code></pre>
 <div data-pagedtable="false">
@@ -531,8 +531,8 @@ phospho_se = SummarizedExperiment(
 )
 
 phospho_se</code></pre>
-<pre><code>## class: SummarizedExperiment 
-## dim: 4540 217 
+<pre><code>## class: SummarizedExperiment
+## dim: 4540 217
 ## metadata(3): cohort pipeline mapped_uniprot_release
 ## assays(1): normalized
 ## rownames(4540): AAK1:NP_055726.3:S21 AAK1:NP_055726.3:T606 ...
@@ -547,8 +547,8 @@ phospho_se</code></pre>
 <pre><code>## [1] &quot;X7316.957&quot;</code></pre>
 <pre class="r"><code>protein_se.shared_samples = protein_se[, colnames(phospho_se)]
 protein_se.shared_samples</code></pre>
-<pre><code>## class: SummarizedExperiment 
-## dim: 6429 217 
+<pre><code>## class: SummarizedExperiment
+## dim: 6429 217
 ## metadata(3): cohort pipeline mapped_uniprot_release
 ## assays(1): normalized
 ## rownames(6429): A1BG A2M ... ZNF219 ZNF687

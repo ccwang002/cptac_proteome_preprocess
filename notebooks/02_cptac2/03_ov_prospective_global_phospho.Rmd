@@ -13,7 +13,7 @@ library(tidyverse)
 ```
 
 ```{r}
-DATA_ROOT = '~/Box/MyCPTAC/CPTAC_proteome_v3.0'
+DATA_ROOT = '~/Box/MyCPTAC/CPTAC_proteome_v3.1'
 ```
 
 Load extra functions for mapping

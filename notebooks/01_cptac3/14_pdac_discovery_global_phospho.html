@@ -174,7 +174,7 @@ pre code {
 library(SummarizedExperiment)
 library(readxl)
 library(tidyverse)</code></pre>
-<pre class="r"><code>DATA_ROOT = &#39;~/Box/MyCPTAC/CPTAC_proteome_v3.0&#39;</code></pre>
+<pre class="r"><code>DATA_ROOT = &#39;~/Box/MyCPTAC/CPTAC_proteome_v3.1&#39;</code></pre>
 <p>Load extra functions for mapping</p>
 <pre class="r"><code>source(&#39;utils.R&#39;)</code></pre>
 <pre class="r"><code>tmt_pth = fs::path(DATA_ROOT, &#39;CPTAC3/PDAC_discovery/S061_CPTAC_PDA_Discovery_Cohort_Specimens_r1_Feb2021.xlsx&#39;)
@@ -247,33 +247,33 @@ tmt_map_clean_tbl %&gt;% head()</code></pre>
 <div id="protein" class="section level2">
 <h2>Protein</h2>
 <pre class="r"><code>protein_tumor_tbl = read_tsv(
-    protein_tumor_pth, 
+    protein_tumor_pth,
     col_types = list(.default = col_double(), ...1 = col_character())
-) %&gt;% 
+) %&gt;%
     rename(symbol = ...1)</code></pre>
 <pre><code>## New names:
 ## * `` -&gt; ...1</code></pre>
 <pre class="r"><code>protein_normal_tbl = read_tsv(
     protein_normal_pth,
     col_types = list(.default = col_double(), ...1 = col_character())
-) %&gt;% 
+) %&gt;%
   rename(symbol = ...1)</code></pre>
 <pre><code>## New names:
 ## * `` -&gt; ...1</code></pre>
 <p>Make sure tumor and normal tables have the same row order</p>
 <pre class="r"><code>stopifnot(identical(protein_tumor_tbl$symbol, protein_normal_tbl$symbol))</code></pre>
 <p>Make sure all the cases are in the clean TMT mapping</p>
-<pre class="r"><code>colnames(protein_tumor_tbl)[-1] %&gt;% 
+<pre class="r"><code>colnames(protein_tumor_tbl)[-1] %&gt;%
     setdiff(tmt_map_clean_tbl %&gt;% filter(sample_type == &#39;Primary Tumor&#39;) %&gt;% pull(case_id))</code></pre>
 <pre><code>## character(0)</code></pre>
-<pre class="r"><code>colnames(protein_normal_tbl)[-1] %&gt;% 
+<pre class="r"><code>colnames(protein_normal_tbl)[-1] %&gt;%
     setdiff(tmt_map_clean_tbl %&gt;% filter(sample_type != &#39;Primary Tumor&#39;) %&gt;% pull(case_id))</code></pre>
 <pre><code>## character(0)</code></pre>
 <p>Combine the tumor and normal data</p>
 <pre class="r"><code>protein_tbl = bind_cols(
-    protein_tumor_tbl %&gt;% 
+    protein_tumor_tbl %&gt;%
       rename_with(~ str_c(.x, &#39;-T&#39;), .cols = - symbol),
-    protein_normal_tbl %&gt;% 
+    protein_normal_tbl %&gt;%
       select(-symbol) %&gt;%
       rename_with(~ str_c(.x, &#39;-N&#39;))
 )
@@ -288,19 +288,19 @@ protein_tbl %&gt;% head()</code></pre>
     &#39;annotation/refseq_20180629/tracked_results/refseq_20180629_human_only_unique_loci_GRanges.rds&#39;
 ))
 names(mcols(protein_annotation_gr))</code></pre>
-<pre><code>##  [1] &quot;symbol&quot;                        &quot;refseq_tx_id&quot;                 
-##  [3] &quot;refseq_prot_id&quot;                &quot;uniparc_id&quot;                   
-##  [5] &quot;hgnc_id&quot;                       &quot;entrez_gene_id&quot;               
-##  [7] &quot;ensembl_gene_id&quot;               &quot;multi_genomic_loci&quot;           
-##  [9] &quot;num_exons&quot;                     &quot;aa_len&quot;                       
-## [11] &quot;tx_len&quot;                        &quot;cds_len&quot;                      
-## [13] &quot;uniparc_crc64_checksum&quot;        &quot;uniparc_xref_refseq_prot_ids&quot; 
+<pre><code>##  [1] &quot;symbol&quot;                        &quot;refseq_tx_id&quot;
+##  [3] &quot;refseq_prot_id&quot;                &quot;uniparc_id&quot;
+##  [5] &quot;hgnc_id&quot;                       &quot;entrez_gene_id&quot;
+##  [7] &quot;ensembl_gene_id&quot;               &quot;multi_genomic_loci&quot;
+##  [9] &quot;num_exons&quot;                     &quot;aa_len&quot;
+## [11] &quot;tx_len&quot;                        &quot;cds_len&quot;
+## [13] &quot;uniparc_crc64_checksum&quot;        &quot;uniparc_xref_refseq_prot_ids&quot;
 ## [15] &quot;uniparc_xref_ensembl_prot_ids&quot; &quot;uniparc_xref_uniprot_ids&quot;</code></pre>
 <pre class="r"><code>gene_annotation_tbl = protein_annotation_gr %&gt;%
     as_tibble() %&gt;%
     distinct(symbol, hgnc_id, entrez_gene_id, ensembl_gene_id)</code></pre>
 <p>Make sure all the genes are unique</p>
-<pre class="r"><code>protein_tbl %&gt;% 
+<pre class="r"><code>protein_tbl %&gt;%
     count(symbol) %&gt;%
     filter(n &gt; 1)</code></pre>
 <div data-pagedtable="false">
@@ -358,8 +358,8 @@ protein_row_tbl %&gt;% head()</code></pre>
 )
 
 protein_se</code></pre>
-<pre><code>## class: SummarizedExperiment 
-## dim: 11662 215 
+<pre><code>## class: SummarizedExperiment
+## dim: 11662 215
 ## metadata(3): cohort pipeline mapped_uniprot_release
 ## assays(1): normalized
 ## rownames(11662): A1BG A1CF ... ZZEF1 ZZZ3
@@ -391,9 +391,9 @@ phospho_normal_tbl = read_tsv(
 stopifnot(identical(phospho_tumor_tbl$Index, phospho_normal_tbl$Index))</code></pre>
 <p>Combine the tumor and normal data</p>
 <pre class="r"><code>phospho_tbl = bind_cols(
-    phospho_tumor_tbl %&gt;% 
+    phospho_tumor_tbl %&gt;%
       rename_with(~ str_c(.x, &#39;-T&#39;), .cols = c(-Index, -Gene, -Peptide)),
-    phospho_normal_tbl %&gt;% 
+    phospho_normal_tbl %&gt;%
       select(c(-Index, -Gene, -Peptide)) %&gt;%
       rename_with(~ str_c(.x, &#39;-N&#39;))
 )
@@ -461,7 +461,7 @@ raw_phospho_row_tbl %&gt;% head()</code></pre>
   </script>
 </div>
 <p>Some rows are not phosphosites</p>
-<pre class="r"><code>raw_phospho_row_tbl %&gt;% 
+<pre class="r"><code>raw_phospho_row_tbl %&gt;%
     filter(is.na(peptide_loc_valid)) %&gt;%
     head()</code></pre>
 <div data-pagedtable="false">
@@ -551,8 +551,8 @@ phospho_se = SummarizedExperiment(
 )
 
 phospho_se</code></pre>
-<pre><code>## class: SummarizedExperiment 
-## dim: 63859 215 
+<pre><code>## class: SummarizedExperiment
+## dim: 63859 215
 ## metadata(3): cohort pipeline mapped_uniprot_release
 ## assays(1): normalized
 ## rownames(63859): A1CF:NP_001185747.1:T491 A2M:NP_000005.2:S928 ...

@@ -12,7 +12,7 @@ library(tidyverse)
 ```
 
 ```{r}
-DATA_ROOT = '~/Box/MyCPTAC/CPTAC_proteome_v3.0'
+DATA_ROOT = '~/Box/MyCPTAC/CPTAC_proteome_v3.1'
 ```
 
 Load extra functions for mapping
@@ -111,7 +111,7 @@ protein_col_tbl = colData(raw_protein_se) %>%
         preferred_sample_name,
         case_id = research_id,
         aliquot_id = sample_id,
-        tmt_experiment = plex, 
+        tmt_experiment = plex,
         tmt_channel,
         sample_type
     )
