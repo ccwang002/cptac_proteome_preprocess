@@ -6,7 +6,7 @@ output:
 ---
 
 ```{r, message=FALSE}
-library(SummarizedExperiment)
+suppressPackageStartupMessages(library(SummarizedExperiment))
 library(here)
 library(tidyverse)
 ```
@@ -17,24 +17,39 @@ DATA_ROOT = '~/Box/MyCPTAC/CPTAC_proteome_v3.1'
 
 Load extra functions for mapping
 ```{r}
-source('utils.R')
+source(here('notebooks/01_cptac3/utils.R'))
 ```
 
 ```{r}
-protein_pth = fs::path(DATA_ROOT, 'CPTAC3/GBM_discovery/proteome_mssm_per_gene_clean.v4.0.20200430.rds')
+protein_pth = fs::path(DATA_ROOT, 'CPTAC3/GBM_confirmatory/pnnl_proteome_per_gene.rds')
 
-phospho_pth = fs::path(DATA_ROOT, 'CPTAC3/GBM_discovery/phosphoproteome_mssm_per_gene_clean.v4.0.20200430.rds')
-phospho_loc_pth = fs::path(DATA_ROOT, 'CPTAC3/GBM_discovery/phosphoproteome_mssm_per_gene_clean.v4.0.20200430.tsv.peptide_location.tsv.gz')
+phospho_pth = fs::path(DATA_ROOT, 'CPTAC3/GBM_confirmatory/pnnl_phosphoproteome.rds')
+phospho_loc_pth = fs::path(DATA_ROOT, 'CPTAC3/GBM_confirmatory/pnnl_phosphoproteome.peptide.tsv.peptide_location.tsv.gz')
 
-acetyl_pth = fs::path(DATA_ROOT, 'CPTAC3/GBM_discovery/acetylome_mssm_per_gene_clean.v4.0.20200430.rds')
-acetyl_loc_pth = fs::path(DATA_ROOT, 'CPTAC3/GBM_discovery/acetylome_mssm_per_gene_clean.v4.0.20200430.tsv.peptide_location.tsv.gz')
+acetyl_pth = fs::path(DATA_ROOT, 'CPTAC3/GBM_confirmatory/pnnl_acetylproteome.rds')
+acetyl_loc_pth = fs::path(DATA_ROOT, 'CPTAC3/GBM_confirmatory/pnnl_acetylproteome.peptide.tsv.peptide_location.tsv.gz')
 
 se_metadata = list(
-    cohort = 'CPTAC3 GBM discovery cohort',
+    cohort = 'CPTAC3 GBM confirmatory cohort',
     pipeline = 'PNNL',
     mapped_uniprot_release = '2021_02'
 )
 ```
+
+
+Extract the peptide information
+```
+phospho = readRDS(phospho_pth)
+rowData(phospho) %>%
+    as_tibble(rownames = 'original_id') %>%
+    write_tsv(fs::path(DATA_ROOT, 'CPTAC3/GBM_confirmatory/pnnl_phosphoproteome.peptide.tsv.gz'))
+
+acetyl = readRDS(acetyl_pth)
+rowData(acetyl) %>%
+    as_tibble(rownames = 'original_id') %>%
+    write_tsv(fs::path(DATA_ROOT, 'CPTAC3/GBM_confirmatory/pnnl_acetylproteome.peptide.tsv.gz'))
+```
+
 
 
 ```{r}
@@ -91,21 +106,23 @@ protein_full_row_tbl = protein_row_tbl %>%
 
 protein_full_row_tbl %>% head()
 ```
+
 Organize colData
 ```{r}
 protein_col_tbl = colData(raw_protein_se) %>%
-    as_tibble(rownames = 'case_id') %>%
+    as_tibble(rownames = 'preferred_sample_name') %>%
     select(
+        preferred_sample_name,
         case_id,
         aliquot_id,
         tmt_experiment = tmt_plex, tmt_channel,
-        sample_type = tumor_normal
+        detailed_sample_type = sample_type
     ) %>%
     mutate(
-        preferred_sample_name = case_id,
         sample_type = case_when(
-            sample_type == 'tumor' ~ 'Primary Tumor',
-            sample_type == 'normal' ~ 'GTEx Normal',
+            str_detect(detailed_sample_type, 'Primary Tumor') ~ 'Primary Tumor',
+            str_detect(detailed_sample_type, 'Recurrent Tumor') ~ 'Primary Tumor',
+            str_detect(detailed_sample_type, 'Normal') ~ 'Tissue Normal',
             TRUE ~ NA_character_
         )
     )
@@ -135,18 +152,20 @@ phospho_loc_tbl = read_tsv(
     phospho_loc_pth,
     col_types = cols(
         peptide_start = col_integer(),
-        peptide_end = col_integer()
+        peptide_end = col_integer(),
+        peptide_loc_invalid_reason = col_character()
     ))
 ```
 
 ```{r}
 raw_phospho_row_tbl = rowData(raw_phospho_se) %>%
     as_tibble(rownames = 'original_id') %>%
-    select(original_id, symbol = gene, refseq_prot_id = refseq_id) %>%
+    select(original_id, symbol, refseq_prot_id = refseq_id) %>%
     inner_join(phospho_loc_tbl, by = 'original_id')
 
 raw_phospho_row_tbl %>% head()
 ```
+
 ```{r}
 phospho_na_percent = rowSums(is.na(assay(raw_phospho_se[raw_phospho_row_tbl$original_id, ]))) / ncol(raw_phospho_se)
 hist(phospho_na_percent)
@@ -169,11 +188,13 @@ phospho_row_tbl = raw_phospho_row_tbl %>%
 
 phospho_row_tbl %>% head()
 ```
+
 Some sites have duplication
 ```{r}
 phospho_row_tbl %>%
     count(symbol, phosphosites, sort = TRUE) %>%
-    filter(n > 1)
+    filter(n > 1) %>%
+    head(200)
 ```
 
 Combine the RefSeq annotation
@@ -226,22 +247,25 @@ acetyl_loc_tbl = read_tsv(
     acetyl_loc_pth,
     col_types = cols(
         peptide_start = col_integer(),
-        peptide_end = col_integer()
+        peptide_end = col_integer(),
+        peptide_loc_invalid_reason = col_character()
     ))
 ```
 
 ```{r}
 raw_acetyl_row_tbl = rowData(raw_acetyl_se) %>%
     as_tibble(rownames = 'original_id') %>%
-    select(original_id, symbol = gene, refseq_prot_id = refseq_id) %>%
+    select(original_id, symbol, refseq_prot_id = refseq_id) %>%
     inner_join(acetyl_loc_tbl, by = 'original_id')
 
 raw_acetyl_row_tbl %>% head()
 ```
+
 ```{r}
 acetyl_na_percent = rowSums(is.na(assay(raw_acetyl_se[raw_acetyl_row_tbl$original_id, ]))) / ncol(raw_acetyl_se)
 hist(acetyl_na_percent)
 ```
+
 ```{r}
 acetyl_row_tbl = raw_acetyl_row_tbl %>%
     bind_cols(tibble(na_percent = acetyl_na_percent)) %>%
@@ -264,9 +288,9 @@ Some sites have duplication
 ```{r}
 acetyl_row_tbl %>%
     count(symbol, acetylsites, sort = TRUE) %>%
-    filter(n > 1)
+    filter(n > 1) %>%
+    head(200)
 ```
-
 
 Combine the RefSeq annotation
 ```{r}
@@ -281,6 +305,7 @@ acetyl_row_full_tbl = acetyl_row_tbl %>%
 
 acetyl_row_full_tbl %>% head()
 ```
+
 Check if we can re-use the protein col data
 ```{r}
 identical(rownames(colData(raw_acetyl_se)), protein_col_tbl$preferred_sample_name)
@@ -304,8 +329,8 @@ acetyl_se
 
 ## Export
 ```{r}
-fs::dir_create(here('final_output/CPTAC3_GBM_discovery'))
-protein_se %>% saveRDS(here('final_output/CPTAC3_GBM_discovery/CPTAC3_GBM_discovery_pnnl_proteome.v2.0.rds'))
-phospho_se %>% saveRDS(here('final_output/CPTAC3_GBM_discovery/CPTAC3_GBM_discovery_pnnl_phosphoproteome.v2.2.rds'))
-acetyl_se %>% saveRDS(here('final_output/CPTAC3_GBM_discovery/CPTAC3_GBM_discovery_pnnl_acetylome.v2.2.rds'))
+fs::dir_create(here('final_output/CPTAC3_GBM_confirmatory'))
+protein_se %>% saveRDS(here('final_output/CPTAC3_GBM_confirmatory/CPTAC3_GBM_confirmatory_pnnl_proteome.v3.1.rds'))
+phospho_se %>% saveRDS(here('final_output/CPTAC3_GBM_confirmatory/CPTAC3_GBM_confirmatory_pnnl_phosphoproteome.v3.1.rds'))
+acetyl_se %>% saveRDS(here('final_output/CPTAC3_GBM_confirmatory/CPTAC3_GBM_confirmatory_pnnl_acetylome.v3.1.rds'))
 ```
